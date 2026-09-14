@@ -1,0 +1,134 @@
+import { boundingBoxDimensions } from "../geometry/bounding-box";
+import type { Dimensions } from "../geometry/dimensions";
+import type { Point } from "../geometry/point";
+import { createPolygon, polygonBounds, type Polygon } from "../geometry/polygon";
+import { millimetersEqual, type Millimeters } from "../geometry/units";
+import { InvalidContourError } from "./errors";
+import {
+  cleanPixelContour,
+  pixelContourBounds,
+  pixelContourSize,
+  type PixelPoint,
+} from "./pixel-contour";
+import { simplifyPixelContour } from "./simplification";
+
+/**
+ * Factor de conversión entre el espacio de imagen y el espacio físico.
+ *
+ * No es la `Scale` del dominio, que es adimensional: esta magnitud tiene
+ * unidades (mm/px) y solo existe en este boundary.
+ * Ver docs/image-processing.md §50.
+ */
+export type MillimetersPerPixel = number;
+
+/**
+ * Versión de la parte determinista del procesamiento.
+ *
+ * Permite saber con qué algoritmo se obtuvo una geometría almacenada cuando
+ * la limpieza o la simplificación cambien. Ver docs/image-processing.md §13.
+ */
+export const CONTOUR_PROCESSOR_VERSION = "1.0";
+
+/**
+ * Tolerancia física por defecto de la simplificación.
+ *
+ * Medio milímetro queda por debajo de lo que puede seguirse recortando a
+ * mano, así que reduce puntos sin alterar la figura que el usuario fabricará.
+ * Ver docs/image-processing.md §44 y §75.
+ */
+export const DEFAULT_SIMPLIFICATION_TOLERANCE_MM: Millimeters = 0.5;
+
+export type PhysicalContourInput = {
+  /** Contorno tal como lo entrega la extracción, en pixels de la imagen. */
+  readonly contour: readonly PixelPoint[];
+  /** Tamaño físico que el usuario quiere para la figura. */
+  readonly targetDimensions: Dimensions;
+  readonly simplificationTolerance?: Millimeters;
+};
+
+export type PhysicalContour = {
+  /** Contorno cerrado en milímetros, normalizado con su origen en (0,0). */
+  readonly polygon: Polygon;
+  /** Tamaño físico real resultante, que puede ser menor que el solicitado. */
+  readonly dimensions: Dimensions;
+  readonly millimetersPerPixel: MillimetersPerPixel;
+  /**
+   * Indica que alcanzar exactamente las dos dimensiones pedidas exigiría
+   * deformar la figura. El dominio nunca deforma; informa.
+   */
+  readonly requiresDistortionForExactFit: boolean;
+  readonly processorVersion: string;
+};
+
+/**
+ * Convierte un contorno detectado en la imagen en geometría física.
+ *
+ * Este es el único punto donde los pixels se transforman en milímetros.
+ * A partir de aquí el dominio ya no conoce la imagen.
+ * Ver docs/image-processing.md §47 y §94.
+ *
+ * La escala se deriva del tamaño del contorno, no del lienzo de la imagen:
+ * cuando el usuario pide una piñata de 800 mm se refiere a la figura, no al
+ * espacio vacío que la rodea en la foto.
+ *
+ * El ajuste es proporcional y contenido dentro de las dimensiones pedidas
+ * (CONTAIN + preserveAspectRatio), el comportamiento seguro por defecto para
+ * moldes. Ver docs/image-processing.md §55.
+ */
+export function convertContourToPhysicalGeometry(
+  input: PhysicalContourInput,
+): PhysicalContour {
+  const {
+    contour,
+    targetDimensions,
+    simplificationTolerance = DEFAULT_SIMPLIFICATION_TOLERANCE_MM,
+  } = input;
+
+  const cleaned = cleanPixelContour(contour);
+  const sourceSize = pixelContourSize(pixelContourBounds(cleaned));
+
+  const millimetersPerPixel = Math.min(
+    targetDimensions.width / sourceSize.width,
+    targetDimensions.height / sourceSize.height,
+  );
+
+  const simplified = simplifyPixelContour(
+    cleaned,
+    simplificationTolerance / millimetersPerPixel,
+  );
+
+  if (simplified.length < 3) {
+    throw new InvalidContourError(
+      `Simplifying with a tolerance of ${simplificationTolerance} mm left ${simplified.length} points, which cannot describe a figure.`,
+    );
+  }
+
+  // La normalización se calcula sobre el contorno ya simplificado para que la
+  // figura empiece exactamente en (0,0). Ver docs/image-processing.md §56.
+  const bounds = pixelContourBounds(simplified);
+
+  const points: Point[] = simplified.map((point) => ({
+    x: (point.x - bounds.minX) * millimetersPerPixel,
+    y: (point.y - bounds.minY) * millimetersPerPixel,
+  }));
+
+  const polygon = createPolygon(points, true);
+
+  return {
+    polygon,
+    dimensions: boundingBoxDimensions(polygonBounds(polygon)),
+    millimetersPerPixel,
+    // Se evalúa sobre el contorno limpio, antes de simplificar, para que la
+    // respuesta dependa de la figura y no de la tolerancia elegida.
+    requiresDistortionForExactFit:
+      !millimetersEqual(
+        sourceSize.width * millimetersPerPixel,
+        targetDimensions.width,
+      ) ||
+      !millimetersEqual(
+        sourceSize.height * millimetersPerPixel,
+        targetDimensions.height,
+      ),
+    processorVersion: CONTOUR_PROCESSOR_VERSION,
+  };
+}

@@ -997,6 +997,36 @@ y_mm = y_px * scale
 
 cuando se conserva la relación de aspecto.
 
+## Origen de `sourceWidth`
+
+`sourceWidth` y `sourceHeight` son las dimensiones del **contorno**, no las del
+lienzo de la imagen.
+
+```text
+Imagen 3000 × 2000 px
+  └── Contorno 200 × 100 px
+          ↓
+   sourceWidth = 200 px
+```
+
+Cuando el usuario pide una piñata de 800 mm se refiere a la figura, no al
+espacio vacío que la rodea en la fotografía.
+
+Escalar usando el lienzo haría que la misma figura produjera moldes de
+tamaños distintos según cuánto margen tuviera la foto.
+
+## Tolerancia de simplificación
+
+La tolerancia se configura en milímetros y se convierte a pixels con la misma
+escala que se aplicará después:
+
+```text
+pixelTolerance = physicalTolerance / scale
+```
+
+Así el resultado depende del tamaño físico del molde y no de la resolución de
+la imagen de origen, tal como exige §45.
+
 ---
 
 # 51. Preserve Aspect Ratio
