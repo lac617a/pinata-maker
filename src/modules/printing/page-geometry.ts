@@ -1,3 +1,4 @@
+import type { BoundingBox } from "../geometry/bounding-box";
 import { clipPolygonToRectangle } from "../geometry/clip";
 import { translatePolygon, type Polygon } from "../geometry/polygon";
 import type {
@@ -52,4 +53,28 @@ export function clipGeometryToPage(
       clip(line.geometry).map((fragment) => ({ geometry: fragment })),
     ),
   };
+}
+
+/**
+ * Indica si algún trazo de la página atraviesa una región.
+ *
+ * Se utiliza para colocar elementos añadidos —como la regla de calibración—
+ * en una zona libre de la hoja. Ver docs/printing.md §41.
+ *
+ * Una región completamente rodeada por la figura, sin ningún trazo que la
+ * cruce, se considera libre: ahí no hay líneas que confundir.
+ */
+export function pageGeometryIntersectsRectangle(
+  geometry: TemplatePageGeometry,
+  rectangle: BoundingBox,
+): boolean {
+  const crosses = (polygon: Polygon): boolean =>
+    clipPolygonToRectangle(polygon, rectangle).length > 0;
+
+  return (
+    geometry.outerContours.some(crosses) ||
+    geometry.holes.some(crosses) ||
+    geometry.cutLines.some((line) => crosses(line.geometry)) ||
+    geometry.foldLines.some((line) => crosses(line.geometry))
+  );
 }

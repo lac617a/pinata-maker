@@ -32,6 +32,15 @@ export class InvalidOverlapError extends Error {
   }
 }
 
+export class InvalidCalibrationError extends Error {
+  readonly code = "INVALID_CALIBRATION";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidCalibrationError";
+  }
+}
+
 export class EmptyPrintableAreaError extends Error {
   readonly code = "EMPTY_PRINTABLE_AREA";
 

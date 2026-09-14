@@ -408,6 +408,13 @@ Debe representar:
 100%
 ```
 
+El layout no expone un factor configurable: `PRINT_SCALE_ACTUAL_SIZE` es el
+único valor válido y se incluye en el resultado para que el documento declare
+su escala en lugar de darla por supuesta.
+
+`CUSTOM_SCALE` no está implementado. Añadirlo requiere escalar la geometría
+antes del reparto en páginas, según el orden del §19.
+
 ---
 
 # 18. Custom Scale
@@ -767,6 +774,24 @@ La implementación visual puede evolucionar.
 
 La relación geométrica debe ser determinista.
 
+Regla implementada:
+
+```text
+Cada borde compartido recibe dos marcas.
+Ambas se sitúan sobre la línea central de la franja de solape.
+Las dos páginas las imprimen en la misma posición física global.
+```
+
+Al superponer las hojas por el solape, las marcas de una caen exactamente
+sobre las de la otra.
+
+Se usan dos marcas por borde y no una porque un único punto no permite
+corregir el giro de la hoja. Se colocan al 25 % y al 75 % del borde para no
+confundirse con las marcas de los bordes contiguos.
+
+Los bordes exteriores de la retícula no llevan marcas: no hay ninguna hoja con
+la que alinearlos.
+
 ---
 
 # 36. Alignment IDs
@@ -783,6 +808,18 @@ B2
 o cualquier esquema equivalente.
 
 La identidad debe derivarse del layout, no de valores aleatorios.
+
+Esquema implementado:
+
+```text
+<página superior o izquierda>-<página inferior o derecha>-<índice>
+
+A1-A2-1   borde entre A1 y A2, primera marca
+A1-B1-2   borde entre A1 y B1, segunda marca
+```
+
+El nombre es el mismo en las dos hojas que comparten el borde, de modo que el
+usuario busca literalmente la misma etiqueta en ambos papeles.
 
 ---
 
@@ -879,6 +916,26 @@ y:
 remains printable
 ```
 
+Regla implementada:
+
+```text
+1. Se reserva una franja de la longitud de la regla por 8 mm de alto.
+2. Se prueban las esquinas del área imprimible en orden fijo:
+   inferior izquierda, inferior derecha, superior izquierda, superior derecha.
+3. Se descarta toda esquina atravesada por un trazo de la página.
+4. Se devuelve la primera esquina libre.
+```
+
+Si ninguna esquina está libre, o la regla no cabe en el área imprimible, la
+página se imprime sin marca. La referencia física del documento queda entonces
+en la hoja de instrucciones.
+
+La franja de 8 mm reserva espacio para los topes de la regla y para el texto
+que indica su longitud.
+
+Una región completamente rodeada por la figura, sin trazos que la crucen, se
+considera libre: ahí no hay líneas que puedan confundirse con la regla.
+
 ---
 
 # 42. Calibration Configuration
@@ -893,6 +950,12 @@ type CalibrationMark = {
 ```
 
 No hardcodear `100` en múltiples lugares.
+
+La longitud vive en `DEFAULT_CALIBRATION_LENGTH_MM` y llega al layout a través
+de la `PrintConfiguration`.
+
+`position` es el extremo izquierdo de la regla, en coordenadas locales de la
+página. La regla es horizontal y se extiende hacia la derecha.
 
 ---
 
@@ -1032,6 +1095,13 @@ type PrintLayout = {
 ```
 
 La implementación puede tener más metadata.
+
+`totalWidth` y `totalHeight` son las dimensiones físicas de la plantilla
+completa, no la suma de las hojas: el reparto en páginas no cambia el tamaño
+del molde.
+
+El resultado añade además `layoutVersion`, `scale`, `rows` y `columns`, que son
+los datos que necesita un `PrintJob` para reproducir el documento.
 
 ---
 

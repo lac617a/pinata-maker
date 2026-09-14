@@ -92,7 +92,7 @@ export function calculatePageLayout(input: PageLayoutInput): PageLayout {
       const minY = bounds.minY + row * step.height;
 
       pages.push({
-        label: `${rowLabel(row)}${column + 1}`,
+        label: pageLabel(row, column),
         pageNumber: row * columns + column + 1,
         row,
         column,
@@ -139,7 +139,19 @@ function countPages(
   return 1 + Math.ceil((uncovered - GEOMETRY_TOLERANCE_MM) / step);
 }
 
-/** Etiquetas de fila A, B, … Z, AA, AB, … Ver docs/PRD.md §14. */
+/**
+ * Identidad de una página dentro de la retícula: fila en letras y columna en
+ * números, como `A1` o `B3`.
+ *
+ * La identidad se deriva del layout y no de la posición en un array, de modo
+ * que dos generaciones con la misma configuración producen las mismas
+ * etiquetas. Ver docs/printing.md §36 y docs/PRD.md §14.
+ */
+export function pageLabel(row: number, column: number): string {
+  return `${rowLabel(row)}${column + 1}`;
+}
+
+/** Etiquetas de fila A, B, … Z, AA, AB, … */
 function rowLabel(row: number): string {
   let label = "";
 
