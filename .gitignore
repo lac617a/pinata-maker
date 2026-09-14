@@ -1,3 +1,64 @@
-.next
-node_modules
-tsconfig.tsbuildinfo
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Build output
+build/
+dist/
+*.tsbuildinfo
+
+# Environment variables
+# Los secretos (Supabase service role, proveedores de procesamiento de imagen)
+# nunca deben versionarse. Solo se versiona la plantilla de ejemplo.
+.env
+.env.*
+!.env.example
+
+# Supabase CLI (local development)
+supabase/.temp/
+supabase/.branches/
+
+# Tests y cobertura
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# Artefactos generados localmente (PDF/SVG/imágenes procesadas de pruebas manuales).
+# El dominio es la fuente de verdad; estos archivos son reproducibles.
+/tmp/
+/output/
+
+# Deploy
+.vercel/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Caches de herramientas
+.eslintcache
+.turbo/
+.cache/
+
+# Editores
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1911,21 +1911,23 @@ editor
 # 126. Recommended Layers
 
 ```text
+app/                        ← presentación (App Router)
+│
 src/
-├── domain/
+├── modules/                ← dominio y aplicación por módulo
 │
-├── application/
-│   └── ...
-│
-├── infrastructure/
-│   └── storage/
-│       ├── database/
-│       ├── object-storage/
-│       ├── repositories/
-│       └── mappers/
-│
-└── presentation/
+└── infrastructure/
+    └── storage/
+        ├── database/
+        ├── object-storage/
+        ├── repositories/
+        └── mappers/
 ```
+
+La estructura de módulos es la definida en `docs/architecture.md` §4.
+
+Storage no introduce una jerarquía de capas paralela: aporta la
+implementación de infraestructura de los contratos que los módulos declaran.
 
 ---
 

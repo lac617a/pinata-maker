@@ -174,20 +174,36 @@ La arquitectura debe evolucionar según la complejidad real del producto.
 La estructura inicial debe organizarse por dominio.
 
 ```text id="i4g3o6"
-src/
-├── app/
+app/
 │
+src/
 ├── modules/
 │   ├── projects/
 │   ├── image-processing/
-│   ├── templates/
 │   ├── geometry/
+│   ├── templates/
+│   ├── printing/
 │   └── pdf-generation/
 │
 ├── components/
 │
 └── lib/
 ```
+
+`app/` permanece en la raíz del proyecto, no dentro de `src/`.
+
+Next.js soporta ambas ubicaciones. Se eligió la raíz para que el límite entre
+el App Router (presentación) y `src/` (dominio, aplicación e infraestructura)
+sea visible en el árbol de directorios.
+
+`printing/` es un módulo de dominio independiente de `geometry/`.
+
+`geometry/` representa y transforma geometría física. `printing/` decide cómo
+esa geometría se distribuye sobre hojas: papel, márgenes, escala, tiling y
+overlap. `pdf-generation/` únicamente renderiza el resultado.
+
+Esta separación sigue la responsabilidad descrita en `docs/printing.md` §98 y
+evita que el motor geométrico dependa de conceptos de impresión.
 
 No crear automáticamente todas las capas dentro de cada módulo.
 
@@ -280,7 +296,46 @@ Incluye:
 
 ---
 
-## 5.5 PDF Generation
+## 5.5 Printing
+
+Responsabilidad:
+
+Determinar cómo una geometría física se distribuye sobre hojas reales.
+
+Incluye:
+
+* paper formats
+* orientation
+* margins
+* printable area
+* print scale
+* tiling
+* overlap
+* page ordering
+* alignment
+* calibration
+
+Entrada:
+
+```text
+TemplateGeometry
++
+PrintConfiguration
+```
+
+Salida:
+
+```text
+PrintLayout
+```
+
+No debe generar archivos ni conocer la librería de PDF.
+
+Ver `docs/printing.md`.
+
+---
+
+## 5.6 PDF Generation
 
 Responsabilidad:
 
@@ -289,9 +344,7 @@ Transformar una plantilla en un documento imprimible.
 Entrada:
 
 ```text
-Template
-+
-Paper Format
+PrintLayout
 ```
 
 Salida:
@@ -301,6 +354,8 @@ PDF
 ```
 
 No debe decidir cómo se construye la geometría.
+
+No debe recalcular tiling, escala, overlap ni número de páginas.
 
 ---
 
