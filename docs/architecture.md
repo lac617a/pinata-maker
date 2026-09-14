@@ -273,6 +273,17 @@ Incluye:
 * scaling
 * clipping
 * measurements
+* template geometry
+
+`TemplateGeometry` pertenece a este módulo, no a `templates/`.
+
+Es la estructura geométrica que produce el pipeline descrito en
+`docs/geometry.md` §91 y la consumen tanto `printing/` como `templates/`.
+Situarla aquí mantiene `geometry/` como el módulo más bajo y estable, y evita
+la dependencia circular `templates → printing → templates`.
+
+`templates/` construye sobre ella los conceptos de plantilla: `Template`,
+`TemplatePart` y su configuración.
 
 Este módulo es independiente de React y Supabase.
 

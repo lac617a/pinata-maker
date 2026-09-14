@@ -1195,7 +1195,33 @@ El clipping:
 ```text
 must not scale geometry
 must not distort geometry
+must not close geometry along the page border
 ```
+
+El resultado del recorte son trazos abiertos.
+
+Un contorno que cruza el borde de la hoja no debe cerrarse siguiendo ese
+borde: el límite del papel no es una línea de corte física. Cerrar la
+geometría contra el rectángulo de página haría que el usuario recortara por el
+canto de la hoja.
+
+Por la misma razón, una página sin ningún trazo no es necesariamente una
+página sobrante.
+
+Ejemplo:
+
+```text
+Figura grande
+  ↓
+Página completamente interior a la figura
+  ↓
+0 líneas recortadas
+```
+
+Esa hoja no contiene líneas, pero sí material de la pieza y debe imprimirse.
+
+Descartar páginas vacías requiere comprobar si la página queda dentro del
+contorno, no únicamente si contiene trazos.
 
 ---
 
