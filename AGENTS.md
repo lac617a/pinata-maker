@@ -85,7 +85,8 @@ docs/
 ├── editor.md
 ├── printing.md
 ├── pdf.md
-└── storage.md
+├── storage.md
+└── roadmap.md
 ```
 
 ---
@@ -284,6 +285,26 @@ storage lifecycle
 ```
 
 Use it whenever dealing with persistence or files.
+
+---
+
+### roadmap.md
+
+Defines:
+
+```text
+what is already implemented
+closed decisions
+pending phases
+open questions
+known debt
+MVP acceptance coverage
+```
+
+Use it to understand **where the project currently stands**.
+
+It records state, not behavior. It must not be used as a source of
+requirements, and it must be updated when a phase is completed.
 
 ---
 
