@@ -944,3 +944,164 @@ Puedo utilizar el molde físicamente
 El éxito del MVP no se mide por la cantidad de funcionalidades implementadas.
 
 Se mide por la capacidad de generar un molde físicamente útil y correctamente escalado.
+
+---
+
+# 38. Access Model
+
+La herramienta tiene tres niveles de acceso.
+
+```text
+Anónimo     usar la herramienta, con límite diario
+Registrado  guardar proyectos y acceder a las herramientas que se añadan
+De pago     sin publicidad y con herramientas profesionales
+```
+
+## Anónimo
+
+Un visitante puede generar un molde **sin registrarse**.
+
+Es una decisión de producto deliberada: obligar a crear una cuenta antes de
+ver si la herramienta sirve elimina a la mayor parte de los usuarios que
+llegan por búsqueda.
+
+El usuario anónimo:
+
+* puede subir una imagen, configurar medidas y descargar el PDF;
+* está sujeto a un límite de uso diario (§39);
+* **no** conserva proyectos: §24 mantiene que guardar exige cuenta;
+* ve publicidad (§40).
+
+## Registrado
+
+El usuario con cuenta:
+
+* conserva sus proyectos y puede reabrirlos (AC-14);
+* tiene un límite diario más alto que el anónimo;
+* accede a las herramientas que se vayan añadiendo al catálogo.
+
+## De pago
+
+El usuario de pago:
+
+* no ve publicidad;
+* accede a herramientas profesionales y a límites ampliados.
+
+**El nivel de pago es posterior al MVP.** §27 excluye explícitamente el
+sistema de pagos del alcance del MVP, y esa exclusión sigue vigente. Lo que
+debe existir desde el principio es que el modelo de datos y la autorización no
+impidan añadirlo: un usuario tiene un nivel, y el nivel decide qué puede hacer.
+
+---
+
+# 39. Usage Limits
+
+El límite protege el coste de procesamiento, que no es despreciable: quitar el
+fondo de una imagen y generar un PDF de veinte hojas cuesta CPU o llamadas a
+un servicio externo.
+
+El límite debe:
+
+* contarse **en el servidor**, nunca en el cliente;
+* aplicarse por día natural;
+* identificar al usuario anónimo por un medio razonable, asumiendo que puede
+  evadirse; el objetivo es contener el abuso normal, no impedirlo por
+  completo;
+* comunicar cuánto queda y cuándo se renueva, antes de que el usuario invierta
+  trabajo en un molde que no va a poder descargar;
+* distinguirse por nivel de acceso.
+
+Los valores concretos son configuración, no constantes repartidas por el
+código.
+
+Un límite alcanzado no es un error del sistema: es un estado previsto y debe
+explicarse como tal, ofreciendo el registro o la suscripción como salida.
+
+---
+
+# 40. Advertising
+
+La aplicación se financia parcialmente con Google AdSense.
+
+Esto impone requisitos que no son opcionales:
+
+* **Páginas legales publicadas y accesibles** (§41). Sin ellas la cuenta de
+  AdSense no se aprueba.
+* **Consentimiento de cookies** conforme al RGPD, con la posibilidad real de
+  rechazar la publicidad personalizada.
+* **Contenido propio y de valor** en las páginas indexables: una aplicación
+  sin contenido no se aprueba.
+
+Restricciones de producto:
+
+* La publicidad **nunca** aparece en el PDF generado. El PDF es un artefacto
+  físico que el usuario imprime y recorta; meter publicidad en él degradaría
+  el producto y gastaría tinta del usuario.
+* La publicidad no puede ocupar la zona de previsualización ni confundirse con
+  controles de la herramienta.
+* El usuario de pago no ve publicidad (§38).
+
+---
+
+# 41. Legal Pages
+
+Deben existir, publicadas y enlazadas desde el pie de todas las páginas:
+
+```text
+Política de privacidad
+Términos y condiciones de uso
+Política de cookies
+Aviso legal
+```
+
+La política de privacidad debe declarar, como mínimo:
+
+* qué datos se recogen del usuario anónimo y del registrado;
+* que las imágenes subidas se procesan y dónde se almacenan;
+* cuánto tiempo se conservan las imágenes y los archivos generados;
+* qué terceros intervienen: proveedor de autenticación, almacenamiento,
+  publicidad y, si lo hay, el servicio de eliminación de fondo.
+
+Los términos deben cubrir la propiedad de las imágenes que sube el usuario: el
+usuario conserva sus derechos y declara tener permiso para usarlas.
+
+---
+
+# 42. SEO
+
+La aplicación debe poder encontrarse en buscadores. Es el canal por el que
+llega el usuario anónimo, que es el que sostiene el modelo publicitario.
+
+Requisitos:
+
+* **Páginas públicas indexables** con contenido real: qué es una piñata de
+  cartón, cómo se imprime un molde a tamaño real, cómo se ensambla. No basta
+  con una página de aterrizaje vacía.
+* **Metadatos por página**: título, descripción, Open Graph y URL canónica.
+* **Datos estructurados** donde aporten algo.
+* `sitemap.xml` y `robots.txt` generados, no escritos a mano.
+* **URLs estables y legibles**.
+* Renderizado en servidor del contenido indexable. La herramienta en sí puede
+  ser cliente; el contenido que debe posicionar, no.
+* El panel de proyectos y las URLs de trabajo del usuario **no** se indexan.
+
+El rendimiento es parte del SEO: los Core Web Vitals afectan al
+posicionamiento, y §31 ya fija requisitos de rendimiento.
+
+---
+
+# 43. Acceptance Criteria — Public Launch
+
+Estos criterios son **adicionales** a los del MVP (§32) y condicionan la
+publicación con publicidad, no la utilidad de la herramienta.
+
+| AC | Criterio |
+| --- | --- |
+| AC-16 | Un visitante sin cuenta puede generar y descargar un molde |
+| AC-17 | El límite diario se cuenta en el servidor y no puede saltarse desde el cliente |
+| AC-18 | Al alcanzar el límite se explica el motivo y se ofrece registrarse |
+| AC-19 | Las cuatro páginas legales existen y están enlazadas desde el pie |
+| AC-20 | El usuario puede rechazar la publicidad personalizada y la decisión se respeta |
+| AC-21 | El PDF generado no contiene publicidad en ninguna página |
+| AC-22 | Las páginas públicas se sirven renderizadas, con metadatos y sitemap |
+| AC-23 | El panel de proyectos y las URLs de trabajo no aparecen en buscadores |
