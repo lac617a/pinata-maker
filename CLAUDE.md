@@ -86,7 +86,9 @@ src/modules/
 docs/                       Fuente de verdad del comportamiento.
 ```
 
-`src/domain/` existe vacío y no se usa. La estructura crece según la
+`src/domain/` y `src/infrastructure/pdf/` existen vacíos y no se usan: son
+restos previos. La infraestructura de PDF vive en
+`src/modules/pdf-generation/infrastructure/`. La estructura crece según la
 necesidad (`docs/architecture.md` §4 y §73): no crear capas por adelantado.
 
 Flujo del pipeline:

@@ -24,15 +24,17 @@ Del lado de la imagen, todo lo determinista está hecho: validación del
 archivo, umbral del canal alfa, regiones conexas y trazado del contorno. Falta
 únicamente quitar el fondo, que es un adaptador de infraestructura.
 
-No hay todavía capa de aplicación, ni persistencia, ni interfaz.
+Hay capa de aplicación, persistencia con RLS y flujo de sesión. **Lo que no
+hay es interfaz**: `app/` solo contiene la API.
 
 ```text
 [✓] Máscara alfa → contorno en pixels → geometría en mm
 [✓] Silueta + profundidad → piezas con pliegues y pestañas
 [✓] Geometría en mm → reparto en páginas → PrintLayout
 [✓] PrintLayout → PDF
+[✓] Proyecto persistido, aislado por usuario, con registro y sesión
 [ ] Imagen real → máscara alfa (eliminación de fondo)
-[ ] Proyecto, persistencia, autenticación, interfaz
+[ ] Interfaz de usuario
 ```
 
 De punta a punta, con un solo caso de uso: una máscara elíptica de 600 × 800
@@ -61,6 +63,14 @@ pnpm exec tsc --noEmit
 * `pnpm` con overrides de seguridad para `postcss` y `sharp` en
   `pnpm-workspace.yaml`.
 * `.gitignore` cubriendo artefactos de Next, pnpm, Supabase CLI y entorno.
+* Supabase con `@supabase/supabase-js` y `@supabase/ssr`. El esquema vive en
+  `supabase/migrations/` y se aplica a mano: la clave anónima no puede
+  ejecutar DDL, que es justo lo que se quiere.
+* `pnpm check:supabase` comprueba entorno, conexión, tabla y RLS sin imprimir
+  ningún valor de configuración.
+* `pnpm test:integration` ejecuta las pruebas contra la base de datos real.
+  Necesita `SUPABASE_TEST_EMAIL` y `SUPABASE_TEST_PASSWORD` en el entorno; sin
+  ellas se salta.
 
 ## 2.2 `src/modules/geometry/`
 
@@ -392,8 +402,10 @@ Queda fuera, por decisión explícita:
 **Parcial.** Ver §2.7. `GenerateTemplate` y `GeneratePdf` están hechos: una
 máscara alfa produce un PDF completo sin pasar por ninguna capa más.
 
-Falta lo que depende de persistencia y no puede construirse antes de la fase
-E: `CreateProject`, `UploadImage`, `DownloadExport`.
+`CreateProject` también, junto al resto del ciclo de vida del proyecto:
+listar, abrir, renombrar, avanzar de estado y eliminar (§2.7 y §2.9).
+
+Falta `UploadImage` y `DownloadExport`, que dependen de object storage.
 
 `ProcessImage` depende además de la eliminación de fondo (fase B). Cuando
 exista, será un caso de uso delgado: el adaptador entrega una `AlphaMask` y
@@ -409,16 +421,20 @@ que la tabla existe y que un cliente sin sesión ni siquiera puede tocarla
 —responde `42501`, que es el `revoke` de la migración actuando antes incluso
 que RLS—.
 
+El registro y el inicio de sesión también están hechos (§2.10).
+
 Falta:
 
 * Plantillas y sus versiones, con inmutabilidad (`storage.md` §15-§22,
-  `AGENTS.md` §17).
+  `AGENTS.md` §17). Hoy una plantilla se genera y se pierde.
 * Assets, separando el original del procesado (`AGENTS.md` §19,
   `storage.md` §37-§49).
-* Exports y object storage.
-* Plantillas persistidas: hoy una plantilla se genera y se pierde.
+* Exports y object storage, sin los cuales el PDF no se puede entregar
+  (AC-13).
 
-El repositorio de proyectos fija el patrón que los demás deben seguir.
+El repositorio de proyectos fija el patrón que los demás deben seguir:
+interfaz en el dominio, contrato compartido, adaptador en `infrastructure/`,
+y el usuario en cada operación.
 
 ## Fase F — Presentación
 
@@ -429,8 +445,9 @@ El repositorio de proyectos fija el patrón que los demás deben seguir.
   margen, solape.
 * Vista previa de la plantilla y del reparto en páginas. La previsualización
   es orientativa: nunca es la fuente de verdad física (`printing.md` §78).
+* Pantallas de registro e inicio de sesión. La API existe (§2.10); lo que
+  falta es por dónde se usa.
 * Panel de proyectos, estados y manejo de errores (PRD §21, §22, §23).
-* Hoja de instrucciones del documento (PRD §19).
 
 ## Fase G — Acceso, límites y monetización
 
