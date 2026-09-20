@@ -45,6 +45,8 @@ export const TEXT_SIZES: Record<TextRole, Millimeters> = {
   ALIGNMENT_LABEL: 2.2,
   CALIBRATION_LABEL: 2.5,
   PRINT_WARNING: 2.5,
+  COVER_TITLE: 5,
+  COVER_TEXT: 3.5,
 };
 
 /**

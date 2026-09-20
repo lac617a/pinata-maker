@@ -16,6 +16,7 @@ import {
 import { DEFAULT_OVERLAP_MM } from "../../printing/tiling";
 import { PdfResourceLimitError, UnsupportedPdfFeatureError } from "../errors";
 import { millimetersToPoints } from "../pdf-units";
+import type { PrintDocument } from "../print-renderer";
 import { JsPdfPrintRenderer } from "./jspdf-print-renderer";
 
 /** Silueta rectangular de 800 × 1000 mm, el caso de referencia del PRD. */
@@ -41,6 +42,21 @@ const template = createTemplateGeometry({
   ],
 });
 
+/** Pieza pequeña, para documentos de varias secciones. */
+const strip = createTemplateGeometry({
+  outerContours: [
+    createPolygon(
+      [
+        createPoint(0, 0),
+        createPoint(180, 0),
+        createPoint(180, 60),
+        createPoint(0, 60),
+      ],
+      true,
+    ),
+  ],
+});
+
 const renderer = new JsPdfPrintRenderer();
 
 /** Fecha fija: el documento no debe depender del momento en que se genera. */
@@ -49,8 +65,9 @@ const creationDate = new Date(Date.UTC(2026, 0, 1));
 function layoutOn(
   format: PaperFormat,
   orientation: PaperOrientation,
+  geometry = template,
 ): PrintLayout {
-  return createPrintLayout(template, {
+  return createPrintLayout(geometry, {
     paper: {
       format,
       orientation,
@@ -59,6 +76,10 @@ function layoutOn(
     overlap: DEFAULT_OVERLAP_MM,
     calibrationLength: DEFAULT_CALIBRATION_LENGTH_MM,
   });
+}
+
+function documentOf(layout: PrintLayout, label = "FRONT"): PrintDocument {
+  return { sections: [{ label, layout }] };
 }
 
 function asText(bytes: Uint8Array): string {
@@ -77,11 +98,16 @@ function pageSizes(bytes: Uint8Array): { width: number; height: number }[] {
   }));
 }
 
+function printedTexts(bytes: Uint8Array): string[] {
+  return [...asText(bytes).matchAll(/\((.*?)\) Tj/g)].map((match) => match[1]);
+}
+
 describe("jsPDF print renderer", () => {
   it("should produce a readable PDF document", async () => {
-    const document = await renderer.render(layoutOn("A4", "PORTRAIT"), {
-      creationDate,
-    });
+    const document = await renderer.render(
+      documentOf(layoutOn("A4", "PORTRAIT")),
+      { creationDate },
+    );
 
     expect(asText(document.bytes).startsWith("%PDF-")).toBe(true);
     expect(document.contentType).toBe("application/pdf");
@@ -89,10 +115,82 @@ describe("jsPDF print renderer", () => {
 
   it("should generate exactly one page per page of the layout", async () => {
     const layout = layoutOn("A4", "PORTRAIT");
-    const document = await renderer.render(layout, { creationDate });
+    const document = await renderer.render(documentOf(layout), {
+      creationDate,
+    });
 
     expect(document.pageCount).toBe(layout.pages.length);
     expect(pageSizes(document.bytes)).toHaveLength(layout.pages.length);
+  });
+
+  it("should gather every piece into a single document", async () => {
+    // Una piñata se descarga en un archivo, no en uno por pieza (PRD §18).
+    const front = layoutOn("A4", "PORTRAIT");
+    const side = layoutOn("A4", "PORTRAIT", strip);
+
+    const document = await renderer.render(
+      {
+        sections: [
+          { label: "FRONT", layout: front },
+          { label: "SIDE-1", layout: side },
+          { label: "SIDE-2", layout: side },
+        ],
+      },
+      { creationDate },
+    );
+
+    expect(document.pageCount).toBe(
+      front.pages.length + side.pages.length * 2,
+    );
+  });
+
+  it("should name the piece each sheet belongs to", async () => {
+    // El identificador de retícula A1 se repite en todas las piezas.
+    const document = await renderer.render(
+      {
+        sections: [
+          { label: "SIDE-1", layout: layoutOn("A4", "PORTRAIT", strip) },
+          { label: "SIDE-2", layout: layoutOn("A4", "PORTRAIT", strip) },
+        ],
+      },
+      { creationDate },
+    );
+
+    const texts = printedTexts(document.bytes);
+
+    expect(texts.some((text) => text.includes("SIDE-1"))).toBe(true);
+    expect(texts.some((text) => text.includes("SIDE-2"))).toBe(true);
+  });
+
+  it("should open the document with an instruction sheet", async () => {
+    const side = layoutOn("A4", "PORTRAIT", strip);
+
+    const document = await renderer.render(
+      {
+        cover: {
+          title: "Elefante",
+          width: 800,
+          height: 1000,
+          depth: 200,
+          paper: "A4 vertical",
+          scale: 1,
+        },
+        sections: [
+          { label: "SIDE-1", layout: side },
+          { label: "SIDE-2", layout: side },
+        ],
+      },
+      { creationDate },
+    );
+
+    const texts = printedTexts(document.bytes);
+
+    expect(document.pageCount).toBe(side.pages.length * 2 + 1);
+    expect(texts).toContain("Elefante");
+    expect(texts.some((text) => text.includes("800"))).toBe(true);
+    expect(texts.some((text) => text.includes("Escala: 100 %"))).toBe(true);
+    // El inventario dice cuántas hojas ocupa cada pieza.
+    expect(texts.some((text) => text.startsWith("SIDE-1 "))).toBe(true);
   });
 
   it("should size every sheet as the paper of the layout", async () => {
@@ -105,26 +203,35 @@ describe("jsPDF print renderer", () => {
       { format: "A4", orientation: "PORTRAIT", width: 210, height: 297 },
       { format: "A4", orientation: "LANDSCAPE", width: 297, height: 210 },
       { format: "A3", orientation: "PORTRAIT", width: 297, height: 420 },
-      { format: "LETTER", orientation: "PORTRAIT", width: 215.9, height: 279.4 },
+      {
+        format: "LETTER",
+        orientation: "PORTRAIT",
+        width: 215.9,
+        height: 279.4,
+      },
     ];
 
     for (const expected of cases) {
       const document = await renderer.render(
-        layoutOn(expected.format, expected.orientation),
+        documentOf(layoutOn(expected.format, expected.orientation)),
         { creationDate },
       );
 
       for (const size of pageSizes(document.bytes)) {
         expect(size.width).toBeCloseTo(millimetersToPoints(expected.width), 1);
-        expect(size.height).toBeCloseTo(millimetersToPoints(expected.height), 1);
+        expect(size.height).toBeCloseTo(
+          millimetersToPoints(expected.height),
+          1,
+        );
       }
     }
   });
 
   it("should keep a landscape sheet wider than it is tall", async () => {
-    const document = await renderer.render(layoutOn("A4", "LANDSCAPE"), {
-      creationDate,
-    });
+    const document = await renderer.render(
+      documentOf(layoutOn("A4", "LANDSCAPE")),
+      { creationDate },
+    );
 
     for (const size of pageSizes(document.bytes)) {
       expect(size.width).toBeGreaterThan(size.height);
@@ -132,10 +239,10 @@ describe("jsPDF print renderer", () => {
   });
 
   it("should produce the same document for the same layout", async () => {
-    const layout = layoutOn("A4", "PORTRAIT");
+    const document = documentOf(layoutOn("A4", "PORTRAIT"));
 
-    const first = await renderer.render(layout, { creationDate });
-    const second = await renderer.render(layout, { creationDate });
+    const first = await renderer.render(document, { creationDate });
+    const second = await renderer.render(document, { creationDate });
 
     // El identificador de archivo es aleatorio por diseño de la librería; el
     // resto del documento debe ser idéntico. Ver docs/pdf.md §72.
@@ -146,18 +253,18 @@ describe("jsPDF print renderer", () => {
   });
 
   it("should name the file safely", async () => {
-    const document = await renderer.render(layoutOn("A4", "PORTRAIT"), {
-      creationDate,
-      fileName: "../../etc/piñata fiesta.pdf",
-    });
+    const document = await renderer.render(
+      documentOf(layoutOn("A4", "PORTRAIT")),
+      { creationDate, fileName: "../../etc/piñata fiesta.pdf" },
+    );
 
     expect(document.fileName).toBe("etc-piñata-fiesta.pdf");
   });
 
-  it("should refuse a layout that asks for a scale it cannot apply", async () => {
+  it("should refuse a section that asks for a scale it cannot apply", async () => {
     const layout = { ...layoutOn("A4", "PORTRAIT"), scale: 0.5 };
 
-    await expect(renderer.render(layout)).rejects.toThrow(
+    await expect(renderer.render(documentOf(layout))).rejects.toThrow(
       UnsupportedPdfFeatureError,
     );
   });
@@ -169,7 +276,7 @@ describe("jsPDF print renderer", () => {
       pages: Array.from({ length: 501 }, () => layout.pages[0]),
     };
 
-    await expect(renderer.render(oversized)).rejects.toThrow(
+    await expect(renderer.render(documentOf(oversized))).rejects.toThrow(
       PdfResourceLimitError,
     );
   });

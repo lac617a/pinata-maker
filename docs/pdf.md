@@ -1689,3 +1689,86 @@ streaming (§58)
 
 El renderer rechaza con un error explícito un layout que declare una escala
 distinta de la real, en lugar de imprimirlo al 100 % en silencio (§44, §75).
+
+---
+
+# 89. Un documento, no uno por pieza
+
+Una piñata son muchas piezas, y el renderer recibe **un documento** con una
+sección por pieza:
+
+```text
+PrintDocument
+├── cover        hoja de instrucciones (opcional)
+└── sections[]   { label, layout } por pieza
+```
+
+El usuario descarga un archivo (PRD §18, AC-13). Entregar un PDF por pieza
+obligaría a manejar dieciocho descargas para una figura de un metro.
+
+Además sale más pequeño: dieciocho documentos de la misma plantilla ocupaban
+539 KB; uno solo, 169 KB, porque las fuentes y los recursos se comparten.
+
+El contrato de §13 sigue vigente por sección: el renderer genera exactamente
+las páginas que declara cada layout, en su orden, sin añadir ni quitar.
+
+---
+
+# 90. Identidad de la hoja
+
+El identificador de retícula —`A1`, `B3`— solo es único dentro de una pieza.
+En un documento con dieciocho piezas hay dieciocho hojas llamadas `A1`.
+
+Por eso el pie de página lleva la sección delante:
+
+```text
+SIDE-3 · A1 (1 / 2)
+```
+
+La numeración sigue siendo **local a la pieza** y no global al documento. Al
+montar, el usuario trabaja pieza a pieza: saber que una hoja es la primera de
+dos de `SIDE-3` sirve; saber que es la hoja 31 de 48, no.
+
+El inventario de la hoja de instrucciones da la visión de conjunto.
+
+---
+
+# 91. Hoja de instrucciones
+
+Es la primera página del documento y contiene lo que exige PRD §19: nombre,
+dimensiones, papel, escala e instrucciones de impresión. Añade el inventario
+de piezas con el número de hojas de cada una.
+
+```text
+Elefante
+
+Figura: 714.7 × 1000 × 200 mm
+Papel: A4 vertical
+Escala: 100 %
+Piezas: 17 en 47 hojas
+
+Antes de imprimir
+Imprimir al 100 % - no ajustar a página
+Comprueba con una regla que la marca de 100 mm mide 100 mm.
+...
+```
+
+Resuelve la pregunta que el roadmap dejaba abierta —si las instrucciones son
+una página más o un documento aparte— en el sentido que ya indicaba PRD §19:
+una página más. Separarla significaría que el usuario puede imprimir la
+plantilla sin haber leído la advertencia de escala.
+
+No lleva geometría. Nada de lo que hay en ella se recorta, así que no
+compromete §49.
+
+Usa el papel de la primera sección. Mezclar formatos dentro de un documento
+obligaría a cambiar la bandeja a mitad de impresión.
+
+---
+
+# 92. Caracteres del castellano
+
+Comprobado sobre el documento generado: la fuente se declara con
+`/Encoding /WinAnsiEncoding`, «á» se codifica como `0xE1` y la raya de la
+lista de piezas como `0x97`. Ambos son sus valores correctos en esa
+codificación, así que se imprimen sin incrustar fuente (§38, §41).

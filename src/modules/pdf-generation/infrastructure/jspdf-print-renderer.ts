@@ -1,18 +1,16 @@
 import { jsPDF } from "jspdf";
 
 import type { Polygon } from "../../geometry/polygon";
-import {
-  PRINT_SCALE_ACTUAL_SIZE,
-  type PrintLayout,
-  type PrintPage,
-} from "../../printing/print-layout";
+import { PRINT_SCALE_ACTUAL_SIZE } from "../../printing/print-layout";
 import {
   InvalidPdfGeometryError,
   PdfRenderError,
   UnsupportedPdfFeatureError,
 } from "../errors";
 import {
+  describeCoverPage,
   describePage,
+  type CoverEntry,
   type PageDrawing,
   type PageStroke,
   type PageText,
@@ -27,6 +25,7 @@ import {
   PDF_CONTENT_TYPE,
   sanitizePdfFileName,
   type PrintableDocument,
+  type PrintDocument,
   type PrintRenderer,
   type PrintRenderOptions,
 } from "../print-renderer";
@@ -45,17 +44,16 @@ import {
  */
 export class JsPdfPrintRenderer implements PrintRenderer {
   async render(
-    layout: PrintLayout,
+    document: PrintDocument,
     options: PrintRenderOptions = {},
   ): Promise<PrintableDocument> {
-    assertActualSize(layout);
-    assertWithinDocumentLimits(layout);
+    for (const section of document.sections) {
+      assertActualSize(section.label, section.layout.scale);
+    }
 
-    const drawings = layout.pages.map((page) => {
-      const drawing = describePage(page);
-      assertWithinPageLimits(drawing.label, drawing.strokes.length);
-      return drawing;
-    });
+    assertWithinDocumentLimits(document);
+
+    const drawings = describeDocument(document);
 
     if (drawings.length === 0) {
       throw new InvalidPdfGeometryError(
@@ -63,19 +61,20 @@ export class JsPdfPrintRenderer implements PrintRenderer {
       );
     }
 
-    const document = this.build(drawings, layout.pages, options);
+    for (const drawing of drawings) {
+      assertWithinPageLimits(drawing.label, drawing.strokes.length);
+    }
 
     return {
       fileName: sanitizePdfFileName(options.fileName ?? DEFAULT_PDF_FILE_NAME),
       contentType: PDF_CONTENT_TYPE,
       pageCount: drawings.length,
-      bytes: document,
+      bytes: this.build(drawings, options),
     };
   }
 
   private build(
     drawings: readonly PageDrawing[],
-    pages: readonly PrintPage[],
     options: PrintRenderOptions,
   ): Uint8Array {
     try {
@@ -102,7 +101,7 @@ export class JsPdfPrintRenderer implements PrintRenderer {
         drawPage(doc, drawing);
       });
 
-      assertRenderedPageSizes(doc, pages);
+      assertRenderedPageSizes(doc, drawings);
 
       return new Uint8Array(doc.output("arraybuffer"));
     } catch (error) {
@@ -122,16 +121,45 @@ export class JsPdfPrintRenderer implements PrintRenderer {
 }
 
 /**
+ * Traduce el documento entero a planos de dibujo.
+ *
+ * La hoja de instrucciones toma el papel de la primera sección: el documento
+ * se imprime de una vez y mezclar formatos obligaría al usuario a cambiar la
+ * bandeja a mitad de trabajo.
+ */
+function describeDocument(document: PrintDocument): PageDrawing[] {
+  const pages = document.sections.flatMap((section) =>
+    section.layout.pages.map((page) => describePage(page, section.label)),
+  );
+
+  if (!document.cover) {
+    return pages;
+  }
+
+  const entries: CoverEntry[] = document.sections.map((section) => ({
+    label: section.label,
+    sheets: section.layout.pages.length,
+  }));
+
+  const cover = describeCoverPage(
+    { ...document.cover, entries },
+    document.sections[0].layout.pages[0].paper,
+  );
+
+  return [cover, ...pages];
+}
+
+/**
  * El MVP solo imprime a tamaño real.
  *
  * Si algún día el layout declara otra escala, el renderer debe fallar en lugar
  * de ignorarla: imprimir al 100 % un documento que pedía otra escala produce
  * una piñata del tamaño equivocado. Ver docs/pdf.md §44 y §75.
  */
-function assertActualSize(layout: PrintLayout): void {
-  if (layout.scale !== PRINT_SCALE_ACTUAL_SIZE) {
+function assertActualSize(label: string, scale: number): void {
+  if (scale !== PRINT_SCALE_ACTUAL_SIZE) {
     throw new UnsupportedPdfFeatureError(
-      `The renderer only supports actual size printing, the layout declares a scale of ${layout.scale}.`,
+      `The renderer only supports actual size printing, section ${label} declares a scale of ${scale}.`,
     );
   }
 }
@@ -234,22 +262,22 @@ function pathInPoints(path: Polygon): [Points, Points][] {
  */
 function assertRenderedPageSizes(
   doc: jsPDF,
-  pages: readonly PrintPage[],
+  drawings: readonly PageDrawing[],
 ): void {
-  pages.forEach((page, index) => {
+  drawings.forEach((drawing, index) => {
     doc.setPage(index + 1);
 
     const width = doc.internal.pageSize.getWidth();
     const height = doc.internal.pageSize.getHeight();
-    const expectedWidth = millimetersToPoints(page.paper.width);
-    const expectedHeight = millimetersToPoints(page.paper.height);
+    const expectedWidth = millimetersToPoints(drawing.paper.width);
+    const expectedHeight = millimetersToPoints(drawing.paper.height);
 
     if (
       !pointsEqual(width, expectedWidth) ||
       !pointsEqual(height, expectedHeight)
     ) {
       throw new InvalidPdfGeometryError(
-        `Page ${page.id} measures ${width} × ${height} pt, expected ${expectedWidth} × ${expectedHeight} pt.`,
+        `Page ${drawing.label} measures ${width} × ${height} pt, expected ${expectedWidth} × ${expectedHeight} pt.`,
       );
     }
   });
