@@ -1888,3 +1888,37 @@ No sacrificar simplicidad por patrones.
 La regla principal es:
 
 > **Keep the domain pure, keep boundaries explicit, keep physical geometry accurate, and introduce complexity only when the product requires it.**
+
+---
+
+# 73. Ubicación de la capa de aplicación
+
+Los casos de uso viven en `src/application/`, fuera de `src/modules/`.
+
+```text
+app/                    Presentación
+src/
+├── application/        Casos de uso
+└── modules/            Dominio e infraestructura por módulo
+```
+
+§4 organiza el dominio por módulos y dice que la estructura debe crecer según
+la necesidad. Esta es esa necesidad: un caso de uso como `GenerateTemplate`
+coordina procesamiento de imagen, geometría y plantillas (§6), y no pertenece
+a ninguno de los tres.
+
+Meterlo dentro de uno le daría un dueño falso y obligaría a ese módulo a
+depender de los otros dos, invirtiendo la dirección de dependencias de §9.
+
+La regla que separa las dos carpetas:
+
+```text
+src/modules/      sabe una cosa a fondo
+src/application/  sabe en qué orden se usan las demás
+```
+
+Un caso de uso no contiene reglas físicas. Lo único que aporta es el contexto
+que ningún módulo puede tener solo. Por ejemplo, `generateTemplate` deriva la
+longitud de las piezas laterales del área imprimible del papel: la plantilla
+no conoce el formato de hoja y la impresión no conoce las piezas, pero quien
+los orquesta conoce los dos.

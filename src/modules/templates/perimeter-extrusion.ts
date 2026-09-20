@@ -62,6 +62,23 @@ export const DEFAULT_EXTRUSION_CONFIGURATION: ExtrusionConfiguration = {
   maxSideSegmentLength: 180,
 };
 
+/**
+ * Longitud de cuerpo que hace que una pieza lateral quepa en un ancho dado.
+ *
+ * La pieza impresa mide su cuerpo más la pestaña de unión, que sobresale por
+ * un extremo. Quien conoce el papel usa esto en lugar del valor por defecto,
+ * para que ninguna pieza se parta en dos hojas.
+ *
+ * La plantilla sigue sin conocer el formato de hoja: recibe una longitud, no
+ * un papel. Ver docs/template.md §114 y §118.
+ */
+export function sideSegmentLengthFor(
+  availableWidth: Millimeters,
+  tabWidth: Millimeters = DEFAULT_EXTRUSION_CONFIGURATION.tabWidth,
+): Millimeters {
+  return availableWidth - tabWidth;
+}
+
 export type ExtrusionInput = {
   readonly silhouette: Polygon;
   /**
