@@ -1058,7 +1058,10 @@ For every non-trivial feature:
 8. Add/update tests
 9. Update documentation if necessary
 10. Review architecture
+11. Commit the change
 ```
+
+The work is not finished until it is committed. See §54.
 
 ---
 
@@ -1376,3 +1379,69 @@ correct > fast
 The objective is not to generate code as quickly as possible.
 
 The objective is to build a system that remains understandable and reliable as Piñata Maker grows.
+
+---
+
+# 54. Version Control
+
+Every feature, fix, or documentation change ends in a commit.
+
+A change that only exists in the working tree has no history: nobody can tell
+what was done, when, or why, and it cannot be reverted independently.
+
+## One commit per unit of work
+
+Do not accumulate several features in a single commit.
+
+```text
+one feature      → one commit
+one fix          → one commit
+one refactor     → one commit
+```
+
+If a change touches two unrelated concerns, it is two commits.
+
+## What a commit must contain
+
+A commit should leave the repository in a working state:
+
+```text
+implementation
++
+tests
++
+documentation updated in the same commit
+```
+
+Do not commit documentation separately from the behaviour it describes when
+both changed for the same reason.
+
+## Commit messages
+
+Use a conventional prefix and describe **what changed**, not how.
+
+```text
+feat:     new capability
+fix:      corrected behaviour
+refactor: structure changed, behaviour unchanged
+docs:     documentation only
+chore:    tooling, dependencies, configuration
+test:     tests only
+```
+
+Reference the affected module when it clarifies the scope.
+
+```text
+feat(pdf-generation): render a PrintLayout as a printable document
+```
+
+The body should explain the decision when the change involved one.
+
+## Before committing
+
+```text
+pnpm test
+pnpm exec tsc --noEmit
+```
+
+Do not commit a red test suite.
