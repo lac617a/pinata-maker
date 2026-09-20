@@ -35,9 +35,9 @@ No hay todavía capa de aplicación, ni persistencia, ni interfaz.
 [ ] Proyecto, persistencia, autenticación, interfaz
 ```
 
-De punta a punta: una máscara elíptica de 600 × 800 px pedida a 800 × 1000 mm
-con 200 mm de profundidad produce 18 piezas —dos caras y dieciséis
-laterales—, 2,11 m² de papel y 48 hojas A4.
+De punta a punta, con un solo caso de uso: una máscara elíptica de 600 × 800
+px pedida a 800 × 1000 mm con 200 mm de profundidad produce 17 piezas, 2,10 m²
+de papel y un único PDF de 48 hojas A4 con su hoja de instrucciones.
 
 A partir de aquí la validación que importa es física: imprimir un molde
 conocido y medirlo con una regla real (`printing.md` §75).
@@ -45,7 +45,7 @@ conocido y medirlo con una regla real (`printing.md` §75).
 Verificación:
 
 ```bash
-pnpm test        # 221 tests
+pnpm test        # 240 tests
 pnpm exec tsc --noEmit
 ```
 
@@ -195,7 +195,25 @@ Invariantes cubiertas por tests:
 El modelo está en `template.md` §110-§122 y su montaje en `assembly.md`
 §99-§105.
 
-## 2.7 Prueba de la cadena completa
+## 2.7 `src/application/`
+
+Casos de uso. Coordinan módulos sin contener reglas físicas
+(`architecture.md` §6 y §73).
+
+| Archivo | Responsabilidad |
+| --- | --- |
+| `generate-template.ts` | Máscara alfa → plantilla, con avisos y coste en papel |
+| `generate-printable-document.ts` | Plantilla → un PDF con todas las piezas |
+
+Lo único que aportan es el contexto que ningún módulo tiene solo: con qué
+papel se imprime, y por tanto cuánto puede medir una pieza lateral. La
+plantilla no conoce el formato de hoja y la impresión no conoce las piezas.
+
+`generateTemplate` devuelve además avisos que el dominio ya calculaba y nadie
+leía: figuras descartadas, tamaño exacto imposible sin deformar, y detalle
+limitado por la resolución de la imagen.
+
+## 2.8 Prueba de la cadena completa
 
 `src/modules/pipeline.test.ts` recorre máscara → contorno → geometría →
 plantilla → reparto en páginas.
@@ -236,6 +254,9 @@ No volver a abrirlas sin un motivo nuevo.
 | `BACK` se declara reflejado aunque la silueta sea simétrica | Las caras se pegan mirándose: una se voltea |
 | La simplificación nunca baja de 1,5 px | Por debajo de un pixel no hay figura, hay rasterización |
 | La geometría de una pieza es una `TemplateGeometry` | Queda lista para imprimirse sin traducción intermedia |
+| Los casos de uso viven en `src/application/` | Coordinan varios módulos y no pertenecen a ninguno |
+| Toda la piñata en un solo PDF, con hoja de instrucciones | El usuario descarga un archivo, no uno por pieza |
+| La numeración de hoja es local a la pieza | Al montar se trabaja pieza a pieza, no por número global |
 
 Detalle que confunde al leer geometría de páginas: el recorte **une los
 fragmentos a través del punto de cierre** del polígono, así que el contorno de
@@ -246,9 +267,10 @@ Es correcto: el trazo es continuo.
 
 # 4. Lo que falta
 
-Orden recomendado. **Las fases A y C están terminadas, y la B lo está salvo
-la eliminación de fondo** (ver §2.3, §2.5 y §2.6); las letras se mantienen
-para no invalidar las referencias de este documento.
+Orden recomendado. **Las fases A y C están terminadas, la B lo está salvo la
+eliminación de fondo y la D a falta de lo que exige persistencia** (ver §2.3,
+§2.5, §2.6 y §2.7); las letras se mantienen para no invalidar las referencias
+de este documento.
 
 ## Fase B — Eliminación de fondo (lo único que queda)
 
@@ -282,11 +304,15 @@ Queda fuera, por decisión explícita:
 
 ## Fase D — Capa de aplicación
 
-`src/modules/*/application/` está vacío. Casos de uso que orquestan lo
-anterior, sin lógica de negocio propia (`architecture.md` §6):
+**Parcial.** Ver §2.7. `GenerateTemplate` y `GeneratePdf` están hechos: una
+máscara alfa produce un PDF completo sin pasar por ninguna capa más.
 
-`CreateProject`, `UploadImage`, `ProcessImage`, `GenerateTemplate`,
-`GeneratePdf`, `DownloadExport`.
+Falta lo que depende de persistencia y no puede construirse antes de la fase
+E: `CreateProject`, `UploadImage`, `DownloadExport`.
+
+`ProcessImage` depende además de la eliminación de fondo (fase B). Cuando
+exista, será un caso de uso delgado: el adaptador entrega una `AlphaMask` y
+`generateTemplate` sigue desde ahí sin cambios.
 
 ## Fase E — Infraestructura
 
@@ -356,7 +382,10 @@ posicionar.
    **Resuelta:** automáticas, con distribución derivada de la curvatura
    (`template.md` §116). Si luego se quieren editables, hay que guardarlas
    como datos y no como geometría ya fusionada.
-4. ¿La hoja de instrucciones es una página más del PDF o un documento aparte?
+4. ~~¿La hoja de instrucciones es una página más del PDF o un documento
+   aparte?~~ **Resuelta:** una página más, como ya indicaba PRD §19
+   (`pdf.md` §91). Separarla permitiría imprimir la plantilla sin haber leído
+   la advertencia de escala.
 5. ¿Cuál es el límite diario para el usuario anónimo y para el registrado?
    Depende del coste real de quitar el fondo, que todavía no se conoce
    (pregunta 2).
@@ -377,8 +406,7 @@ posicionar.
 * El pie de página del PDF puede caer sobre la plantilla en una hoja muy
   ocupada. Es un compromiso consciente: a diferencia de la regla de
   calibración, la etiqueta de la hoja no puede omitirse (`pdf.md` §87).
-* El PDF no incrusta la imagen de referencia ni incluye hoja de instrucciones
-  (`pdf.md` §88, PRD §19).
+* El PDF no incrusta la imagen de referencia (`pdf.md` §88, PRD §24).
 * Los huecos de la silueta se extraen pero no se convierten a milímetros. El
   modelo de extrusión no los cubre: un hueco es una pared interior y necesita
   su propia tira. Falla de forma explícita (`template.md` §121).
@@ -419,6 +447,6 @@ posicionar.
 | AC-10 | Marcas de alineación | **Hecho y probado** |
 | AC-11 | Referencia de calibración | **Hecho y probado** |
 | AC-12 | Generar PDF | **Hecho y probado** |
-| AC-13 | Descargar el PDF | Pendiente (E, F) |
+| AC-13 | Descargar el PDF | Documento listo; falta entregarlo (E, F) |
 | AC-14 | Reabrir el proyecto | Pendiente (E) |
 | AC-15 | Aislamiento entre usuarios | Pendiente (E) |

@@ -34,7 +34,7 @@ aquí.
 ## 2. Comandos
 
 ```bash
-pnpm test              # Vitest, 221 tests, entorno node
+pnpm test              # Vitest, 240 tests, entorno node
 ```
 
 ```bash
@@ -65,6 +65,7 @@ overrides de seguridad para `postcss` y `sharp`). No usar npm ni yarn.
 
 ```text
 app/                        Presentación (App Router). Permanece en la raíz.
+src/application/            Casos de uso. Coordinan módulos, sin reglas propias.
 src/modules/
 ├── geometry/               Vocabulario físico en mm. No depende de nada.
 ├── image-processing/       Imagen → máscara → contorno → mm.
@@ -84,6 +85,7 @@ Flujo del pipeline:
 ```text
 Imagen → máscara alfa → contorno px → geometría mm → piezas → PrintLayout → PDF
          (falta B)       image-processing            templates   printing   pdf-generation
+                         └────────── generateTemplate ─────────┘  └─ generatePrintableDocument ─┘
 ```
 
 `src/modules/pipeline.test.ts` recorre la cadena entera. Existe porque hay
@@ -138,8 +140,10 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
   produce la máscara alfa. Decisión abierta: ¿servicio externo o servidor
   propio? (`docs/roadmap.md` §5.2). No bloquea nada más: el contrato ya está
   abstraído y el resto del pipeline empieza en la máscara.
-* **Fases D y E** son lo siguiente: casos de uso y persistencia. Convierten
-  el núcleo en algo usable de punta a punta.
+* **Fase D parcial:** `generateTemplate` y `generatePrintableDocument` ya
+  cubren la cadena entera. Falta lo que depende de persistencia.
+* **Fase E es lo siguiente:** Supabase, repositorios y autorización. Sin ella
+  no hay proyectos, ni descarga, ni aislamiento entre usuarios.
 * **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,
   de pago) y la publicación con SEO y páginas legales. Los requisitos están en
   `docs/PRD.md` §38-§43, no en el roadmap: el roadmap solo registra cuándo se
