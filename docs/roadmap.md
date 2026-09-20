@@ -45,7 +45,7 @@ conocido y medirlo con una regla real (`printing.md` §75).
 Verificación:
 
 ```bash
-pnpm test        # 285 tests
+pnpm test        # 297 tests, más 7 de integración que necesitan cuenta
 pnpm exec tsc --noEmit
 ```
 
@@ -265,7 +265,29 @@ Invariantes cubiertas por tests:
 La autenticación usa `getUser` y no `getSession`: en el servidor, confiar en
 la cookie es confiar en el navegador (`architecture.md` §75).
 
-## 2.10 Prueba de la cadena completa
+## 2.10 `src/modules/accounts/`
+
+Registro, inicio y cierre de sesión, detrás del puerto `AuthGateway`.
+
+| Archivo | Responsabilidad |
+| --- | --- |
+| `credentials.ts` | Forma del correo y longitud de la contraseña |
+| `auth-gateway.ts` | Puerto |
+| `infrastructure/supabase-auth-gateway.ts` | Único archivo que conoce Supabase Auth |
+| `presentation/http/auth-endpoints.ts` | Las tres rutas, probadas con un servicio de mentira |
+
+Invariantes cubiertas por tests:
+
+* El registro responde lo mismo con una dirección nueva que con una ya
+  registrada: decirlo permitiría averiguar quién tiene cuenta.
+* El inicio de sesión falla igual con dirección desconocida que con
+  contraseña incorrecta.
+* `sign-in` no devuelve token: la sesión viaja en cookies.
+* Un rechazo es 401 y una avería del servicio es 503.
+
+Decisiones en `architecture.md` §76.
+
+## 2.11 Prueba de la cadena completa
 
 `src/modules/pipeline.test.ts` recorre máscara → contorno → geometría →
 plantilla → reparto en páginas.
@@ -316,6 +338,10 @@ No volver a abrirlas sin un motivo nuevo.
 | Las rutas de `app/` solo construyen el contexto | Lo que hace el trabajo debe poder probarse sin servidor |
 | Un proyecto ajeno responde 404, no 403 | Un 403 confirmaría que existe |
 | `getUser` y nunca `getSession` en servidor | La cookie la manda el cliente y puede estar manipulada |
+| Ninguna respuesta revela quién tiene cuenta | El registro y el login serían un buscador de usuarios |
+| `sign-in` no devuelve token | En el cuerpo acabaría en `localStorage` |
+| Contraseña de 8 caracteres mínimo | Más estricto que el mínimo de Supabase, a propósito |
+| Las credenciales de prueba viven en el entorno | Nunca en el código ni en el repositorio |
 
 Detalle que confunde al leer geometría de páginas: el recorte **une los
 fragmentos a través del punto de cierre** del polígono, así que el contorno de
@@ -378,10 +404,10 @@ exista, será un caso de uso delgado: el adaptador entrega una `AlphaMask` y
 **Parcial.** Ver §2.8. El proyecto del usuario está persistido, con su
 repositorio, su contrato y sus políticas RLS.
 
-**La migración está escrita pero no aplicada.** La clave anónima no puede
-ejecutar DDL, que es justo lo que se quiere: hay que aplicarla con
-`supabase db push` o desde el editor SQL, y comprobarla con
-`pnpm check:supabase`.
+La migración está **aplicada y verificada**: `pnpm check:supabase` confirma
+que la tabla existe y que un cliente sin sesión ni siquiera puede tocarla
+—responde `42501`, que es el `revoke` de la migración actuando antes incluso
+que RLS—.
 
 Falta:
 
@@ -390,8 +416,7 @@ Falta:
 * Assets, separando el original del procesado (`AGENTS.md` §19,
   `storage.md` §37-§49).
 * Exports y object storage.
-* Registro e inicio de sesión: la petición ya se autentica (§2.9), pero no
-  hay todavía pantalla ni flujo para conseguir una sesión.
+* Plantillas persistidas: hoy una plantilla se genera y se pierde.
 
 El repositorio de proyectos fija el patrón que los demás deben seguir.
 
