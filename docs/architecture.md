@@ -1922,3 +1922,76 @@ que ningún módulo puede tener solo. Por ejemplo, `generateTemplate` deriva la
 longitud de las piezas laterales del área imprimible del papel: la plantilla
 no conoce el formato de hoja y la impresión no conoce las piezas, pero quien
 los orquesta conoce los dos.
+
+---
+
+# 74. Presentación: rutas finas
+
+`app/` contiene rutas y nada más. La traducción entre HTTP y los casos de uso
+vive en `src/presentation/`.
+
+```text
+app/api/projects/route.ts          construye el contexto y delega
+src/presentation/http/             petición → caso de uso → respuesta
+src/presentation/next/             el único punto que conoce Next y Supabase
+```
+
+§24 pide que una ruta sea fina. La forma de conseguirlo no es escribir poco
+en el archivo de la ruta, sino que lo que hay dentro **se pueda probar**: los
+endpoints son funciones de `(Request, contexto)` a `Response`, y sus pruebas
+usan un repositorio en memoria, sin servidor, sin base de datos y sin Next.
+
+El archivo de la ruta solo monta el contexto de esa petición. Es el único
+sitio donde se juntan el framework, Supabase y el dominio.
+
+## Qué hace un endpoint
+
+```text
+1. ¿hay sesión?          si no, 401
+2. validar la entrada    que llegue un texto, no que sea un nombre válido
+3. llamar al caso de uso
+4. traducir el resultado o el fallo
+```
+
+Nada más. Las reglas del dominio no se repiten aquí.
+
+## Errores
+
+Un fallo conocido se traduce a un código estable y a un mensaje que explica
+qué pasó (`PRD.md` §23). Uno desconocido se registra y responde 500 sin
+detalle: su mensaje puede contener rutas, consultas o nombres internos.
+
+Un proyecto ajeno responde **404, no 403**. Un 403 confirmaría que existe.
+
+---
+
+# 75. Frontera de autenticación
+
+Quién es el usuario se resuelve en el borde de la petición y llega al resto
+del sistema como un identificador. Ni los casos de uso ni el dominio conocen
+Supabase Auth.
+
+```text
+cookies de la petición
+        ↓
+cliente de Supabase ligado a esa petición
+        ↓
+UserId | null
+        ↓
+contexto del endpoint
+```
+
+## `getUser`, nunca `getSession`
+
+La sesión viaja en una cookie que manda el cliente y podría estar manipulada.
+`getSession` la lee y se la cree; `getUser` la valida contra el servidor de
+autenticación.
+
+En el servidor, confiar en `getSession` es confiar en el navegador. Ver
+`AGENTS.md` §45.
+
+## Cada petición, su cliente
+
+El cliente de Supabase se construye por petición y no se comparte. Un cliente
+compartido entre peticiones arrastraría la sesión de un usuario a la
+siguiente.
