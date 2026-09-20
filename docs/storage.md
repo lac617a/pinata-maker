@@ -2250,3 +2250,141 @@ Editor
 ```
 
 Nunca invertir esas responsabilidades.
+
+---
+
+# 140. Implementación de referencia: proyectos
+
+Primera parte de la persistencia. Registra cómo se resolvió y qué queda
+(`AGENTS.md` §36).
+
+```text
+src/modules/projects/
+├── project.ts                        Entidad, estados y transiciones
+├── project-repository.ts             Interfaz
+├── in-memory-project-repository.ts   Implementación de referencia
+├── project-repository.contract.ts    Qué significa cumplir el contrato
+├── errors.ts
+└── infrastructure/
+    └── supabase-project-repository.ts   Único archivo que conoce la tabla
+
+src/infrastructure/supabase/
+├── environment.ts   Lectura y validación de la configuración
+└── client.ts        Cliente por petición
+
+supabase/migrations/
+└── 0001_projects.sql   Esquema y políticas RLS
+```
+
+---
+
+# 141. Estados del proyecto
+
+`PRD.md` §22 y este documento §14 proponían conjuntos distintos. Manda el PRD
+(`AGENTS.md` §6):
+
+```text
+DRAFT  PROCESSING  READY  ERROR
+```
+
+`ARCHIVED` no se implementa. El panel de proyectos ofrece eliminar, no
+archivar (`PRD.md` §21), y un estado que nada produce ni consume es una
+etiqueta, no una condición del dominio.
+
+Las transiciones son explícitas y las que no existen fallan. Volver a
+`PROCESSING` desde `READY` o desde `ERROR` es legítimo: el usuario cambia la
+imagen o las medidas, o reintenta lo que falló.
+
+---
+
+# 142. El aislamiento se aplica dos veces
+
+AC-15 —un usuario no accede a proyectos ajenos— está implementado en dos
+sitios a propósito:
+
+```text
+dominio          toda operación del repositorio recibe quién la pide
+base de datos    Row Level Security sobre auth.uid() = owner_id
+```
+
+No es redundancia inútil. La del dominio explica el porqué y se lee en el
+código; la de la base de datos no se puede olvidar desde una ruta nueva.
+
+La firma del repositorio refuerza la regla: no existe una operación que lea
+un proyecto sin decir quién lo lee. Una firma que lo permitiese sería una
+invitación a saltarse el filtro.
+
+## No existe y no es tuyo son la misma respuesta
+
+`findById` devuelve `null` tanto si el proyecto no existe como si es de otro,
+y la capa de aplicación lanza el mismo error en los dos casos.
+
+Distinguirlos permitiría a un atacante averiguar qué identificadores existen
+probando uno tras otro.
+
+---
+
+# 143. Contrato del repositorio
+
+`project-repository.contract.ts` define qué debe observarse después de cada
+operación, sin decir cómo se guarda. Se ejecuta contra cada implementación,
+de modo que «el repositorio funciona» significa lo mismo para la de memoria y
+para la de Supabase.
+
+La implementación en memoria no es una utilidad de tests genérica
+(`AGENTS.md` §29): permite probar los casos de uso sin base de datos, igual
+que el dominio se prueba sin navegador.
+
+---
+
+# 144. La clave anónima es pública a propósito
+
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` llega al navegador y eso no es una fuga.
+
+La clave anónima identifica al proyecto; no autoriza nada por sí sola. Quien
+decide qué ve cada usuario es RLS. Una clave de servicio sí sería un secreto,
+y por eso **no existe ninguna** en este proyecto: todo el acceso pasa por el
+token del usuario.
+
+La configuración se lee en un único sitio y se valida al leerla. Un error por
+configuración que falta nombra la variable, nunca su valor: un mensaje de
+error acaba en un log.
+
+---
+
+# 145. Aplicar la migración
+
+El esquema no se aplica desde la aplicación: la clave anónima no puede
+ejecutar DDL, que es justo lo que se quiere.
+
+```bash
+supabase db push
+```
+
+o pegar `supabase/migrations/0001_projects.sql` en el editor SQL del panel.
+
+Para comprobar que el entorno está listo:
+
+```bash
+pnpm check:supabase
+```
+
+Verifica que las variables están definidas, que el proyecto responde, que la
+tabla existe y que **RLS oculta los proyectos a un cliente anónimo**. No
+imprime ningún valor de configuración.
+
+---
+
+# 146. Lo que falta de la persistencia
+
+```text
+plantillas y sus versiones (§15-§22)
+assets: original y procesado por separado (§37-§49)
+exports (§50 en adelante)
+object storage
+autenticación: el flujo de Supabase Auth en la aplicación
+```
+
+El repositorio de proyectos fija el patrón que los demás deben seguir:
+interfaz en el dominio, contrato compartido, adaptador en `infrastructure/`,
+y el usuario en cada operación.
