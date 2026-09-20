@@ -2142,14 +2142,19 @@ exactamente la misma (§37, §40).
 
 # 104. Huecos
 
-`MaskOutline` devuelve los huecos que la máscara contiene, pero
-`convertContourToPhysicalGeometry` todavía solo convierte el contorno
-exterior.
+`MaskOutline` devuelve los huecos que la máscara contiene y
+`convertContourToPhysicalGeometry` los convierte a milímetros con la escala y
+el origen del contorno exterior, de modo que siguen perforándolo donde les
+corresponde.
 
-Es deliberado: quién decide cómo un hueco de la silueta se convierte en
-geometría de plantilla es la generación de plantillas, que aún no existe. Los
-huecos se extraen y no se tiran para no perder información que la máscara sí
-tiene.
+Quien los rechaza es la generación de plantillas: el modelo de extrusión
+perimetral no produce paredes interiores (`template.md` §121). Convertirlos
+igualmente hace que el rechazo llegue con geometría real en lugar de con un
+recuento, y deja la conversión lista para cuando el modelo los soporte.
+
+Un hueco que la simplificación deja sin superficie se cuenta en
+`holesBelowTolerance` en lugar de desaparecer: es más pequeño que lo que se
+puede recortar, pero el usuario lo dibujó (§24).
 
 ---
 

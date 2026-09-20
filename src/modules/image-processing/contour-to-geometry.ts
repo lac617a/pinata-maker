@@ -64,6 +64,13 @@ export const MINIMUM_PIXEL_TOLERANCE = 1.5;
 export type PhysicalContourInput = {
   /** Contorno tal como lo entrega la extracción, en pixels de la imagen. */
   readonly contour: readonly PixelPoint[];
+  /**
+   * Huecos de la figura, en los mismos pixels.
+   *
+   * Se convierten con la escala y el origen del contorno exterior, para que
+   * sigan perforándolo donde les corresponde.
+   */
+  readonly holes?: readonly (readonly PixelPoint[])[];
   /** Tamaño físico que el usuario quiere para la figura. */
   readonly targetDimensions: Dimensions;
   readonly simplificationTolerance?: Millimeters;
@@ -72,6 +79,16 @@ export type PhysicalContourInput = {
 export type PhysicalContour = {
   /** Contorno cerrado en milímetros, normalizado con su origen en (0,0). */
   readonly polygon: Polygon;
+  /** Huecos en milímetros, en el sistema de coordenadas del contorno. */
+  readonly holes: readonly Polygon[];
+  /**
+   * Huecos que la simplificación dejó sin superficie.
+   *
+   * Un hueco más pequeño que la tolerancia física no puede recortarse, pero
+   * desaparecer en silencio sería perder parte de la figura.
+   * Ver docs/image-processing.md §24.
+   */
+  readonly holesBelowTolerance: number;
   /** Tamaño físico real resultante, que puede ser menor que el solicitado. */
   readonly dimensions: Dimensions;
   readonly millimetersPerPixel: MillimetersPerPixel;
@@ -149,9 +166,33 @@ export function convertContourToPhysicalGeometry(
 
   const polygon = createPolygon(points, true);
 
+  const toPhysical = (point: PixelPoint): Point => ({
+    x: (point.x - bounds.minX) * millimetersPerPixel,
+    y: (point.y - bounds.minY) * millimetersPerPixel,
+  });
+
+  const holes: Polygon[] = [];
+  let holesBelowTolerance = 0;
+
+  for (const hole of input.holes ?? []) {
+    const simplifiedHole = simplifyPixelContour(
+      cleanPixelContour(hole),
+      pixelTolerance,
+    );
+
+    if (simplifiedHole.length < 3) {
+      holesBelowTolerance++;
+      continue;
+    }
+
+    holes.push(createPolygon(simplifiedHole.map(toPhysical), true));
+  }
+
   return {
     polygon,
     dimensions: boundingBoxDimensions(polygonBounds(polygon)),
+    holes,
+    holesBelowTolerance,
     millimetersPerPixel,
     appliedSimplificationTolerance: pixelTolerance * millimetersPerPixel,
     // Se evalúa sobre el contorno limpio, antes de simplificar, para que la
