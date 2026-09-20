@@ -28,12 +28,16 @@ No hay todavía capa de aplicación, ni persistencia, ni interfaz.
 
 ```text
 [✓] Máscara alfa → contorno en pixels → geometría en mm
+[✓] Silueta + profundidad → piezas con pliegues y pestañas
 [✓] Geometría en mm → reparto en páginas → PrintLayout
 [✓] PrintLayout → PDF
 [ ] Imagen real → máscara alfa (eliminación de fondo)
-[ ] Contorno → plantilla con pliegues, pestañas y profundidad
 [ ] Proyecto, persistencia, autenticación, interfaz
 ```
+
+De punta a punta: una máscara elíptica de 600 × 800 px pedida a 800 × 1000 mm
+con 200 mm de profundidad produce 18 piezas —dos caras y dieciséis
+laterales—, 2,11 m² de papel y 48 hojas A4.
 
 A partir de aquí la validación que importa es física: imprimir un molde
 conocido y medirlo con una regla real (`printing.md` §75).
@@ -41,7 +45,7 @@ conocido y medirlo con una regla real (`printing.md` §75).
 Verificación:
 
 ```bash
-pnpm test        # 182 tests
+pnpm test        # 221 tests
 pnpm exec tsc --noEmit
 ```
 
@@ -163,6 +167,43 @@ Invariantes cubiertas por tests:
 
 Las decisiones de implementación están documentadas en `pdf.md` §80-§88.
 
+## 2.6 `src/modules/templates/`
+
+Convierte una silueta y una profundidad en piezas recortables.
+
+| Archivo | Responsabilidad |
+| --- | --- |
+| `template.ts` | `Template`, `TemplatePiece` y el coste en papel |
+| `silhouette-profile.ts` | Recorrido del perímetro: arco, giro y curvatura |
+| `tabs.ts` | Reparto de pestañas derivado de la curvatura |
+| `perimeter-extrusion.ts` | La derivación: silueta + profundidad → piezas |
+| `assembly.ts` | Grafo de conexiones, pasos y validación del montaje |
+| `errors.ts` | Silueta no soportada, configuración y montaje inválidos |
+
+Invariantes cubiertas por tests:
+
+* Las piezas laterales cubren el perímetro completo, ni más ni menos.
+* La tira mide exactamente la profundidad pedida, más una pestaña por lado.
+* Una curva lisa no recibe dobleces transversales; una esquina sí.
+* Las pestañas de una curva cerrada son más cortas que las de un tramo recto.
+* Ninguna pestaña cruza una línea de doblez.
+* El anillo lateral se cierra y ninguna pieza queda fuera del grafo.
+* Todas las conexiones salen de la pieza que posee la pestaña.
+* El montaje termina en `CLOSE`, no en `ATTACH`.
+* Una silueta con huecos falla de forma explícita.
+
+El modelo está en `template.md` §110-§122 y su montaje en `assembly.md`
+§99-§105.
+
+## 2.7 Prueba de la cadena completa
+
+`src/modules/pipeline.test.ts` recorre máscara → contorno → geometría →
+plantilla → reparto en páginas.
+
+Existe porque hay errores que solo viven en la costura: cada módulo puede ser
+correcto por separado y la cadena estar mal. El caso que la motivó está en
+§6.
+
 ---
 
 # 3. Decisiones cerradas
@@ -193,6 +234,8 @@ No volver a abrirlas sin un motivo nuevo.
 | Todas las pestañas viven en la tira lateral | Recortar las caras es un corte continuo, sin entrantes |
 | Pestañas automáticas, más cortas en curvas cerradas | Una pestaña recta sobre una curva se despega |
 | `BACK` se declara reflejado aunque la silueta sea simétrica | Las caras se pegan mirándose: una se voltea |
+| La simplificación nunca baja de 1,5 px | Por debajo de un pixel no hay figura, hay rasterización |
+| La geometría de una pieza es una `TemplateGeometry` | Queda lista para imprimirse sin traducción intermedia |
 
 Detalle que confunde al leer geometría de páginas: el recorte **une los
 fragmentos a través del punto de cierre** del polígono, así que el contorno de
@@ -203,9 +246,9 @@ Es correcto: el trazo es continuo.
 
 # 4. Lo que falta
 
-Orden recomendado. **La fase A está terminada y la B lo está salvo la
-eliminación de fondo** (ver §2.3 y §2.5); las letras se mantienen para no
-invalidar las referencias de este documento.
+Orden recomendado. **Las fases A y C están terminadas, y la B lo está salvo
+la eliminación de fondo** (ver §2.3, §2.5 y §2.6); las letras se mantienen
+para no invalidar las referencias de este documento.
 
 ## Fase B — Eliminación de fondo (lo único que queda)
 
@@ -226,26 +269,16 @@ Documentación: `image-processing.md` §98-§106.
 
 ## Fase C — Generación de plantilla
 
-Hoy `TemplateGeometry` es un contenedor; nada la construye a partir de una
-silueta. Es lo que separa una silueta plana de una piñata, y bloquea AC-06.
+**Terminada.** Ver §2.6. El modelo de extrusión perimetral está implementado
+y probado, con su validación de ensamblaje.
 
-**El modelo ya está fijado**: extrusión perimetral, en `template.md`
-§110-§122, con su ensamblaje en `assembly.md` §99-§105. Ya no hay que decidir
-nada antes de implementar; hay que implementar lo escrito.
+Queda fuera, por decisión explícita:
 
-Resumen: `FRONT` es la silueta, `BACK` su reflejo declarado, y `SIDE` una tira
-de anchura igual a la profundidad y longitud igual al perímetro, repartida en
-piezas. Todas las pestañas viven en la tira.
-
-* `TemplatePiece` con rol, y `Template` como agregado (`template.md` §8, §16).
-* Derivación de las tres familias de pieza desde silueta y profundidad.
-* Dobleces transversales en los vértices que superan `foldAngleThreshold`.
-* Pestañas automáticas, más cortas cuanto más cerrada la curva
-  (`template.md` §116). El usuario no las coloca en el MVP.
-* Fallo explícito en siluetas con huecos (`template.md` §121).
-* Recuento de piezas y superficie antes de generar (`template.md` §120).
-* Validación de ensamblaje: anillo cerrado y grafo conexo (`assembly.md` §105).
-* Versionado e inmutabilidad de plantillas publicadas (`AGENTS.md` §17).
+* Siluetas con huecos, que necesitan una pared interior propia
+  (`template.md` §121).
+* Colocación manual de pestañas: en el MVP son automáticas.
+* Versionado e inmutabilidad de plantillas publicadas (`AGENTS.md` §17), que
+  no tiene sentido hasta que exista persistencia (fase E).
 
 ## Fase D — Capa de aplicación
 
@@ -348,7 +381,13 @@ posicionar.
   (`pdf.md` §88, PRD §19).
 * Los huecos de la silueta se extraen pero no se convierten a milímetros. El
   modelo de extrusión no los cubre: un hueco es una pared interior y necesita
-  su propia tira. Debe fallar de forma explícita (`template.md` §121).
+  su propia tira. Falla de forma explícita (`template.md` §121).
+* Cada pieza se imprime en su propio documento, así que dos piezas pequeñas
+  nunca comparten hoja. Agruparlas es un problema de empaquetado que todavía
+  no se ha abordado: hoy cuesta hojas, no corrección.
+* La plantilla completa de una figura de un metro supera las cuarenta hojas.
+  Es lo que cuesta físicamente, pero conviene avisar antes de generar
+  (`template.md` §120).
 * Los valores iniciales de los parámetros de derivación —anchura de pestaña,
   umbral de doblez, tolerancia de planitud— son un punto de partida razonado,
   no medido. Se ajustan cuando haya moldes impresos y montados
@@ -373,7 +412,7 @@ posicionar.
 | AC-03 | Visualizar la imagen cargada | Pendiente (F) |
 | AC-04 | Obtener una figura aislada | Parcial: falta la eliminación de fondo |
 | AC-05 | Configurar medidas y papel | Dominio listo; falta interfaz (F) |
-| AC-06 | Generar una plantilla | Parcial: falta la fase C |
+| AC-06 | Generar una plantilla | **Hecho y probado** |
 | AC-07 | Conservar las dimensiones físicas | **Hecho y probado** |
 | AC-08 | Dividir automáticamente en páginas | **Hecho y probado** |
 | AC-09 | Identificadores de página | **Hecho y probado** |

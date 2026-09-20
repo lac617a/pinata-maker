@@ -34,7 +34,7 @@ aquí.
 ## 2. Comandos
 
 ```bash
-pnpm test              # Vitest, 182 tests, entorno node
+pnpm test              # Vitest, 221 tests, entorno node
 ```
 
 ```bash
@@ -68,6 +68,7 @@ app/                        Presentación (App Router). Permanece en la raíz.
 src/modules/
 ├── geometry/               Vocabulario físico en mm. No depende de nada.
 ├── image-processing/       Imagen → máscara → contorno → mm.
+├── templates/              Silueta + profundidad → piezas recortables.
 ├── printing/               Papel, márgenes, tiling, PrintLayout.
 └── pdf-generation/         PrintLayout → PDF. Boundary de salida.
     └── infrastructure/     Único sitio que importa jspdf.
@@ -81,9 +82,12 @@ capas por adelantado.
 Flujo del pipeline:
 
 ```text
-Imagen → máscara alfa → contorno px → geometría mm → PrintLayout → PDF
-         (falta B)       image-processing              printing    pdf-generation
+Imagen → máscara alfa → contorno px → geometría mm → piezas → PrintLayout → PDF
+         (falta B)       image-processing            templates   printing   pdf-generation
 ```
+
+`src/modules/pipeline.test.ts` recorre la cadena entera. Existe porque hay
+errores que solo viven en la costura entre módulos correctos.
 
 ---
 
@@ -126,16 +130,16 @@ afectado cuando aclare el alcance — `feat(pdf-generation): ...`.
 Resumen; la versión autoritativa está en `docs/roadmap.md`.
 
 * **Hecho y probado:** validación de imagen, máscara alfa → contorno →
-  geometría en mm, reparto en páginas, marcas de alineación, calibración y
-  generación de PDF (AC-07 a AC-12). El bucle físico está cerrado: ya se puede
-  imprimir un molde y medirlo con una regla.
+  geometría en mm, derivación de piezas por extrusión perimetral, reparto en
+  páginas, marcas de alineación, calibración y generación de PDF (AC-06 a
+  AC-12). La cadena está cerrada: una máscara produce un juego de piezas
+  imprimibles a tamaño real.
 * **Lo único que falta de la Fase B:** el adaptador que quita el fondo y
   produce la máscara alfa. Decisión abierta: ¿servicio externo o servidor
   propio? (`docs/roadmap.md` §5.2). No bloquea nada más: el contrato ya está
   abstraído y el resto del pipeline empieza en la máscara.
-* **Fase C (plantilla) está bloqueada** por una decisión de diseño sin tomar:
-  cómo se derivan piezas, pliegues y pestañas desde silueta + profundidad. No
-  empezar a implementarla sin resolver `docs/roadmap.md` §5.
+* **Fases D y E** son lo siguiente: casos de uso y persistencia. Convierten
+  el núcleo en algo usable de punta a punta.
 * **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,
   de pago) y la publicación con SEO y páginas legales. Los requisitos están en
   `docs/PRD.md` §38-§43, no en el roadmap: el roadmap solo registra cuándo se
