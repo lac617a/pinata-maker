@@ -1213,6 +1213,23 @@ to the client.
 
 Authorization must be enforced server-side.
 
+## Secrets stay out of the transcript
+
+When inspecting `.env` or any credentials file, read the **variable names
+only**, never the values.
+
+```bash
+sed -n 's/^\([A-Za-z_][A-Za-z0-9_]*\)=.*/\1/p' .env   # yes
+cat .env                                              # no
+```
+
+Knowing which keys exist is enough to write the code that consumes them.
+A value that enters the conversation is a value that ends up in a log,
+a transcript or a summary.
+
+If a value has to be verified, have the user verify it, or write a check the
+user runs. Never print, copy or echo it.
+
 ---
 
 # 46. User Files
