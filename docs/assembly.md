@@ -1771,3 +1771,119 @@ PDF responde:
 La regla fundamental:
 
 > **Assembly defines how the pieces become a physical object. It does not define their geometry or how they are printed.**
+
+---
+
+# 99. Ensamblaje de una extrusión perimetral
+
+`template.md` §110-§122 fija cómo se derivan las piezas desde una silueta y
+una profundidad. Esta parte fija el grafo y los pasos que le corresponden.
+
+Nada de esto sustituye a las secciones anteriores: es el caso concreto que el
+MVP genera, expresado con el modelo que ya definen §9 a §33.
+
+---
+
+# 100. Grafo resultante
+
+Con `n` piezas laterales:
+
+```text
+        FRONT
+     ▲    ▲    ▲
+     │    │    │        TAB (pestaña del borde largo superior)
+   SIDE1─SIDE2─SIDE3 ── … ── SIDEn ─┐
+     │    │    │        TAB          │ TAB (cierra el anillo)
+     ▼    ▼    ▼                     │
+        BACK                         │
+          └──────────────────────────┘
+```
+
+Tres familias de conexión, todas de tipo `TAB`:
+
+```text
+SIDEi → FRONT      borde largo superior
+SIDEi → BACK       borde largo inferior
+SIDEi → SIDEi+1    extremo, y SIDEn → SIDE1 cierra el anillo
+```
+
+La pestaña pertenece siempre a la pieza lateral (§11 y `template.md` §115), de
+modo que la dirección de todas las conexiones sale de `SIDE`.
+
+El grafo es conexo (§23): cada pieza lateral toca las dos caras y sus dos
+vecinas, así que ninguna queda suelta.
+
+---
+
+# 101. Anillo cerrado
+
+Las piezas laterales forman un **anillo**, no una cadena: la última se une a la
+primera.
+
+Esto introduce un ciclo en el grafo de conexiones. Es un ciclo **físico y
+legítimo**, no el ciclo de dependencias que §22 y §83 prohíben: aquellos son
+pasos que se esperan mutuamente, este es una pieza que se muerde la cola
+porque la figura es cerrada.
+
+La validación debe distinguirlos. Un anillo lateral sin cerrar significa que
+falta una pieza o que el perímetro no se repartió entero.
+
+---
+
+# 102. Pasos del montaje
+
+```text
+1  IDENTIFY   reconocer FRONT, BACK y las piezas laterales por su etiqueta
+2  FOLD       plegar las pestañas de cada pieza lateral a 90°
+3  ATTACH     unir las piezas laterales entre sí hasta cerrar el anillo
+4  ATTACH     pegar el anillo a BACK
+5  ALIGN      comprobar que el anillo sigue el contorno de BACK
+6  ATTACH     pegar FRONT, dejando un tramo sin pegar
+7  CLOSE      rellenar la piñata y cerrar el tramo restante
+```
+
+---
+
+# 103. Por qué ese orden
+
+El anillo se monta **antes** de pegarlo a ninguna cara. Una tira suelta se
+manipula; una tira ya pegada a una cara, no.
+
+`BACK` va antes que `FRONT` porque la última cara en cerrarse es la que el
+usuario ve, y conviene que los desajustes acumulados queden en la cara
+trasera.
+
+El paso 6 deja un tramo sin pegar a propósito: una piñata que se cierra del
+todo no puede rellenarse. El tramo sin pegar es la boca, y el paso 7 la cierra
+una vez llena.
+
+Este es el motivo por el que existe la acción `CLOSE` (§33) como paso separado
+de `ATTACH`: no es pegar una pieza más, es terminar el objeto.
+
+---
+
+# 104. Alineación
+
+El paso 5 es una comprobación, no una unión.
+
+Si al recorrer el anillo sobre `BACK` sobra o falta tira, el molde se imprimió
+a una escala distinta de la real. La causa está casi siempre en el visor o en
+el driver de impresión, no en la plantilla (`printing.md` §74).
+
+Las instrucciones deben remitir a la regla de calibración de 100 mm antes de
+que el usuario empiece a pegar: descubrirlo con la mitad de la piñata montada
+no tiene arreglo.
+
+---
+
+# 105. Criterios de aceptación del montaje
+
+```text
+[ ] Cada pieza lateral está conectada a FRONT, a BACK y a sus dos vecinas.
+[ ] Las piezas laterales forman un anillo cerrado.
+[ ] Ninguna pieza queda fuera del grafo.
+[ ] Las conexiones salen siempre de la pieza que posee la pestaña.
+[ ] El ciclo del anillo no se confunde con un ciclo de dependencias.
+[ ] Los pasos terminan en CLOSE y no en ATTACH.
+[ ] Las instrucciones remiten a la calibración antes del primer pegado.
+```

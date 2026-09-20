@@ -189,6 +189,10 @@ No volver a abrirlas sin un motivo nuevo.
 | El contorno se traza por las aristas de la retícula | El trazo cae donde hay que cortar, no medio pixel adentro |
 | Dos figuras comparables fallan en vez de unirse | La plantilla debe corresponder a lo que el usuario subió |
 | Umbral alfa por defecto en 128 | Un pixel más opaco que transparente es figura |
+| Extrusión perimetral para derivar las piezas | Con 200 mm de profundidad, pestañas en la silueta exigirían 100 mm |
+| Todas las pestañas viven en la tira lateral | Recortar las caras es un corte continuo, sin entrantes |
+| Pestañas automáticas, más cortas en curvas cerradas | Una pestaña recta sobre una curva se despega |
+| `BACK` se declara reflejado aunque la silueta sea simétrica | Las caras se pegan mirándose: una se voltea |
 
 Detalle que confunde al leer geometría de páginas: el recorte **une los
 fragmentos a través del punto de cierre** del polígono, así que el contorno de
@@ -222,18 +226,25 @@ Documentación: `image-processing.md` §98-§106.
 
 ## Fase C — Generación de plantilla
 
-El hueco conceptual más grande. Hoy `TemplateGeometry` es un contenedor; nada
-la construye a partir de una silueta.
+Hoy `TemplateGeometry` es un contenedor; nada la construye a partir de una
+silueta. Es lo que separa una silueta plana de una piñata, y bloquea AC-06.
 
-**Antes de escribir código hay que resolver:** una silueta 2D más una
-profundidad no es una piñata. Hay que decidir cómo se derivan las piezas
-(frontal, trasera, laterales), dónde van los pliegues y cómo se generan las
-pestañas de pegado. Leer `template.md` y `assembly.md` completos y fijar el
-modelo antes de implementar.
+**El modelo ya está fijado**: extrusión perimetral, en `template.md`
+§110-§122, con su ensamblaje en `assembly.md` §99-§105. Ya no hay que decidir
+nada antes de implementar; hay que implementar lo escrito.
 
-* Piezas de la plantilla (PRD §13).
-* Líneas de doblado y pestañas (PRD §12, `architecture.md` §20, §21).
-* Validación de ensamblaje (`assembly.md`).
+Resumen: `FRONT` es la silueta, `BACK` su reflejo declarado, y `SIDE` una tira
+de anchura igual a la profundidad y longitud igual al perímetro, repartida en
+piezas. Todas las pestañas viven en la tira.
+
+* `TemplatePiece` con rol, y `Template` como agregado (`template.md` §8, §16).
+* Derivación de las tres familias de pieza desde silueta y profundidad.
+* Dobleces transversales en los vértices que superan `foldAngleThreshold`.
+* Pestañas automáticas, más cortas cuanto más cerrada la curva
+  (`template.md` §116). El usuario no las coloca en el MVP.
+* Fallo explícito en siluetas con huecos (`template.md` §121).
+* Recuento de piezas y superficie antes de generar (`template.md` §120).
+* Validación de ensamblaje: anillo cerrado y grafo conexo (`assembly.md` §105).
 * Versionado e inmutabilidad de plantillas publicadas (`AGENTS.md` §17).
 
 ## Fase D — Capa de aplicación
@@ -304,11 +315,14 @@ posicionar.
 
 # 5. Preguntas abiertas
 
-1. ¿Cómo se derivan las piezas y los pliegues desde silueta + profundidad?
-   Bloquea la fase C.
+1. ~~¿Cómo se derivan las piezas y los pliegues desde silueta + profundidad?~~
+   **Resuelta:** extrusión perimetral, `template.md` §110-§122.
 2. ¿La eliminación de fondo es un servicio externo o se hace en el servidor?
    Afecta a coste, latencia y modo de fallo.
-3. ¿Las pestañas se generan automáticamente o las coloca el usuario?
+3. ~~¿Las pestañas se generan automáticamente o las coloca el usuario?~~
+   **Resuelta:** automáticas, con distribución derivada de la curvatura
+   (`template.md` §116). Si luego se quieren editables, hay que guardarlas
+   como datos y no como geometría ya fusionada.
 4. ¿La hoja de instrucciones es una página más del PDF o un documento aparte?
 5. ¿Cuál es el límite diario para el usuario anónimo y para el registrado?
    Depende del coste real de quitar el fondo, que todavía no se conoce
@@ -332,9 +346,13 @@ posicionar.
   calibración, la etiqueta de la hoja no puede omitirse (`pdf.md` §87).
 * El PDF no incrusta la imagen de referencia ni incluye hoja de instrucciones
   (`pdf.md` §88, PRD §19).
-* Los huecos de la silueta se extraen pero no se convierten a milímetros:
-  decidir cómo un hueco se vuelve geometría de plantilla pertenece a la fase C
-  (`image-processing.md` §104).
+* Los huecos de la silueta se extraen pero no se convierten a milímetros. El
+  modelo de extrusión no los cubre: un hueco es una pared interior y necesita
+  su propia tira. Debe fallar de forma explícita (`template.md` §121).
+* Los valores iniciales de los parámetros de derivación —anchura de pestaña,
+  umbral de doblez, tolerancia de planitud— son un punto de partida razonado,
+  no medido. Se ajustan cuando haya moldes impresos y montados
+  (`template.md` §118).
 * La orientación EXIF no se normaliza. Una foto girada produciría un contorno
   girado (`image-processing.md` §9).
 * El umbral de figura ambigua (la mitad del área mayor) es provisional

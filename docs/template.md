@@ -2011,3 +2011,279 @@ Por eso el flujo correcto es:
 La responsabilidad de cada capa debe permanecer aislada.
 
 > **Geometry describes the shape. Template describes the construction. Printing describes the paper. PDF describes the output.**
+
+---
+
+# 110. Derivación desde la silueta
+
+Las secciones anteriores describen **qué es** una plantilla: piezas con rol,
+pestañas, líneas de corte y de doblez. No describen **cómo se obtienen** a
+partir de lo único que el usuario aporta:
+
+```text
+una silueta 2D
++
+una profundidad
+```
+
+Esta parte cierra ese hueco. Es la decisión que bloqueaba la construcción de
+plantillas, y se fija aquí antes de implementarla (`AGENTS.md` §35 y §36).
+
+---
+
+# 111. Extrusión perimetral
+
+El modelo es el prisma: la silueta se extruye a lo largo de la profundidad.
+
+```text
+        silueta                    pieza lateral
+   ╭───────────────╮        ┌──────────────────────────┐
+   │               │        │                          │  depth
+   │     FRONT     │        └──────────────────────────┘
+   │               │         longitud = perímetro
+   ╰───────────────╯
+```
+
+Tres tipos de pieza:
+
+```text
+FRONT   la silueta
+BACK    la silueta reflejada
+SIDE    una tira de anchura igual a la profundidad y longitud igual
+        al perímetro de la silueta, repartida en varias piezas
+```
+
+## Por qué este modelo y no otro
+
+La alternativa evidente —poner las pestañas en el borde de la propia silueta y
+que ellas formen el volumen— exige pestañas de longitud `depth / 2`. Con la
+profundidad de referencia del PRD (200 mm) serían pestañas de 100 mm: más
+grandes que muchas piezas y imposibles de doblar con limpieza.
+
+Ese modelo solo sirve para figuras muy planas. El de tira perimetral funciona
+con cualquier profundidad y es como se construye físicamente una piñata de
+cartón.
+
+---
+
+# 112. Front y Back
+
+```text
+FRONT.geometry = silueta
+BACK.geometry  = silueta reflejada sobre el eje vertical
+```
+
+El reflejo se declara **siempre**, aunque la silueta sea simétrica y las dos
+piezas coincidan punto por punto.
+
+El motivo no es geométrico sino de montaje: las dos caras se pegan mirándose,
+así que una de ellas se voltea. Declararlo evita que el usuario pegue dos
+piezas en la misma orientación y evita que una futura imagen de referencia
+impresa salga del revés.
+
+Ninguna de las dos piezas lleva pestañas: todas viven en la tira (§115).
+
+---
+
+# 113. La tira lateral
+
+La tira es un rectángulo:
+
+```text
+anchura  = depth
+longitud = perímetro de la silueta
+```
+
+El perímetro se mide sobre el contorno **ya simplificado**, que es el que se
+va a imprimir y recortar. Medirlo sobre el contorno crudo daría una tira más
+larga que la figura real.
+
+## Dobleces transversales
+
+Cada vértice de la silueta obliga a la tira a cambiar de dirección, así que le
+corresponde una línea de doblez transversal, situada a la distancia de arco de
+ese vértice.
+
+Generar una por vértice es inviable: el contorno simplificado de una elipse
+tiene más de mil. Solo reciben doblez los vértices cuyo **ángulo de giro
+supera `foldAngleThreshold`**. Por debajo de ese umbral el cartón curva solo,
+que es lo que hace de hecho.
+
+```text
+giro >= foldAngleThreshold   → línea de doblez transversal
+giro <  foldAngleThreshold   → la tira curva sin marca
+```
+
+---
+
+# 114. Reparto de la tira en piezas
+
+Una tira de varios metros no cabe en una hoja. Se parte en varias piezas
+`SIDE`, y el corte se decide así, por orden de preferencia:
+
+```text
+1. en una línea de doblez transversal
+2. en el punto más cercano que no supere maxSideSegmentLength
+```
+
+Cortar en un doblez es preferible porque ahí la tira ya iba a quebrarse: la
+unión no añade un pliegue nuevo.
+
+Las piezas conservan su orden y su posición de arco, de modo que el montaje
+sabe cuál sigue a cuál (`assembly.md` §99).
+
+`maxSideSegmentLength` es configuración, no una constante derivada del papel:
+la plantilla no debe conocer el formato de hoja (§6).
+
+---
+
+# 115. Dónde van las pestañas
+
+Todas las pestañas están en la tira:
+
+```text
+borde largo superior  → se pega a FRONT
+borde largo inferior  → se pega a BACK
+extremos de cada pieza → se pegan a la pieza SIDE contigua
+```
+
+`FRONT` y `BACK` quedan como siluetas limpias.
+
+Es una decisión deliberada: concentrar las pestañas en una sola pieza hace que
+recortar las dos caras —que son las piezas grandes y visibles— sea un corte
+continuo por la silueta, sin entrantes. Los errores de recorte se concentran
+donde no se ven.
+
+---
+
+# 116. Distribución de pestañas
+
+Las pestañas se reparten a lo largo de cada borde con `tabLength` y
+`tabSpacing`, pero la longitud no puede ser fija: una pestaña recta pegada
+sobre una curva cerrada se despega o arruga (§30).
+
+La regla es geométrica. Para un tramo de radio de curvatura `r`, una pestaña
+recta de longitud `L` se separa de la curva como máximo:
+
+```text
+sagita = L² / (8 · r)
+```
+
+Se exige que esa separación no supere `tabFlatnessTolerance`, de donde:
+
+```text
+L <= min(tabLength, sqrt(8 · r · tabFlatnessTolerance))
+```
+
+Es decir: **cuanto más cerrada la curva, más cortas y más juntas las
+pestañas**, y en los tramos rectos la longitud nominal. La distribución
+depende de la geometría y no de una cantidad fija (§28, §30).
+
+El radio de curvatura se estima sobre el contorno simplificado, con los
+vértices vecinos de cada punto.
+
+---
+
+# 117. Esquinas y tramos cortos
+
+En un vértice con doblez transversal (§113) la pestaña **no lo cruza**: se
+interrumpe antes y vuelve a empezar después. Una pestaña que cruza un doblez
+no puede plegarse en las dos direcciones a la vez (§29).
+
+Un tramo entre dos dobleces consecutivos más corto que `minimumTabSegment` no
+recibe pestaña propia (§32). Se registra como tramo sin pestaña en lugar de
+forzar una pestaña deformada.
+
+Si un tramo se queda sin pestaña, la validación de ensamblaje debe poder
+detectarlo: dos piezas que no comparten ninguna pestaña no están conectadas
+(`assembly.md` §23).
+
+---
+
+# 118. Parámetros de la derivación
+
+Todos en milímetros y todos configuración, no constantes repartidas por el
+código (§26, §31).
+
+| Parámetro | Qué controla | Valor inicial |
+| --- | --- | --- |
+| `depth` | Anchura de la tira | Lo pide el usuario (PRD §10) |
+| `tabWidth` | Cuánto monta la pestaña sobre la cara | 15 mm |
+| `tabLength` | Longitud nominal a lo largo del borde | 30 mm |
+| `tabSpacing` | Hueco entre pestañas consecutivas | 10 mm |
+| `tabFlatnessTolerance` | Separación admisible entre pestaña y curva | 1 mm |
+| `foldAngleThreshold` | Giro a partir del cual se marca un doblez | 20° |
+| `minimumTabSegment` | Tramo mínimo con pestaña propia | 20 mm |
+| `maxSideSegmentLength` | Longitud máxima de una pieza lateral | 250 mm |
+
+Los valores iniciales son un punto de partida razonable, no una decisión
+cerrada: se ajustarán cuando existan moldes impresos y montados.
+
+---
+
+# 119. Líneas resultantes
+
+La derivación produce, por pieza:
+
+```text
+FRONT   contorno de corte = silueta
+BACK    contorno de corte = silueta reflejada
+SIDE    contorno de corte = tira con el perfil de sus pestañas
+        dobleces longitudinales a tabWidth de cada borde largo
+        dobleces transversales en los vértices marcados
+```
+
+Los dobleces longitudinales son los que separan cada pestaña de la tira: es
+por ahí por donde se pliega 90° para pegarla a la cara.
+
+---
+
+# 120. Coste en papel
+
+La derivación debe poder informar del número de piezas y de su superficie
+**antes** de generar el documento.
+
+No es un detalle de interfaz. Para una silueta de 715 × 1000 mm y 200 mm de
+profundidad, el perímetro ronda los 2,7 m, así que la tira sola ocupa unas
+diez hojas A4 y la plantilla completa supera las cuarenta.
+
+Eso es lo que cuesta físicamente una piñata de un metro, no un defecto del
+modelo. Pero un usuario que descubre las cuarenta hojas después de esperar el
+procesado tiene una mala experiencia evitable (PRD §23).
+
+---
+
+# 121. Lo que este modelo no resuelve
+
+Debe fallar de forma explícita, no aproximar (§90):
+
+```text
+siluetas con huecos       un hueco es una pared interior y necesita su
+                          propia tira; fuera del alcance de esta versión
+apéndices muy estrechos   la tira no puede girar más cerrado de lo que
+                          el cartón admite
+contornos que se cruzan   no delimitan un volumen
+profundidad variable      el prisma tiene profundidad constante
+```
+
+El caso de los huecos conecta con `image-processing.md` §104: la extracción ya
+los detecta y los conserva, precisamente para que esta limitación sea
+detectable y no una pérdida silenciosa de información.
+
+---
+
+# 122. Criterios de aceptación de la derivación
+
+```text
+[ ] Una silueta y una profundidad producen FRONT, BACK y una o más SIDE.
+[ ] BACK es el reflejo declarado de FRONT.
+[ ] La longitud total de las piezas SIDE es igual al perímetro de la silueta.
+[ ] La anchura de la tira es exactamente la profundidad pedida.
+[ ] Cada pieza SIDE tiene pestañas en sus dos bordes largos.
+[ ] Ninguna pestaña cruza una línea de doblez transversal.
+[ ] En una curva cerrada las pestañas son más cortas que en un tramo recto.
+[ ] Un tramo más corto que minimumTabSegment no recibe pestaña.
+[ ] La misma silueta y la misma configuración producen la misma plantilla.
+[ ] Una silueta con huecos falla con un error explícito.
+[ ] La plantilla informa del número de piezas antes de generar el documento.
+```
