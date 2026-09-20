@@ -1995,3 +1995,59 @@ En el servidor, confiar en `getSession` es confiar en el navegador. Ver
 El cliente de Supabase se construye por petición y no se comparte. Un cliente
 compartido entre peticiones arrastraría la sesión de un usuario a la
 siguiente.
+
+---
+
+# 76. Registro e inicio de sesión
+
+El flujo vive detrás de un puerto, `AuthGateway`, igual que la persistencia.
+El dominio no conoce Supabase Auth: lo que necesita es que alguien convierta
+unas credenciales en un usuario y mantenga la sesión.
+
+```text
+POST /api/auth/sign-up    registra; responde «revisa tu correo»
+POST /api/auth/sign-in    abre sesión; no devuelve token
+POST /api/auth/sign-out   la cierra
+```
+
+## Ninguna respuesta dice quién tiene cuenta
+
+El registro responde **lo mismo** tanto si la dirección era nueva como si ya
+estaba registrada. Decir «ese correo ya existe» convierte el formulario en
+una forma de averiguar quién tiene cuenta en el sitio; quien ya la tuviera
+recibe un correo que se lo recuerda, que es donde esa información sí es
+privada.
+
+El inicio de sesión falla igual con una dirección desconocida que con una
+contraseña incorrecta, con el mismo código y el mismo mensaje.
+
+## La sesión no vuelve en el cuerpo
+
+`sign-in` responde 204. La sesión viaja en cookies que escribe el adaptador.
+Un token en el cuerpo acabaría guardado en `localStorage`, donde cualquier
+script de la página puede leerlo.
+
+## Rechazo y avería no son lo mismo
+
+Un rechazo del servicio de autenticación es un 401: el usuario se equivocó.
+Una avería del servicio es un 503: no es culpa suya y merece reintento.
+Confundirlos haría que una caída pareciera una contraseña mala.
+
+---
+
+# 77. Credenciales en las pruebas
+
+La prueba de integración del repositorio comprueba contra la base de datos
+real lo que ninguna prueba en memoria puede demostrar: que RLS impide guardar
+un proyecto a nombre de otro.
+
+Necesita una cuenta, y sus credenciales llegan **del entorno**, nunca del
+código:
+
+```text
+SUPABASE_TEST_EMAIL
+SUPABASE_TEST_PASSWORD
+```
+
+Sin ellas la suite se salta, de modo que `pnpm test` sigue funcionando en un
+equipo o en un CI que no las tenga. Ver `AGENTS.md` §45.

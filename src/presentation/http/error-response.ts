@@ -39,6 +39,20 @@ const KNOWN_ERRORS: Record<string, ErrorPresentation> = {
     status: 503,
     message: "No pudimos guardar los cambios. Inténtalo de nuevo.",
   },
+  INVALID_CREDENTIALS_FORMAT: {
+    status: 400,
+    message: "Revisa el correo y la contraseña.",
+  },
+  AUTHENTICATION_FAILED: {
+    status: 401,
+    // El mismo mensaje para una dirección desconocida y para una contraseña
+    // incorrecta: distinguirlos diría quién tiene cuenta.
+    message: "El correo o la contraseña no son correctos.",
+  },
+  AUTH_SERVICE_FAILED: {
+    status: 503,
+    message: "No pudimos verificar tu cuenta. Inténtalo de nuevo.",
+  },
   UNSUPPORTED_IMAGE_FORMAT: {
     status: 415,
     message: "Ese formato de imagen no está soportado. Usa PNG, JPEG o WEBP.",
