@@ -34,7 +34,7 @@ aquí.
 ## 2. Comandos
 
 ```bash
-pnpm test              # Vitest, 273 tests, entorno node
+pnpm test              # Vitest, 285 tests, entorno node
 ```
 
 ```bash
@@ -68,8 +68,11 @@ overrides de seguridad para `postcss` y `sharp`). No usar npm ni yarn.
 ## 3. Estructura real
 
 ```text
-app/                        Presentación (App Router). Permanece en la raíz.
+app/                        Rutas (App Router). Permanece en la raíz.
+app/api/projects/           API de proyectos. Solo montan el contexto y delegan.
 src/application/            Casos de uso. Coordinan módulos, sin reglas propias.
+src/presentation/http/      Petición → caso de uso → respuesta. Sin Next.
+src/presentation/next/      Único punto que junta Next, Supabase y el dominio.
 src/infrastructure/         Adaptadores compartidos (cliente de Supabase).
 supabase/migrations/        Esquema y políticas RLS. Se aplican a mano.
 src/modules/
@@ -151,9 +154,11 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
 * **Fase E parcial:** el proyecto del usuario está persistido con RLS. **La
   migración `supabase/migrations/0001_projects.sql` está escrita pero no
   aplicada**; compruébalo con `pnpm check:supabase`.
-* **Siguiente:** autenticación real (hoy el repositorio recibe un usuario
-  pero nada lo autentica), y después plantillas, assets y exports siguiendo
-  el patrón que fija el repositorio de proyectos.
+* **La API de proyectos existe y está autenticada.** Sin sesión responde 401;
+  un proyecto ajeno responde 404 y no 403.
+* **Siguiente:** el flujo de registro e inicio de sesión —la petición se
+  autentica, pero no hay forma de conseguir una sesión—, y después plantillas,
+  assets y exports siguiendo el patrón del repositorio de proyectos.
 * **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,
   de pago) y la publicación con SEO y páginas legales. Los requisitos están en
   `docs/PRD.md` §38-§43, no en el roadmap: el roadmap solo registra cuándo se

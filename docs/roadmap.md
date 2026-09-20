@@ -45,7 +45,7 @@ conocido y medirlo con una regla real (`printing.md` §75).
 Verificación:
 
 ```bash
-pnpm test        # 273 tests
+pnpm test        # 285 tests
 pnpm exec tsc --noEmit
 ```
 
@@ -238,7 +238,34 @@ El contrato del repositorio se ejecuta contra cada implementación, de modo que
 
 Decisiones documentadas en `storage.md` §140-§146.
 
-## 2.9 Prueba de la cadena completa
+## 2.9 `src/presentation/` y `app/api/`
+
+La API de proyectos, con autenticación real.
+
+| Archivo | Responsabilidad |
+| --- | --- |
+| `infrastructure/supabase/request-client.ts` | Cliente por petición y usuario autenticado |
+| `presentation/http/project-endpoints.ts` | Petición → caso de uso → respuesta |
+| `presentation/http/error-response.ts` | Fallo del dominio → código y mensaje |
+| `presentation/next/project-request-context.ts` | Único punto que junta Next, Supabase y el dominio |
+| `app/api/projects/` | Rutas: construyen el contexto y delegan |
+
+Los endpoints son funciones de `(Request, contexto)` a `Response` y se prueban
+con un repositorio en memoria, sin servidor ni base de datos. Esa es la forma
+de que una ruta sea fina de verdad (`architecture.md` §74).
+
+Invariantes cubiertas por tests:
+
+* Sin sesión, las cinco operaciones responden 401.
+* Un proyecto ajeno responde 404, no 403: un 403 confirmaría que existe.
+* Un proyecto inexistente y uno ajeno dan la misma respuesta.
+* El cuerpo no incluye `ownerId`.
+* Renombrar o eliminar algo ajeno no lo cambia.
+
+La autenticación usa `getUser` y no `getSession`: en el servidor, confiar en
+la cookie es confiar en el navegador (`architecture.md` §75).
+
+## 2.10 Prueba de la cadena completa
 
 `src/modules/pipeline.test.ts` recorre máscara → contorno → geometría →
 plantilla → reparto en páginas.
@@ -286,6 +313,9 @@ No volver a abrirlas sin un motivo nuevo.
 | Toda operación del repositorio recibe el usuario | El aislamiento no puede depender de acordarse de filtrar |
 | Un proyecto ajeno responde como inexistente | Distinguirlos revelaría qué identificadores existen |
 | No hay clave de servicio | Todo el acceso pasa por el token del usuario y RLS |
+| Las rutas de `app/` solo construyen el contexto | Lo que hace el trabajo debe poder probarse sin servidor |
+| Un proyecto ajeno responde 404, no 403 | Un 403 confirmaría que existe |
+| `getUser` y nunca `getSession` en servidor | La cookie la manda el cliente y puede estar manipulada |
 
 Detalle que confunde al leer geometría de páginas: el recorte **une los
 fragmentos a través del punto de cierre** del polígono, así que el contorno de
@@ -360,8 +390,8 @@ Falta:
 * Assets, separando el original del procesado (`AGENTS.md` §19,
   `storage.md` §37-§49).
 * Exports y object storage.
-* El flujo de Supabase Auth en la aplicación: hoy el repositorio recibe un
-  usuario, pero nada lo autentica todavía.
+* Registro e inicio de sesión: la petición ya se autentica (§2.9), pero no
+  hay todavía pantalla ni flujo para conseguir una sesión.
 
 El repositorio de proyectos fija el patrón que los demás deben seguir.
 
@@ -490,5 +520,5 @@ posicionar.
 | AC-11 | Referencia de calibración | **Hecho y probado** |
 | AC-12 | Generar PDF | **Hecho y probado** |
 | AC-13 | Descargar el PDF | Documento listo; falta entregarlo (E, F) |
-| AC-14 | Reabrir el proyecto | Pendiente (E) |
-| AC-15 | Aislamiento entre usuarios | Hecho para proyectos; falta autenticar |
+| AC-14 | Reabrir el proyecto | API lista; falta interfaz (F) |
+| AC-15 | Aislamiento entre usuarios | **Hecho y probado** para proyectos |
