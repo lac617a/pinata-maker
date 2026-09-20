@@ -76,6 +76,41 @@ export function cleanPixelContour(
   return cleaned;
 }
 
+/**
+ * Elimina los vértices que no cambian la forma del contorno.
+ *
+ * Un contorno recién extraído de una máscara avanza pixel a pixel, así que un
+ * lado recto de cien pixels llega con noventa y nueve vértices intermedios.
+ * Quitarlos no pierde nada: la figura es exactamente la misma y la
+ * simplificación posterior trabaja sobre muchos menos puntos.
+ *
+ * El recorrido es cíclico porque un contorno cerrado no tiene principio: el
+ * punto por el que empezó el trazado suele caer en mitad de un lado recto.
+ * Ver docs/image-processing.md §37 y §40.
+ */
+export function removeCollinearPixels(
+  points: readonly PixelPoint[],
+): PixelPoint[] {
+  if (points.length < MINIMUM_CONTOUR_POINTS) {
+    return [...points];
+  }
+
+  const kept = points.filter((current, index) => {
+    const previous = points[(index - 1 + points.length) % points.length];
+    const next = points[(index + 1) % points.length];
+
+    const cross =
+      (current.x - previous.x) * (next.y - current.y) -
+      (current.y - previous.y) * (next.x - current.x);
+
+    return cross !== 0;
+  });
+
+  // Una figura degenerada —todos sus puntos alineados— se devuelve intacta
+  // para que la rechace quien sepa por qué es inválida.
+  return kept.length >= MINIMUM_CONTOUR_POINTS ? kept : [...points];
+}
+
 export function pixelContourBounds(
   points: readonly PixelPoint[],
 ): PixelBounds {

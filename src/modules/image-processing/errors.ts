@@ -1,15 +1,81 @@
 /**
  * Errores del procesamiento de imagen.
  *
- * Un contorno inválido es un resultado clasificable del proceso, no un fallo
- * genérico: la UI necesita distinguirlo para explicarle al usuario que la
- * imagen no produjo una figura utilizable. Ver docs/image-processing.md §77.
+ * Cada uno describe un resultado clasificable del proceso, no un fallo
+ * genérico: la interfaz necesita distinguirlos para explicarle al usuario qué
+ * pasó con su imagen. Ver docs/image-processing.md §77 y docs/PRD.md §9.
  */
+
 export class InvalidContourError extends Error {
   readonly code = "INVALID_CONTOUR";
 
   constructor(message: string) {
     super(message);
     this.name = "InvalidContourError";
+  }
+}
+
+/** El archivo no es uno de los formatos que el sistema sabe leer. */
+export class UnsupportedImageFormatError extends Error {
+  readonly code = "UNSUPPORTED_IMAGE_FORMAT";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "UnsupportedImageFormatError";
+  }
+}
+
+/** El archivo pesa más de lo que el sistema acepta procesar. */
+export class ImageFileTooLargeError extends Error {
+  readonly code = "IMAGE_FILE_TOO_LARGE";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "ImageFileTooLargeError";
+  }
+}
+
+/**
+ * La imagen no tiene un tamaño utilizable.
+ *
+ * Cubre tanto la imagen demasiado pequeña para dar un contorno con detalle
+ * como la demasiado grande para procesarse sin agotar memoria.
+ */
+export class InvalidImageDimensionsError extends Error {
+  readonly code = "INVALID_IMAGE_DIMENSIONS";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidImageDimensionsError";
+  }
+}
+
+/**
+ * La máscara no contiene ninguna figura.
+ *
+ * Es el caso de la imagen completamente transparente y el de la segmentación
+ * que no encontró nada. Ver docs/PRD.md §9.
+ */
+export class EmptyMaskError extends Error {
+  readonly code = "EMPTY_MASK";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "EmptyMaskError";
+  }
+}
+
+/**
+ * La máscara no describe una sola figura de forma inequívoca.
+ *
+ * Unir regiones separadas en silencio produciría una plantilla que no
+ * corresponde a lo que el usuario subió. Ver docs/image-processing.md §27.
+ */
+export class AmbiguousSubjectError extends Error {
+  readonly code = "AMBIGUOUS_SUBJECT";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "AmbiguousSubjectError";
   }
 }

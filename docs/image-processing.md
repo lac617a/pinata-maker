@@ -2011,3 +2011,180 @@ La IA puede equivocarse.
 La geometría física no puede depender de una suposición silenciosa.
 
 > **AI assists. Deterministic geometry decides.**
+
+---
+
+# 98. Implementación de referencia
+
+Las secciones anteriores definen las reglas. Esta parte registra cómo se
+resolvió la mitad determinista del pipeline y qué sigue pendiente, para que
+las decisiones no queden implícitas en el código (`AGENTS.md` §36).
+
+```text
+src/modules/image-processing/
+├── image-validation.ts     Formato, extensión, peso y dimensiones
+├── mask.ts                 AlphaMask, BinaryMask, umbral
+├── mask-components.ts      Regiones conexas y elección de la figura
+├── contour-extraction.ts   Máscara → contorno de pixels
+├── pixel-contour.ts        Limpieza del contorno
+├── simplification.ts       Douglas-Peucker
+├── contour-to-geometry.ts  Único paso de pixels a milímetros
+└── errors.ts               Causas distinguibles de fallo
+```
+
+El pipeline implementado:
+
+```text
+ImageUpload → validateImageUpload
+ImageMetadata → validateImageMetadata
+        ↓
+   (eliminación de fondo: pendiente)
+        ↓
+AlphaMask → thresholdAlphaMask → BinaryMask
+        ↓
+labelForegroundComponents → selectMainSubject → isolateComponent
+        ↓
+traceMaskOutline → MaskOutline (contorno y huecos, en pixels)
+        ↓
+convertContourToPhysicalGeometry → geometría en mm
+```
+
+---
+
+# 99. Validación en dos pasos
+
+La validación está partida en dos funciones porque la información llega en
+dos momentos:
+
+```text
+validateImageUpload    antes de decodificar: formato, extensión, peso
+validateImageMetadata  después de decodificar: dimensiones
+```
+
+Separarlas evita gastar trabajo en decodificar un archivo que ya se sabe que
+no sirve, y deja claro qué comprobación puede hacerse en cliente y cuál
+necesita haber leído el archivo (§6).
+
+El MIME type y la extensión se comprueban juntos: el nombre lo elige el
+usuario y el tipo lo declara el cliente, así que ninguno de los dos merece
+confianza por separado (`AGENTS.md` §46).
+
+Los límites viven en `IMAGE_LIMITS`, en un único sitio (§7).
+
+---
+
+# 100. Umbral del canal alfa
+
+`thresholdAlphaMask` es el único punto donde se decide qué pixel pertenece a
+la figura. El valor por defecto es 128 —un pixel más opaco que transparente
+es figura— y es configurable (§32).
+
+Tratar como figura cualquier alfa distinto de cero haría que el antialiasing
+del borde agrandase la pieza aproximadamente un pixel por lado (§30, §31).
+
+Una máscara en la que ningún pixel alcanza el umbral produce `EmptyMaskError`,
+que es el caso «imagen completamente transparente» del PRD §9.
+
+---
+
+# 101. Elección de la figura principal
+
+La estrategia es explícita: la región conexa de mayor área (§26).
+
+Cuando existe otra región cuyo área supera la mitad de la mayor, el sistema
+lanza `AmbiguousSubjectError` en lugar de elegir. Unir dos figuras o quedarse
+con una al azar produciría una plantilla que no corresponde a lo que el
+usuario subió (§27).
+
+Las regiones pequeñas descartadas se devuelven en `MainSubject.discarded` en
+lugar de desaparecer, para que la interfaz pueda avisar.
+
+La proporción de 0,5 es una decisión provisional: el producto todavía no ha
+decidido si el usuario debe poder elegir la figura a mano.
+
+---
+
+# 102. Vecindad
+
+La figura usa vecindad de 8 y el trazado del contorno la respeta: dos pixels
+que solo se tocan por una esquina forman una sola pieza, porque el papel no se
+separa ahí.
+
+La alternativa —tratarlos como figuras distintas— produciría dos contornos que
+al recortarse dejarían una pieza partida por un punto que en la imagen estaba
+unido.
+
+---
+
+# 103. Trazado del contorno
+
+`traceMaskOutline` recorre las **aristas de la retícula** que separan figura de
+fondo y las encadena en trazos cerrados.
+
+No recorre los centros de los pixels: el trazo debe caer donde hay que cortar,
+en el borde exterior de la figura, y no medio pixel hacia dentro. Una máscara
+de 4 × 2 pixels que empieza en (1,1) produce un rectángulo de (1,1) a (5,3).
+
+El sentido del recorrido distingue el borde exterior de un hueco, porque las
+aristas se generan siempre con la figura del mismo lado. El área con signo del
+trazo da esa clasificación sin necesidad de comprobar contenciones.
+
+El resultado es exacto y todavía escalonado. Suavizarlo es tarea de la
+simplificación posterior (§41), que trabaja con una tolerancia derivada de
+milímetros y no de pixels (§44).
+
+Los vértices que no cambian la dirección del trazo se eliminan durante el
+recorrido y, cíclicamente, al cerrarlo: un lado recto de cien pixels son dos
+puntos y no ciento uno. La operación no pierde nada, porque la figura es
+exactamente la misma (§37, §40).
+
+---
+
+# 104. Huecos
+
+`MaskOutline` devuelve los huecos que la máscara contiene, pero
+`convertContourToPhysicalGeometry` todavía solo convierte el contorno
+exterior.
+
+Es deliberado: quién decide cómo un hueco de la silueta se convierte en
+geometría de plantilla es la generación de plantillas, que aún no existe. Los
+huecos se extraen y no se tiran para no perder información que la máscara sí
+tiene.
+
+---
+
+# 105. Coste medido
+
+Sobre una imagen de 2000 × 2500 px (5 megapixels) con una figura circular, en
+Node:
+
+```text
+umbral + regiones conexas   ~370 ms
+trazado del contorno        ~140 ms
+conversión a milímetros       ~6 ms
+```
+
+El contorno crudo sale con unos 4.200 puntos y la simplificación a 0,5 mm lo
+deja en unos 280.
+
+El coste crece con el número de pixels, así que el límite de `maxPixels`
+(§83, `IMAGE_LIMITS`) es también el techo del tiempo de proceso. No se ha
+optimizado nada: primero corrección, y optimizar cuando haya un cuello de
+botella medido (`AGENTS.md` §47).
+
+---
+
+# 106. Fuera del alcance todavía
+
+```text
+eliminación de fondo (decisión de producto pendiente)
+normalización de orientación EXIF (§9)
+preprocesado: resize, denoise, normalización de contraste (§10)
+conversión de huecos a geometría física (§104)
+selección manual de la figura por parte del usuario
+```
+
+La eliminación de fondo es un adaptador de infraestructura y su contrato ya
+está abstraído (§16, §19): produce una máscara alfa, que es exactamente donde
+empieza lo implementado aquí. Elegir servicio externo o implementación local
+no cambia nada de lo anterior.
