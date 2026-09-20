@@ -2188,3 +2188,54 @@ La eliminación de fondo es un adaptador de infraestructura y su contrato ya
 está abstraído (§16, §19): produce una máscara alfa, que es exactamente donde
 empieza lo implementado aquí. Elegir servicio externo o implementación local
 no cambia nada de lo anterior.
+
+---
+
+# 107. Límite de resolución de la simplificación
+
+La tolerancia de simplificación se expresa en milímetros y se convierte a
+pixels dividiéndola por `millimetersPerPixel` (§44). Esa conversión tiene un
+suelo: **la tolerancia efectiva nunca baja de 1,5 pixels**.
+
+## Por qué
+
+El contorno que produce la extracción recorre el borde de los pixels (§103),
+así que avanza a escalones de un pixel. Esos escalones son un efecto de
+rasterizar la figura, no detalle de la figura, y una tolerancia menor que el
+escalón no puede eliminarlos: Douglas-Peucker conserva todos los vértices
+porque ninguno se desvía lo suficiente.
+
+El resultado es un contorno que sigue siendo una escalera, con todos sus
+vértices girando 90°.
+
+## Qué costaba
+
+Medido sobre una elipse de 714,7 × 1000 mm a 1,43 mm por pixel, con perímetro
+real de 2712 mm:
+
+| Tolerancia pedida | Puntos | Perímetro | Error |
+| --- | --- | --- | --- |
+| 0,5 mm | 1364 | 3429 mm | +26,4 % |
+| 1,0 mm | 732 | 3102 mm | +14,4 % |
+| 1,5 mm | 133 | 2743 mm | +1,1 % |
+| 2,0 mm | 52 | 2712 mm | 0,0 % |
+
+El perímetro no es un dato cosmético: es la **longitud de la tira lateral** de
+la plantilla (`template.md` §113). Una tira un 26 % más larga que la figura no
+cierra.
+
+El error además no se ve en pantalla. La silueta parece correcta porque los
+escalones miden un pixel; lo que está mal es su longitud recorrida.
+
+## Qué significa el suelo
+
+Pedir más precisión de la que el original contiene no la produce. El suelo no
+pierde información: reconoce que por debajo de un pixel no hay figura, hay
+rasterización.
+
+Por eso la tolerancia pedida sigue mandando cuando la imagen sí puede
+resolverla —una figura pequeña con muchos pixels por milímetro— y solo se
+eleva cuando no.
+
+`PhysicalContour.appliedSimplificationTolerance` declara la que se usó de
+verdad, para que la diferencia no sea invisible (§93).

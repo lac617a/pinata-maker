@@ -131,6 +131,42 @@ describe("Contour to physical geometry", () => {
     ).toThrow(InvalidContourError);
   });
 
+  it("should not try to refine the contour below the resolution of the image", () => {
+    // Un borde diagonal recorrido pixel a pixel: cien escalones que la
+    // imagen no distingue de una recta.
+    const staircase: PixelPoint[] = [
+      { x: 0, y: 0 },
+      ...Array.from({ length: 100 }, (_, step) => [
+        { x: step, y: step },
+        { x: step + 1, y: step },
+      ]).flat(),
+      { x: 100, y: 100 },
+      { x: 0, y: 100 },
+    ];
+
+    const result = convertContourToPhysicalGeometry({
+      contour: staircase,
+      targetDimensions: createDimensions(1000, 1000),
+      simplificationTolerance: 0.5,
+    });
+
+    // A 10 mm por pixel, medio milímetro es la vigésima parte de un escalón:
+    // respetarlo dejaría el contorno hecho una escalera y el perímetro sería
+    // la mitad más largo que la figura.
+    expect(result.appliedSimplificationTolerance).toBeGreaterThan(0.5);
+    expect(result.polygon.points.length).toBeLessThan(10);
+  });
+
+  it("should respect a tolerance the image can resolve", () => {
+    const result = convertContourToPhysicalGeometry({
+      contour: figureInImage,
+      targetDimensions: createDimensions(800, 1000),
+      simplificationTolerance: 20,
+    });
+
+    expect(result.appliedSimplificationTolerance).toBe(20);
+  });
+
   it("should identify the processor version that produced the geometry", () => {
     const result = convertContourToPhysicalGeometry({
       contour: figureInImage,

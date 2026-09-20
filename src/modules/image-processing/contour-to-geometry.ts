@@ -38,6 +38,29 @@ export const CONTOUR_PROCESSOR_VERSION = "1.0";
  */
 export const DEFAULT_SIMPLIFICATION_TOLERANCE_MM: Millimeters = 0.5;
 
+/**
+ * Tolerancia mínima de simplificación, en pixels de la imagen.
+ *
+ * El contorno que entrega la extracción recorre el borde de los pixels, así
+ * que avanza a escalones de un pixel. Esos escalones son un efecto de
+ * rasterizar, no detalle de la figura, y una tolerancia menor que el escalón
+ * no puede eliminarlos: el contorno se queda hecho una escalera.
+ *
+ * Las consecuencias no son cosméticas. Medido sobre una elipse de
+ * 714,7 × 1000 mm a 1,43 mm por pixel:
+ *
+ * ```text
+ * tolerancia   puntos   perímetro   error
+ * 0,5 mm        1364      3429 mm   +26,4 %
+ * 1,0 mm         732      3102 mm   +14,4 %
+ * 2,0 mm          52      2712 mm     0,0 %
+ * ```
+ *
+ * Un perímetro un 26 % largo produce una tira lateral que no cierra la
+ * figura. Ver docs/image-processing.md §45 y docs/template.md §113.
+ */
+export const MINIMUM_PIXEL_TOLERANCE = 1.5;
+
 export type PhysicalContourInput = {
   /** Contorno tal como lo entrega la extracción, en pixels de la imagen. */
   readonly contour: readonly PixelPoint[];
@@ -52,6 +75,14 @@ export type PhysicalContour = {
   /** Tamaño físico real resultante, que puede ser menor que el solicitado. */
   readonly dimensions: Dimensions;
   readonly millimetersPerPixel: MillimetersPerPixel;
+  /**
+   * Tolerancia realmente aplicada.
+   *
+   * Puede ser mayor que la pedida cuando la imagen no tiene resolución para
+   * respetarla: no se puede exigir más precisión de la que el original
+   * contiene.
+   */
+  readonly appliedSimplificationTolerance: Millimeters;
   /**
    * Indica que alcanzar exactamente las dos dimensiones pedidas exigiría
    * deformar la figura. El dominio nunca deforma; informa.
@@ -92,10 +123,14 @@ export function convertContourToPhysicalGeometry(
     targetDimensions.height / sourceSize.height,
   );
 
-  const simplified = simplifyPixelContour(
-    cleaned,
+  // Pedir menos que el tamaño de un pixel no afina el contorno: deja la
+  // escalera de la rasterización intacta. Ver MINIMUM_PIXEL_TOLERANCE.
+  const pixelTolerance = Math.max(
     simplificationTolerance / millimetersPerPixel,
+    MINIMUM_PIXEL_TOLERANCE,
   );
+
+  const simplified = simplifyPixelContour(cleaned, pixelTolerance);
 
   if (simplified.length < 3) {
     throw new InvalidContourError(
@@ -118,6 +153,7 @@ export function convertContourToPhysicalGeometry(
     polygon,
     dimensions: boundingBoxDimensions(polygonBounds(polygon)),
     millimetersPerPixel,
+    appliedSimplificationTolerance: pixelTolerance * millimetersPerPixel,
     // Se evalúa sobre el contorno limpio, antes de simplificar, para que la
     // respuesta dependa de la figura y no de la tolerancia elegida.
     requiresDistortionForExactFit:
