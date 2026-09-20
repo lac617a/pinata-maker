@@ -34,11 +34,15 @@ aquí.
 ## 2. Comandos
 
 ```bash
-pnpm test              # Vitest, 240 tests, entorno node
+pnpm test              # Vitest, 273 tests, entorno node
 ```
 
 ```bash
 pnpm exec tsc --noEmit # Type check, sin emitir
+```
+
+```bash
+pnpm check:supabase    # Variables, conexión, tabla y RLS. No imprime valores.
 ```
 
 ```bash
@@ -66,9 +70,12 @@ overrides de seguridad para `postcss` y `sharp`). No usar npm ni yarn.
 ```text
 app/                        Presentación (App Router). Permanece en la raíz.
 src/application/            Casos de uso. Coordinan módulos, sin reglas propias.
+src/infrastructure/         Adaptadores compartidos (cliente de Supabase).
+supabase/migrations/        Esquema y políticas RLS. Se aplican a mano.
 src/modules/
 ├── geometry/               Vocabulario físico en mm. No depende de nada.
 ├── image-processing/       Imagen → máscara → contorno → mm.
+├── projects/               Proyecto del usuario, con su repositorio.
 ├── templates/              Silueta + profundidad → piezas recortables.
 ├── printing/               Papel, márgenes, tiling, PrintLayout.
 └── pdf-generation/         PrintLayout → PDF. Boundary de salida.
@@ -76,9 +83,8 @@ src/modules/
 docs/                       Fuente de verdad del comportamiento.
 ```
 
-`src/domain/` y `src/infrastructure/` existen vacíos y no se usan. La
-estructura crece según la necesidad (`docs/architecture.md` §4): no crear
-capas por adelantado.
+`src/domain/` existe vacío y no se usa. La estructura crece según la
+necesidad (`docs/architecture.md` §4 y §73): no crear capas por adelantado.
 
 Flujo del pipeline:
 
@@ -142,8 +148,12 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
   abstraído y el resto del pipeline empieza en la máscara.
 * **Fase D parcial:** `generateTemplate` y `generatePrintableDocument` ya
   cubren la cadena entera. Falta lo que depende de persistencia.
-* **Fase E es lo siguiente:** Supabase, repositorios y autorización. Sin ella
-  no hay proyectos, ni descarga, ni aislamiento entre usuarios.
+* **Fase E parcial:** el proyecto del usuario está persistido con RLS. **La
+  migración `supabase/migrations/0001_projects.sql` está escrita pero no
+  aplicada**; compruébalo con `pnpm check:supabase`.
+* **Siguiente:** autenticación real (hoy el repositorio recibe un usuario
+  pero nada lo autentica), y después plantillas, assets y exports siguiendo
+  el patrón que fija el repositorio de proyectos.
 * **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,
   de pago) y la publicación con SEO y páginas legales. Los requisitos están en
   `docs/PRD.md` §38-§43, no en el roadmap: el roadmap solo registra cuándo se

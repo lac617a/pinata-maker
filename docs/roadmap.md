@@ -45,7 +45,7 @@ conocido y medirlo con una regla real (`printing.md` §75).
 Verificación:
 
 ```bash
-pnpm test        # 240 tests
+pnpm test        # 273 tests
 pnpm exec tsc --noEmit
 ```
 
@@ -213,7 +213,32 @@ plantilla no conoce el formato de hoja y la impresión no conoce las piezas.
 leía: figuras descartadas, tamaño exacto imposible sin deformar, y detalle
 limitado por la resolución de la imagen.
 
-## 2.8 Prueba de la cadena completa
+## 2.8 `src/modules/projects/` y `src/infrastructure/supabase/`
+
+Primera parte de la persistencia: el proyecto del usuario.
+
+| Archivo | Responsabilidad |
+| --- | --- |
+| `projects/project.ts` | Entidad, estados de `PRD.md` §22 y transiciones válidas |
+| `projects/project-repository.ts` | Interfaz; toda operación recibe quién la pide |
+| `projects/in-memory-project-repository.ts` | Implementación de referencia |
+| `projects/project-repository.contract.ts` | Qué significa cumplir el contrato |
+| `projects/infrastructure/supabase-project-repository.ts` | Único archivo que conoce la tabla |
+| `infrastructure/supabase/environment.ts` | Lee y valida la configuración |
+| `infrastructure/supabase/client.ts` | Cliente por petición |
+| `supabase/migrations/0001_projects.sql` | Esquema y políticas RLS |
+
+El aislamiento entre usuarios (AC-15) se aplica **dos veces**: en el dominio,
+donde se lee el porqué, y en la base de datos con RLS, donde no se puede
+olvidar desde una ruta nueva. Un proyecto ajeno responde igual que uno
+inexistente, para no revelar qué identificadores existen.
+
+El contrato del repositorio se ejecuta contra cada implementación, de modo que
+«funciona» significa lo mismo para la de memoria y para la de Supabase.
+
+Decisiones documentadas en `storage.md` §140-§146.
+
+## 2.9 Prueba de la cadena completa
 
 `src/modules/pipeline.test.ts` recorre máscara → contorno → geometría →
 plantilla → reparto en páginas.
@@ -257,6 +282,10 @@ No volver a abrirlas sin un motivo nuevo.
 | Los casos de uso viven en `src/application/` | Coordinan varios módulos y no pertenecen a ninguno |
 | Toda la piñata en un solo PDF, con hoja de instrucciones | El usuario descarga un archivo, no uno por pieza |
 | La numeración de hoja es local a la pieza | Al montar se trabaja pieza a pieza, no por número global |
+| Estados `DRAFT`, `PROCESSING`, `READY`, `ERROR` | Los del PRD §22; `ARCHIVED` no lo pide nadie |
+| Toda operación del repositorio recibe el usuario | El aislamiento no puede depender de acordarse de filtrar |
+| Un proyecto ajeno responde como inexistente | Distinguirlos revelaría qué identificadores existen |
+| No hay clave de servicio | Todo el acceso pasa por el token del usuario y RLS |
 
 Detalle que confunde al leer geometría de páginas: el recorte **une los
 fragmentos a través del punto de cierre** del polígono, así que el contorno de
@@ -316,12 +345,25 @@ exista, será un caso de uso delgado: el adaptador entrega una `AlphaMask` y
 
 ## Fase E — Infraestructura
 
-* Supabase: autenticación, base de datos, object storage (`storage.md`,
-  `architecture.md` §34-§38).
-* Repositorios detrás de interfaces del dominio: proyectos, plantillas,
-  assets, exports.
-* Separación entre asset original y asset procesado (`AGENTS.md` §19).
-* Autorización en servidor: un usuario no accede a proyectos ajenos (AC-15).
+**Parcial.** Ver §2.8. El proyecto del usuario está persistido, con su
+repositorio, su contrato y sus políticas RLS.
+
+**La migración está escrita pero no aplicada.** La clave anónima no puede
+ejecutar DDL, que es justo lo que se quiere: hay que aplicarla con
+`supabase db push` o desde el editor SQL, y comprobarla con
+`pnpm check:supabase`.
+
+Falta:
+
+* Plantillas y sus versiones, con inmutabilidad (`storage.md` §15-§22,
+  `AGENTS.md` §17).
+* Assets, separando el original del procesado (`AGENTS.md` §19,
+  `storage.md` §37-§49).
+* Exports y object storage.
+* El flujo de Supabase Auth en la aplicación: hoy el repositorio recibe un
+  usuario, pero nada lo autentica todavía.
+
+El repositorio de proyectos fija el patrón que los demás deben seguir.
 
 ## Fase F — Presentación
 
@@ -435,7 +477,7 @@ posicionar.
 
 | AC | Criterio | Estado |
 | --- | --- | --- |
-| AC-01 | Crear un proyecto | Pendiente (D, E) |
+| AC-01 | Crear un proyecto | Dominio y persistencia listos; falta interfaz (F) |
 | AC-02 | Subir una imagen válida | Validación lista; falta interfaz (F) |
 | AC-03 | Visualizar la imagen cargada | Pendiente (F) |
 | AC-04 | Obtener una figura aislada | Parcial: falta la eliminación de fondo |
@@ -449,4 +491,4 @@ posicionar.
 | AC-12 | Generar PDF | **Hecho y probado** |
 | AC-13 | Descargar el PDF | Documento listo; falta entregarlo (E, F) |
 | AC-14 | Reabrir el proyecto | Pendiente (E) |
-| AC-15 | Aislamiento entre usuarios | Pendiente (E) |
+| AC-15 | Aislamiento entre usuarios | Hecho para proyectos; falta autenticar |
