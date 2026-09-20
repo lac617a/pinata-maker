@@ -12,6 +12,7 @@
     "check:supabase": "node --env-file=.env scripts/check-supabase.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
     "jspdf": "4.2.1",
     "lucide-react": "0.468.0",
