@@ -9,31 +9,39 @@ documentación del subsistema, en ese orden (`AGENTS.md` §6).
 
 Debe actualizarse al terminar cada fase.
 
+Cada feature termina en un commit: el historial es lo que explica qué se hizo
+y cuándo. La regla completa está en `AGENTS.md` §54.
+
 ---
 
 # 1. Estado actual
 
-El **dominio geométrico y de impresión está completo y probado**. Dada una
-`TemplateGeometry` en milímetros, el sistema ya produce un documento de
-impresión físicamente correcto, repartido en hojas, con marcas de alineación y
-regla de calibración.
+El **bucle físico está cerrado**. Dada una `TemplateGeometry` en milímetros,
+el sistema produce un PDF imprimible a tamaño real, repartido en hojas, con
+marcas de alineación, regla de calibración e identidad de página.
 
-No existe todavía nada fuera del dominio: ni capa de aplicación, ni
-persistencia, ni PDF, ni interfaz.
+Del lado de la imagen, todo lo determinista está hecho: validación del
+archivo, umbral del canal alfa, regiones conexas y trazado del contorno. Falta
+únicamente quitar el fondo, que es un adaptador de infraestructura.
+
+No hay todavía capa de aplicación, ni persistencia, ni interfaz.
 
 ```text
-[✓] Imagen → contorno en pixels → geometría en mm
+[✓] Máscara alfa → contorno en pixels → geometría en mm
 [✓] Geometría en mm → reparto en páginas → PrintLayout
-[ ] PrintLayout → PDF
-[ ] Imagen real → contorno en pixels
+[✓] PrintLayout → PDF
+[ ] Imagen real → máscara alfa (eliminación de fondo)
 [ ] Contorno → plantilla con pliegues, pestañas y profundidad
 [ ] Proyecto, persistencia, autenticación, interfaz
 ```
 
+A partir de aquí la validación que importa es física: imprimir un molde
+conocido y medirlo con una regla real (`printing.md` §75).
+
 Verificación:
 
 ```bash
-pnpm test        # 117 tests
+pnpm test        # 182 tests
 pnpm exec tsc --noEmit
 ```
 
@@ -72,10 +80,30 @@ Boundary donde los pixels se convierten en milímetros.
 
 | Archivo | Responsabilidad |
 | --- | --- |
+| `image-validation.ts` | Formato, extensión, peso y dimensiones; límites en un solo sitio |
+| `mask.ts` | `AlphaMask`, `BinaryMask` y umbral del canal alfa |
+| `mask-components.ts` | Regiones conexas y elección explícita de la figura principal |
+| `contour-extraction.ts` | Máscara → contorno de pixels, con sus huecos |
 | `pixel-contour.ts` | Tipos en espacio imagen, limpieza y validación del contorno |
 | `simplification.ts` | Douglas-Peucker iterativo, tolerancia derivada de mm |
 | `contour-to-geometry.ts` | Contorno en pixels → polígono en mm al tamaño pedido |
-| `errors.ts` | `InvalidContourError` |
+| `errors.ts` | Causas distinguibles: formato, tamaño, máscara vacía, figura ambigua |
+
+Invariantes cubiertas por tests:
+
+* El nombre del archivo y el tipo declarado deben coincidir.
+* El antialiasing del borde queda fuera de la figura: un pixel más
+  transparente que opaco es fondo.
+* Dos partes que se tocan por una esquina son una sola pieza, tanto al
+  agrupar regiones como al trazar el contorno.
+* El contorno sigue el borde exterior de los pixels, no sus centros.
+* Un hueco de la figura sale separado del contorno exterior.
+* Una imagen con dos figuras de tamaño comparable falla en lugar de unirlas o
+  elegir al azar.
+* Una imagen completamente transparente se reporta como tal.
+
+Las decisiones de implementación están documentadas en `image-processing.md`
+§98-§106.
 
 `convertContourToPhysicalGeometry` ya resuelve el escalado físico del PRD §11:
 recibe las dimensiones que pide el usuario, ajusta de forma proporcional
@@ -93,7 +121,7 @@ deformar la figura.
 | `page-geometry.ts` | Recorte a una hoja y paso a coordenadas locales |
 | `alignment.ts` | Marcas de alineación entre hojas adyacentes |
 | `calibration.ts` | Regla física de 100 mm en una esquina libre |
-| `print-layout.ts` | `createPrintLayout`: compone `PrintLayout` y `PrintPage` |
+| `print-layout.ts` | `createPrintLayout`: compone `PrintLayout` y `PrintPage`, incluido `printableOrigin` |
 | `errors.ts` | Errores de configuración de impresión |
 
 Invariantes cubiertas por tests:
@@ -106,6 +134,34 @@ Invariantes cubiertas por tests:
   hojas que comparten un borde.
 * La misma geometría con la misma configuración produce siempre el mismo
   documento.
+
+## 2.5 `src/modules/pdf-generation/`
+
+Boundary de salida. Convierte un `PrintLayout` ya calculado en un documento.
+
+| Archivo | Responsabilidad |
+| --- | --- |
+| `pdf-units.ts` | Única conversión mm → pt del sistema, sin redondeo |
+| `pdf-style.ts` | Grosores, patrón de los pliegues, tamaños de texto y fuente |
+| `page-drawing.ts` | `PrintPage` → plano de dibujo en mm sobre el papel |
+| `print-renderer.ts` | `PrintRenderer`, `PrintableDocument`, límites y nombre de archivo |
+| `infrastructure/jspdf-print-renderer.ts` | Único archivo que importa `jspdf` |
+| `errors.ts` | Errores del boundary, no del dominio |
+
+Invariantes cubiertas por tests:
+
+* Una pulgada son 72 puntos y la conversión no redondea.
+* El documento tiene exactamente las páginas del layout, en su mismo orden.
+* Cada hoja mide lo que declara el layout, en A4, A3, Letter y en las dos
+  orientaciones. El renderer lo verifica antes de entregar el documento.
+* La regla de calibración mide exactamente su longitud declarada.
+* Los pliegues salen con un trazo distinto del de los cortes.
+* El mismo layout produce el mismo documento, salvo el `/ID` que la librería
+  genera al azar.
+* Un layout que pida una escala distinta de la real falla con un error
+  explícito en lugar de imprimirse al 100 %.
+
+Las decisiones de implementación están documentadas en `pdf.md` §80-§88.
 
 ---
 
@@ -124,6 +180,15 @@ No volver a abrirlas sin un motivo nuevo.
 | Solo escala real (`PRINT_SCALE_ACTUAL_SIZE`) | MVP del PRD; el layout la declara en lugar de suponerla |
 | La calibración puede faltar en una hoja | Preferible a imprimir una regla encima del molde |
 | Las páginas vacías no se eliminan del reparto | Pueden contener material físico interior de la figura |
+| `jspdf` solo se importa en `pdf-generation/infrastructure/` | La librería debe poder sustituirse sin tocar el dominio |
+| Entre `PrintPage` y la librería hay un plano de dibujo en mm | Permite probar qué se dibuja sin generar un PDF |
+| `PrintPage` expone `printableOrigin` | Los márgenes asimétricos hacen ambiguo deducirlo del tamaño |
+| El documento es monocromo y usa Helvetica sin incrustar | Imprime igual en cualquier lector e impresora |
+| La advertencia de escala se imprime en cada hoja | El documento no controla el visor ni el driver |
+| Vecindad de 8 para la figura | El papel no se separa por una esquina |
+| El contorno se traza por las aristas de la retícula | El trazo cae donde hay que cortar, no medio pixel adentro |
+| Dos figuras comparables fallan en vez de unirse | La plantilla debe corresponder a lo que el usuario subió |
+| Umbral alfa por defecto en 128 | Un pixel más opaco que transparente es figura |
 
 Detalle que confunde al leer geometría de páginas: el recorte **une los
 fragmentos a través del punto de cierre** del polígono, así que el contorno de
@@ -134,44 +199,26 @@ Es correcto: el trazo es continuo.
 
 # 4. Lo que falta
 
-Orden recomendado. Las fases A y B son independientes entre sí; C depende de
-una decisión de diseño todavía sin tomar.
+Orden recomendado. **La fase A está terminada y la B lo está salvo la
+eliminación de fondo** (ver §2.3 y §2.5); las letras se mantienen para no
+invalidar las referencias de este documento.
 
-## Fase A — Renderer de PDF
+## Fase B — Eliminación de fondo (lo único que queda)
 
-**Por qué primero:** cierra el bucle físico. En cuanto exista, se puede
-imprimir un molde conocido de 800 × 1000 mm y comprobarlo con una regla real,
-que es la única validación que de verdad importa (`printing.md` §75). Todo lo
-construido hasta ahora queda verificado de golpe.
+La parte determinista está hecha: validación, umbral, regiones conexas y
+trazado del contorno. Queda el adaptador que produce la máscara alfa a partir
+de la imagen del usuario.
 
-* Abstracción `PrintRenderer` en el dominio/aplicación; `jspdf` solo detrás de
-  ella (`printing.md` §66, §67; `architecture.md` §29).
-* Adaptador que traduce `PrintPage` a puntos PDF (1 pt = 1/72 in), sin pasar
-  por pixels ni CSS.
-* Dibujar: contornos, líneas de corte, líneas de doblado (trazo distinto),
-  marcas de alineación con su etiqueta, regla de calibración, y pie con
-  `id` y `pageNumber / totalPages`.
-* Metadatos del documento y advertencia de "imprimir al 100 %, sin ajustar a
-  página" (`printing.md` §71, §72).
-* Tests: dimensiones de página en pt, correspondencia mm → pt, reproducibilidad.
+* Decidir servicio externo o implementación local (§5.2). Es un adaptador de
+  infraestructura, no dominio, y su contrato ya está abstraído
+  (`image-processing.md` §16 y §19).
+* Casos de error del PRD §9 que dependen de él: sin figura detectable y
+  servicio caído. Los demás —imagen transparente, figura ambigua, imagen
+  inválida— ya están cubiertos.
+* Normalización de orientación EXIF antes de segmentar
+  (`image-processing.md` §9).
 
-Documentación: `pdf.md`, `printing.md` §66-§74.
-
-## Fase B — Extracción de contorno desde la imagen
-
-Hoy el pipeline empieza cuando ya existe un contorno en pixels. Falta llegar
-hasta ahí.
-
-* Validación de la imagen subida: MIME, extensión, tamaño, dimensiones
-  mínimas y máximas, en cliente **y** servidor (PRD §8, `AGENTS.md` §46).
-* Eliminación de fondo → máscara alfa. Decidir servicio o implementación
-  local; es un adaptador de infraestructura, no dominio.
-* Máscara alfa → contorno de pixels (trazado de bordes tipo marching squares).
-  Esta parte sí es determinista y va en `image-processing/`.
-* Casos de error del PRD §9: sin figura detectable, imagen transparente,
-  figura demasiado compleja, servicio caído.
-
-Documentación: `image-processing.md`.
+Documentación: `image-processing.md` §98-§106.
 
 ## Fase C — Generación de plantilla
 
@@ -218,6 +265,41 @@ anterior, sin lógica de negocio propia (`architecture.md` §6):
 * Panel de proyectos, estados y manejo de errores (PRD §21, §22, §23).
 * Hoja de instrucciones del documento (PRD §19).
 
+## Fase G — Acceso, límites y monetización
+
+Requisitos en `PRD.md` §38 y §39. Criterios AC-16 a AC-18 y AC-21.
+
+El producto se usa **sin cuenta**, con un límite diario; la cuenta sirve para
+guardar proyectos y acceder a más herramientas; el nivel de pago quita la
+publicidad y añade herramientas profesionales.
+
+* Uso anónimo de punta a punta: subir, configurar y descargar sin registro.
+* Contador de uso diario **en servidor**, por nivel de acceso. Nunca en
+  cliente: un contador en el navegador no es un límite.
+* Estado de «límite alcanzado» como estado previsto de la interfaz, con el
+  registro como salida, y avisado antes de que el usuario haga el trabajo.
+* Nivel de acceso en el modelo de usuario, aunque el cobro llegue después.
+
+**El sistema de pagos sigue fuera del MVP** (`PRD.md` §27). Lo que entra ahora
+es que el modelo no impida añadirlo.
+
+## Fase H — Publicación: SEO y páginas legales
+
+Requisitos en `PRD.md` §40, §41 y §42. Criterios AC-19, AC-20, AC-22 y AC-23.
+
+Condiciona poder publicar con Google AdSense, no la utilidad de la
+herramienta. Por eso va al final: sin molde correcto no hay nada que
+posicionar.
+
+* Las cuatro páginas legales, enlazadas desde el pie: privacidad, términos,
+  cookies y aviso legal. Sin ellas AdSense no aprueba la cuenta.
+* Consentimiento de cookies con rechazo efectivo de la publicidad
+  personalizada.
+* Contenido público indexable con valor real, servido desde el servidor.
+* Metadatos por página, `sitemap.xml` y `robots.txt` generados.
+* Panel de proyectos y URLs de trabajo fuera del índice.
+* Integración de AdSense, nunca dentro del PDF.
+
 ---
 
 # 5. Preguntas abiertas
@@ -228,6 +310,13 @@ anterior, sin lógica de negocio propia (`architecture.md` §6):
    Afecta a coste, latencia y modo de fallo.
 3. ¿Las pestañas se generan automáticamente o las coloca el usuario?
 4. ¿La hoja de instrucciones es una página más del PDF o un documento aparte?
+5. ¿Cuál es el límite diario para el usuario anónimo y para el registrado?
+   Depende del coste real de quitar el fondo, que todavía no se conoce
+   (pregunta 2).
+6. ¿Cómo se identifica al usuario anónimo para contarle el uso? Cualquier
+   método es evadible; hay que decidir cuánto esfuerzo merece.
+7. ¿Qué herramientas justifican registrarse y cuáles el nivel de pago? Sin una
+   respuesta, el registro no ofrece nada a cambio.
 
 ---
 
@@ -236,7 +325,21 @@ anterior, sin lógica de negocio propia (`architecture.md` §6):
 * `pnpm lint` no está configurado: lanza el asistente interactivo de Next y
   falla. Hay que migrar a la CLI de ESLint.
 * `CUSTOM_SCALE` no está implementado. Requiere escalar la geometría antes del
-  reparto en páginas (`printing.md` §17, §19).
+  reparto en páginas (`printing.md` §17, §19). El renderer de PDF ya rechaza
+  con un error explícito cualquier escala distinta de la real.
+* El pie de página del PDF puede caer sobre la plantilla en una hoja muy
+  ocupada. Es un compromiso consciente: a diferencia de la regla de
+  calibración, la etiqueta de la hoja no puede omitirse (`pdf.md` §87).
+* El PDF no incrusta la imagen de referencia ni incluye hoja de instrucciones
+  (`pdf.md` §88, PRD §19).
+* Los huecos de la silueta se extraen pero no se convierten a milímetros:
+  decidir cómo un hueco se vuelve geometría de plantilla pertenece a la fase C
+  (`image-processing.md` §104).
+* La orientación EXIF no se normaliza. Una foto girada produciría un contorno
+  girado (`image-processing.md` §9).
+* El umbral de figura ambigua (la mitad del área mayor) es provisional
+  mientras el producto no decida si el usuario puede elegir la figura a mano
+  (`image-processing.md` §101).
 * El reparto en páginas no descarta hojas sin geometría. Optimizar el uso de
   papel es una decisión pendiente, no un olvido.
 * Los márgenes de hardware de la impresora no se modelan (`printing.md` §12).
@@ -248,9 +351,9 @@ anterior, sin lógica de negocio propia (`architecture.md` §6):
 | AC | Criterio | Estado |
 | --- | --- | --- |
 | AC-01 | Crear un proyecto | Pendiente (D, E) |
-| AC-02 | Subir una imagen válida | Pendiente (B, F) |
+| AC-02 | Subir una imagen válida | Validación lista; falta interfaz (F) |
 | AC-03 | Visualizar la imagen cargada | Pendiente (F) |
-| AC-04 | Obtener una figura aislada | Pendiente (B) |
+| AC-04 | Obtener una figura aislada | Parcial: falta la eliminación de fondo |
 | AC-05 | Configurar medidas y papel | Dominio listo; falta interfaz (F) |
 | AC-06 | Generar una plantilla | Parcial: falta la fase C |
 | AC-07 | Conservar las dimensiones físicas | **Hecho y probado** |
@@ -258,7 +361,7 @@ anterior, sin lógica de negocio propia (`architecture.md` §6):
 | AC-09 | Identificadores de página | **Hecho y probado** |
 | AC-10 | Marcas de alineación | **Hecho y probado** |
 | AC-11 | Referencia de calibración | **Hecho y probado** |
-| AC-12 | Generar PDF | Pendiente (A) |
+| AC-12 | Generar PDF | **Hecho y probado** |
 | AC-13 | Descargar el PDF | Pendiente (E, F) |
 | AC-14 | Reabrir el proyecto | Pendiente (E) |
 | AC-15 | Aislamiento entre usuarios | Pendiente (E) |
