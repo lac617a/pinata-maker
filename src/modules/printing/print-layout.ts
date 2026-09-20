@@ -3,6 +3,7 @@ import {
   type BoundingBox,
 } from "../geometry/bounding-box";
 import type { Dimensions } from "../geometry/dimensions";
+import { createPoint, type Point } from "../geometry/point";
 import type { Scale } from "../geometry/scale";
 import {
   templateGeometryBounds,
@@ -81,6 +82,16 @@ export type PrintPage = {
   readonly column: number;
   readonly paper: PaperSize;
   readonly printableArea: Dimensions;
+  /**
+   * Esquina superior izquierda del área imprimible sobre la hoja.
+   *
+   * La geometría de la página está en coordenadas locales al área imprimible,
+   * cuyo origen no es el del papel: entre ambos están los márgenes. El
+   * renderer necesita este desplazamiento explícito, porque deducirlo de la
+   * diferencia de tamaños sería ambiguo con márgenes asimétricos.
+   * Ver docs/printing.md §65.
+   */
+  readonly printableOrigin: Point;
   /** Región de la plantilla que cubre esta hoja, en coordenadas globales. */
   readonly globalBounds: BoundingBox;
   readonly geometry: TemplatePageGeometry;
@@ -127,6 +138,11 @@ export function createPrintLayout(
 
   const totalPages = grid.pages.length;
 
+  const printableOrigin = createPoint(
+    configuration.paper.margins.left,
+    configuration.paper.margins.top,
+  );
+
   const pages = grid.pages.map((region): PrintPage => {
     const pageGeometry = clipGeometryToPage(geometry, region);
 
@@ -138,6 +154,7 @@ export function createPrintLayout(
       column: region.column,
       paper,
       printableArea: grid.printableArea,
+      printableOrigin,
       globalBounds: region.globalBounds,
       geometry: pageGeometry,
       alignmentMarks: generateAlignmentMarks({

@@ -1544,3 +1544,148 @@ Cada capa tiene una responsabilidad.
 La regla fundamental:
 
 > **The PDF represents the layout. It never defines the layout.**
+
+---
+
+# 80. Implementación de referencia
+
+Las secciones anteriores definen las reglas. Esta parte registra cómo se
+resolvieron en la fase A y por qué, para que las decisiones no queden
+implícitas en el código (`AGENTS.md` §36).
+
+```text
+src/modules/pdf-generation/
+├── errors.ts            Errores del boundary de salida
+├── pdf-units.ts         mm → pt, única conversión del sistema
+├── pdf-style.ts         Grosores, discontinuos, tamaños de texto y fuente
+├── page-drawing.ts      PrintPage → plano de dibujo en mm
+├── print-renderer.ts    PrintRenderer, PrintableDocument, límites
+└── infrastructure/
+    └── jspdf-print-renderer.ts   Único archivo que importa jspdf
+```
+
+---
+
+# 81. Ubicación del renderer
+
+`jspdf` se importa exclusivamente en `infrastructure/`. El resto del módulo no
+conoce la librería y podría alimentar otro adaptador —SVG para previsualizar,
+otra librería de PDF— sin cambiar nada (`printing.md` §67, §68).
+
+La separación es visible en el árbol de directorios en lugar de depender de
+una convención de nombres, por la misma razón por la que `app/` vive en la
+raíz (`architecture.md` §4).
+
+---
+
+# 82. Origen del área imprimible
+
+La geometría de un `PrintPage` está en coordenadas locales al área imprimible.
+Situarla sobre el papel exige conocer dónde empieza esa área.
+
+Deducirlo de la diferencia entre papel y área imprimible sería ambiguo: unos
+márgenes de 5 y 15 mm producen la misma diferencia que unos de 10 y 10.
+
+Por eso `PrintPage` expone `printableOrigin`, calculado por el dominio de
+impresión a partir de los márgenes configurados. El renderer lo aplica, no lo
+infiere (`printing.md` §65).
+
+---
+
+# 83. Plano de dibujo intermedio
+
+`describePage` traduce un `PrintPage` a un `PageDrawing`: la lista de trazos y
+textos que componen la hoja, todavía en milímetros y ya en coordenadas del
+papel.
+
+Existe por dos motivos:
+
+```text
+la traducción se prueba sin generar un PDF
+el adaptador solo dibuja lo que recibe
+```
+
+El plano conserva la semántica de cada trazo (`CONTOUR`, `HOLE`, `CUT`,
+`FOLD`, `ALIGNMENT`, `CALIBRATION`) y deja el estilo a `pdf-style.ts`, según
+§25.
+
+Lo único que el plano añade a lo que el layout ya decidió son las **formas**
+con las que se representa una marca: la cruz de una marca de alineación, los
+topes de la regla. Las posiciones vienen dadas y no se recalculan (§33).
+
+---
+
+# 84. Sistema de coordenadas de jsPDF
+
+jsPDF expone un espacio de usuario con origen arriba-izquierda y Y hacia
+abajo, la misma convención que el dominio, y aplica internamente la inversión
+del eje que exige el formato PDF.
+
+Por eso el adaptador actual **no** invierte la Y. Eso es una propiedad de esta
+librería, no del formato: otro adaptador puede necesitar la transformación de
+§18, y el dominio sigue sin conocer ninguna de las dos.
+
+---
+
+# 85. Precisión del tamaño de página
+
+jsPDF escribe el `MediaBox` con dos decimales. Una hoja A4 queda registrada
+como:
+
+```text
+595.28 × 841.89 pt
+```
+
+frente a los `595.2756 × 841.8898 pt` exactos. La diferencia es de 0,0007 mm,
+por debajo de la tolerancia geométrica del dominio (0,001 mm) y varios órdenes
+de magnitud por debajo de lo que una impresora puede resolver.
+
+La conversión interna no redondea (§9). El redondeo pertenece al serializador.
+
+El renderer comprueba el tamaño de cada hoja generada antes de entregar el
+documento, con una tolerancia de 0,01 pt (§45, §46, §48).
+
+---
+
+# 86. Reproducibilidad
+
+El mismo `PrintLayout` con la misma `creationDate` produce documentos
+idénticos byte a byte **salvo la entrada `/ID`**, que jsPDF genera al azar.
+
+Por eso la fecha de creación es un parámetro del renderer y no un
+`new Date()` interno, y por eso el test de reproducibilidad compara el
+documento ignorando `/ID`, en lugar de exigir igualdad binaria completa
+(§72).
+
+---
+
+# 87. Decisiones de presentación
+
+| Decisión | Motivo |
+| --- | --- |
+| Documento monocromo | El color no distingue nada que el trazo no distinga ya, y una impresora en blanco y negro lo convertiría en grises indistinguibles |
+| Pliegues discontinuos, corte continuo | Confundir doblar con cortar destruye la pieza (§27) |
+| Helvetica sin incrustar | Es una de las catorce fuentes estándar: está garantizada en cualquier lector y cubre los acentos y la eñe (§38, §39, §41) |
+| Pie de página dentro del área imprimible | Los márgenes de hardware de la impresora no se modelan; un pie en el margen puede recortarse, y perder la etiqueta de una hoja rompe el montaje |
+| La advertencia de escala se imprime en cada hoja | El documento no puede impedir que el visor o el driver reescalen (`printing.md` §71, §72) |
+| Sin compresión | La plantilla es geometría vectorial ligera; comprimir no cambia el tamaño de forma apreciable |
+
+El pie de página puede solaparse con la plantilla en una hoja muy ocupada. Es
+un compromiso consciente, no un olvido: a diferencia de la regla de
+calibración, la identidad de la hoja no puede omitirse.
+
+---
+
+# 88. Fuera del alcance de la fase A
+
+No implementado todavía, por decisión explícita:
+
+```text
+imagen de referencia incrustada (§24)
+hoja de instrucciones del documento
+escalas distintas del tamaño real
+streaming (§58)
+```
+
+El renderer rechaza con un error explícito un layout que declare una escala
+distinta de la real, en lugar de imprimirlo al 100 % en silencio (§44, §75).

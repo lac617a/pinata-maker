@@ -6,6 +6,7 @@ import {
   createTemplateGeometry,
   isTemplateGeometryEmpty,
 } from "../geometry/template-geometry";
+import { DEFAULT_MARGIN_MM } from "./margins";
 import { createPrintLayout, PRINT_SCALE_ACTUAL_SIZE } from "./print-layout";
 
 /** Silueta rectangular de 800 × 1000 mm, el caso de referencia del PRD. */
@@ -106,6 +107,20 @@ describe("Print layout", () => {
     expect(layout.pages).toHaveLength(1);
     expect(layout.pages[0].alignmentMarks).toEqual([]);
     expect(layout.pages[0].calibrationMark).toBeDefined();
+  });
+
+  it("should tell where the printable area starts on the sheet", () => {
+    const [page] = createPrintLayout(smallTemplate).pages;
+
+    // El origen del papel no es el del área imprimible: entre ambos están los
+    // márgenes, y quien dibuje la hoja necesita ese desplazamiento.
+    expect(page.printableOrigin).toEqual({
+      x: DEFAULT_MARGIN_MM,
+      y: DEFAULT_MARGIN_MM,
+    });
+    expect(page.printableArea.width).toBe(
+      page.paper.width - DEFAULT_MARGIN_MM * 2,
+    );
   });
 
   it("should produce the same document for the same template", () => {
