@@ -1,7 +1,13 @@
 import { boundingBoxFromPoints, type BoundingBox } from "./bounding-box";
 import { InvalidGeometryError } from "./errors";
 import { isFiniteMillimeters } from "./units";
-import { translatePoint, type Point, type Vector } from "./point";
+import {
+  distanceBetween,
+  translatePoint,
+  type Point,
+  type Vector,
+} from "./point";
+import type { Millimeters } from "./units";
 
 /**
  * Secuencia ordenada de puntos físicos.
@@ -69,6 +75,20 @@ export function polygonSegments(
   }
 
   return segments;
+}
+
+/**
+ * Longitud del recorrido del polígono.
+ *
+ * Un contorno cerrado incluye el segmento de cierre, así que su perímetro es
+ * la vuelta completa. Es la medida de la que sale la tira lateral de una
+ * plantilla. Ver docs/template.md §113.
+ */
+export function polygonPerimeter(polygon: Polygon): Millimeters {
+  return polygonSegments(polygon).reduce(
+    (total, [from, to]) => total + distanceBetween(from, to),
+    0,
+  );
 }
 
 /**

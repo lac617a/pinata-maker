@@ -2212,12 +2212,28 @@ código (§26, §31).
 | `tabLength` | Longitud nominal a lo largo del borde | 30 mm |
 | `tabSpacing` | Hueco entre pestañas consecutivas | 10 mm |
 | `tabFlatnessTolerance` | Separación admisible entre pestaña y curva | 1 mm |
+| `minimumTabLength` | Pestaña más corta que se puede pegar | 8 mm |
 | `foldAngleThreshold` | Giro a partir del cual se marca un doblez | 20° |
 | `minimumTabSegment` | Tramo mínimo con pestaña propia | 20 mm |
-| `maxSideSegmentLength` | Longitud máxima de una pieza lateral | 250 mm |
+| `maxSideSegmentLength` | Longitud del cuerpo de una pieza lateral | 180 mm |
 
 Los valores iniciales son un punto de partida razonable, no una decisión
 cerrada: se ajustarán cuando existan moldes impresos y montados.
+
+`minimumTabLength` no estaba en la primera versión de esta tabla. Apareció al
+implementar §116: una curva muy cerrada produce pestañas de dos o tres
+milímetros, que no hay forma de plegar ni de pegar. El límite es el suelo de
+esa fórmula.
+
+`maxSideSegmentLength` mide el **cuerpo** de la pieza. La pieza impresa mide
+esto más `tabWidth`, porque la pestaña de unión sobresale por un extremo. El
+valor inicial de 180 mm deja piezas de 195 mm, que caben en los 200 mm
+imprimibles de un A4 vertical con el margen recomendado; con 250 mm cada pieza
+lateral se partía en dos hojas y desperdiciaba la segunda.
+
+Quien conozca el papel debería derivarlo del área imprimible en lugar de
+confiar en el valor por defecto. La plantilla no conoce el formato de hoja
+(§6), pero quien la manda imprimir sí.
 
 ---
 

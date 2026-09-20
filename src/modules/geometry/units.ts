@@ -11,6 +11,28 @@
 export type Millimeters = number;
 
 /**
+ * Superficie física.
+ *
+ * Existe como tipo propio porque un área y una longitud no son
+ * intercambiables: sumarlas o compararlas no significa nada.
+ */
+export type SquareMillimeters = number;
+
+/**
+ * Ángulo en grados.
+ *
+ * Se elige grados y no radianes porque los valores que configuran el dominio
+ * los lee y ajusta una persona: un umbral de giro de 20° se entiende, uno de
+ * 0,349 rad no. La conversión ocurre donde se calcula.
+ * Ver docs/AGENTS.md §14.
+ */
+export type Degrees = number;
+
+export function radiansToDegrees(radians: number): Degrees {
+  return (radians * 180) / Math.PI;
+}
+
+/**
  * Tolerancia geométrica centralizada.
  *
  * Las magnitudes físicas derivadas de cálculos en punto flotante no deben
