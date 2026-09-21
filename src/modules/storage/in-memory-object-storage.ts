@@ -25,6 +25,16 @@ export class InMemoryObjectStorage implements ObjectStorage {
     this.files.delete(key);
   }
 
+  async get(key: string): Promise<Uint8Array> {
+    const file = this.files.get(key);
+
+    if (!file) {
+      throw new ObjectStorageError(`There is no file stored at ${key}.`);
+    }
+
+    return Uint8Array.from(file.bytes);
+  }
+
   async createSignedUrl(
     key: string,
     _expiresInSeconds?: number,

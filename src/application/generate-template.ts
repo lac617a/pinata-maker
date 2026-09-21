@@ -4,7 +4,6 @@ import { traceMaskOutline } from "@/modules/image-processing/contour-extraction"
 import {
   convertContourToPhysicalGeometry,
   DEFAULT_SIMPLIFICATION_TOLERANCE_MM,
-  type ImagePlacement,
   imagePlacementFor,
 } from "@/modules/image-processing/contour-to-geometry";
 import {
@@ -71,14 +70,6 @@ export type GenerateTemplateResult = {
   readonly template: Template;
   readonly footprint: TemplateFootprint;
   readonly warnings: readonly TemplateWarning[];
-  /**
-   * Dónde queda la imagen original respecto a la pieza `FRONT`, en mm.
-   *
-   * La plantilla no la usa: la geometría ya está calculada y la imagen no es
-   * fuente de verdad (docs/pdf.md §24). Sirve para enseñar la figura dentro
-   * de la pieza. `BACK` es su reflejo horizontal.
-   */
-  readonly imagePlacement: ImagePlacement;
 };
 
 /**
@@ -112,7 +103,7 @@ export function generateTemplate(
     simplificationTolerance: requestedTolerance,
   });
 
-  const template = deriveTemplateFromSilhouette({
+  const derived = deriveTemplateFromSilhouette({
     silhouette: physical.polygon,
     holes: physical.holes,
     depth: input.depth,
@@ -123,9 +114,16 @@ export function generateTemplate(
     },
   });
 
+  // Dónde cae la imagen respecto a la silueta viaja con la plantilla: el PDF
+  // se genera en el servidor desde la versión guardada, y ahí no queda otro
+  // rastro de esa correspondencia. Ver docs/image-processing.md §109.
+  const template: Template = {
+    ...derived,
+    referenceImage: imagePlacementFor(physical, input.mask),
+  };
+
   return {
     template,
-    imagePlacement: imagePlacementFor(physical, input.mask),
     footprint: templateFootprint(template),
     warnings: collectWarnings({
       discarded: subject.discarded.length,

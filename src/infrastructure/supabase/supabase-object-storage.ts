@@ -58,6 +58,20 @@ export class SupabaseObjectStorage implements ObjectStorage {
     }
   }
 
+  async get(key: string): Promise<Uint8Array> {
+    const { data, error } = await this.client.storage
+      .from(this.bucket)
+      .download(key);
+
+    if (error || !data) {
+      throw new ObjectStorageError("Could not read the file.", {
+        cause: error,
+      });
+    }
+
+    return new Uint8Array(await data.arrayBuffer());
+  }
+
   async createSignedUrl(
     key: string,
     expiresInSeconds: number,

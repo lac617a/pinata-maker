@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ExportServices } from "@/application/export-printable-document";
 import { createProject } from "@/application/manage-projects";
 import { publishTemplateVersion } from "@/application/manage-template-versions";
+import { InMemoryAssetRepository } from "@/modules/assets/in-memory-asset-repository";
 import { InMemoryExportRepository } from "@/modules/exports/in-memory-export-repository";
 import type {
   PrintableDocument,
@@ -55,6 +56,8 @@ function services(): ExportServices & { exportStorage: InMemoryObjectStorage } {
     repository: projects,
     templateVersions: new InMemoryTemplateVersionRepository(projects),
     exports: new InMemoryExportRepository(projects),
+    assets: new InMemoryAssetRepository(projects),
+    assetStorage: new InMemoryObjectStorage(),
     exportStorage,
     renderer: new FakeRenderer(),
     now: () => new Date(Date.UTC(2026, 0, 1, 10, ++clock)),

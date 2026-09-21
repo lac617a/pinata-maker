@@ -55,7 +55,7 @@ conocido y medirlo con una regla real (`printing.md` §75).
 Verificación:
 
 ```bash
-pnpm test        # 431 tests, más 26 de integración que necesitan cuenta
+pnpm test        # 457 tests, más 26 de integración que necesitan cuenta
 pnpm exec tsc --noEmit
 ```
 
@@ -438,7 +438,9 @@ Lo que el usuario puede hacer hoy:
 3. Ajustar medidas y papel **mirando el molde**: se recalcula solo y enseña
    cada pieza con la figura recortada dentro, la retícula de hojas encima con
    sus etiquetas y cuántas hojas lleva cada una (PRD §20).
-4. **Descargar el PDF en un clic.** Por debajo son tres operaciones —publicar
+4. **Descargar el PDF en un clic**, con la figura a color dentro del frente y
+   de la espalda, recortada por la silueta y repartida en las hojas
+   (`pdf.md` §93). Por debajo son tres operaciones —publicar
    la versión, generar el documento y firmar el enlace—, pero el usuario no
    tiene por qué saberlo.
 
@@ -639,8 +641,6 @@ Falta:
 
 * Arrastrar y soltar al subir, y margen y solape en el formulario: hoy son
   los valores del producto y no se pueden tocar desde la interfaz.
-* La figura no se imprime dentro de las piezas del PDF: la vista previa la
-  enseña, el documento solo lleva contornos (`pdf.md` §24 y §88).
 * Los estados del proyecto no se mueven desde la interfaz: publicar una
   versión no lo lleva a `READY` (`storage.md` §159).
 * La derivación bloquea el hilo del navegador mientras calcula.
@@ -720,7 +720,6 @@ posicionar.
 * El pie de página del PDF puede caer sobre la plantilla en una hoja muy
   ocupada. Es un compromiso consciente: a diferencia de la regla de
   calibración, la etiqueta de la hoja no puede omitirse (`pdf.md` §87).
-* El PDF no incrusta la imagen de referencia (`pdf.md` §88, PRD §24).
 * Los huecos de la silueta se extraen pero no se convierten a milímetros. El
   modelo de extrusión no los cubre: un hueco es una pared interior y necesita
   su propia tira. Falla de forma explícita (`template.md` §121).

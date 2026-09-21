@@ -51,7 +51,67 @@ export type Template = {
    */
   readonly pieces: readonly TemplatePiece[];
   readonly derivationVersion: string;
+  /**
+   * Dónde va la imagen de origen, si la plantilla salió de una.
+   *
+   * Es decoración: la geometría ya está calculada y la imagen no es fuente de
+   * verdad del molde (docs/pdf.md §24). Se guarda con la plantilla porque el
+   * documento se genera en el servidor, desde la versión publicada, y ahí no
+   * queda ningún otro rastro de cómo se correspondían imagen y silueta.
+   */
+  readonly referenceImage?: ReferenceImagePlacement;
 };
+
+/**
+ * Rectángulo que ocupa la imagen de origen, en mm, respecto a la pieza
+ * `FRONT`.
+ *
+ * Puede empezar en negativo: la imagen suele tener margen alrededor de la
+ * figura, y la silueta empieza en (0,0). `BACK` es el reflejo de `FRONT`
+ * dentro de su ancho, así que la imagen se refleja igual.
+ * Ver docs/image-processing.md §109.
+ */
+export type ReferenceImagePlacement = {
+  readonly x: Millimeters;
+  readonly y: Millimeters;
+  readonly width: Millimeters;
+  readonly height: Millimeters;
+};
+
+/**
+ * La imagen de origen colocada sobre una cara, en coordenadas de esa pieza.
+ *
+ * Para `BACK` la refleja dentro del ancho de la cara —x → ancho − x—, igual
+ * que la derivación refleja la silueta. `mirrored` avisa a quien dibuje de
+ * que la imagen también va volteada, no solo desplazada.
+ */
+export function referenceImageOnFace(
+  template: Template,
+  piece: TemplatePiece,
+): {
+  readonly placement: ReferenceImagePlacement;
+  readonly mirrored: boolean;
+} | null {
+  const placement = template.referenceImage;
+
+  if (!placement || piece.role === "SIDE") {
+    return null;
+  }
+
+  if (piece.role === "FRONT") {
+    return { placement, mirrored: false };
+  }
+
+  const faceWidth = templateGeometryBounds(piece.geometry).maxX;
+
+  return {
+    placement: {
+      ...placement,
+      x: faceWidth - (placement.x + placement.width),
+    },
+    mirrored: true,
+  };
+}
 
 export function templatePiecesWithRole(
   template: Template,

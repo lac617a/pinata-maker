@@ -204,3 +204,94 @@ describe("Page drawing", () => {
     );
   });
 });
+
+describe("Artwork on each sheet", () => {
+  const artwork = {
+    image: { bytes: new Uint8Array([1, 2, 3]), format: "PNG" as const },
+    // La imagen asoma 20 mm por cada lado de la silueta de 800 × 1000.
+    placement: { x: -20, y: -20, width: 840, height: 1040 },
+    mirrored: false,
+    clip: largeTemplate.outerContours,
+  };
+
+  it("should move the image to paper coordinates like the geometry", () => {
+    const page = layout.pages[layout.pages.length - 1];
+    const [image] = describePage(page, "FRONT", artwork).images;
+
+    // Global → papel: restar la región de la hoja y sumar el origen del área
+    // imprimible, la misma traslación que ya sufrió el contorno.
+    expect(image.x).toBeCloseTo(
+      -20 - page.globalBounds.minX + page.printableOrigin.x,
+      6,
+    );
+    expect(image.y).toBeCloseTo(
+      -20 - page.globalBounds.minY + page.printableOrigin.y,
+      6,
+    );
+    expect(image.width).toBe(840);
+  });
+
+  it("should clip the image with the silhouette in the same coordinates", () => {
+    const page = layout.pages[1];
+    const [image] = describePage(page, "FRONT", artwork).images;
+    const [contour] = strokesOf(page, "CONTOUR");
+
+    // El recorte y el trazo tienen que coincidir: si no, la figura se sale
+    // de la línea por la que se corta.
+    const first = image.clip[0].points[0];
+
+    expect(first.x).toBeCloseTo(
+      0 - page.globalBounds.minX + page.printableOrigin.x,
+      6,
+    );
+    expect(contour).toBeDefined();
+  });
+
+  it("should keep the image inside the printable area", () => {
+    const page = layout.pages[0];
+    const [image] = describePage(page, "FRONT", artwork).images;
+
+    expect(image.bounds).toEqual({
+      x: page.printableOrigin.x,
+      y: page.printableOrigin.y,
+      width: page.printableArea.width,
+      height: page.printableArea.height,
+    });
+  });
+
+  it("should put the image on every sheet the piece covers", () => {
+    const withImage = layout.pages.filter(
+      (page) => describePage(page, "FRONT", artwork).images.length === 1,
+    );
+
+    expect(withImage).toHaveLength(layout.pages.length);
+  });
+
+  it("should leave out a sheet the image does not reach", () => {
+    const small = {
+      ...artwork,
+      placement: { x: 0, y: 0, width: 50, height: 50 },
+    };
+
+    const withImage = layout.pages.filter(
+      (page) => describePage(page, "FRONT", small).images.length === 1,
+    );
+
+    // Incrustarla donde no se ve solo haría el documento más pesado.
+    expect(withImage).toHaveLength(1);
+  });
+
+  it("should carry the mirroring to every sheet", () => {
+    const back = { ...artwork, mirrored: true };
+
+    expect(
+      layout.pages.every(
+        (page) => describePage(page, "BACK", back).images[0]?.mirrored,
+      ),
+    ).toBe(true);
+  });
+
+  it("should draw no image when the piece has none", () => {
+    expect(describePage(layout.pages[0], "SIDE-1").images).toEqual([]);
+  });
+});

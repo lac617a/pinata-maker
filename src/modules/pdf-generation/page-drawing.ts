@@ -1,4 +1,8 @@
 import {
+  type BoundingBox,
+  boundingBoxFromPoints,
+} from "@/modules/geometry/bounding-box";
+import {
   type Point,
   translatePoint,
   type Vector,
@@ -9,6 +13,8 @@ import type { AlignmentMark, PageEdge } from "@/modules/printing/alignment";
 import type { CalibrationMark } from "@/modules/printing/calibration";
 import type { PaperSize } from "@/modules/printing/paper-format";
 import type { PrintPage } from "@/modules/printing/print-layout";
+
+import type { EmbeddedImage, SectionArtwork } from "./print-renderer";
 
 /**
  * Significado físico de un trazo.
@@ -57,8 +63,34 @@ export type PageText = {
 export type PageDrawing = {
   readonly label: string;
   readonly paper: PaperSize;
+  /** Se dibujan primero: los trazos van encima y se ven enteros. */
+  readonly images: readonly PageImage[];
   readonly strokes: readonly PageStroke[];
   readonly texts: readonly PageText[];
+};
+
+/**
+ * La parte de la figura que cae en una hoja, en coordenadas del papel.
+ *
+ * La imagen se coloca entera y se recorta dos veces: por la silueta de la
+ * pieza y por el área imprimible. Así cada hoja lleva exactamente su trozo, y
+ * al juntarlas la figura se recompone sin saltos. Ver docs/pdf.md §93.
+ */
+export type PageImage = {
+  readonly image: EmbeddedImage;
+  readonly x: Millimeters;
+  readonly y: Millimeters;
+  readonly width: Millimeters;
+  readonly height: Millimeters;
+  readonly mirrored: boolean;
+  readonly clip: readonly Polygon[];
+  /** Área imprimible de la hoja: la imagen no invade los márgenes. */
+  readonly bounds: {
+    readonly x: Millimeters;
+    readonly y: Millimeters;
+    readonly width: Millimeters;
+    readonly height: Millimeters;
+  };
 };
 
 /**
@@ -104,6 +136,7 @@ export function describePage(
    * en un documento con dieciocho piezas no basta por sí solo.
    */
   sectionLabel?: string,
+  artwork?: SectionArtwork,
 ): PageDrawing {
   const toPaper: Vector = {
     x: page.printableOrigin.x,
@@ -146,9 +179,66 @@ export function describePage(
   return {
     label: sectionLabel ? `${sectionLabel} ${page.id}` : page.id,
     paper: page.paper,
+    images: artwork ? pageImages(page, artwork) : [],
     strokes,
     texts,
   };
+}
+
+/**
+ * La ilustración de la pieza, trasladada a esta hoja.
+ *
+ * Global → papel es restar el origen de la región que cubre la hoja y sumar
+ * el del área imprimible: la misma traslación que ya sufrió su geometría
+ * (printing/page-geometry.ts). Nada se escala.
+ *
+ * Una hoja que no toca la imagen, o en la que la pieza no aparece, no la
+ * lleva: incrustarla ahí solo haría el documento más lento de imprimir.
+ */
+function pageImages(page: PrintPage, artwork: SectionArtwork): PageImage[] {
+  const region = page.globalBounds;
+  const clipBounds = boundingBoxFromPoints(
+    artwork.clip.flatMap((polygon) => [...polygon.points]),
+  );
+  const imageBounds = {
+    minX: artwork.placement.x,
+    minY: artwork.placement.y,
+    maxX: artwork.placement.x + artwork.placement.width,
+    maxY: artwork.placement.y + artwork.placement.height,
+  };
+
+  if (!overlaps(region, imageBounds) || !overlaps(region, clipBounds)) {
+    return [];
+  }
+
+  const toPaper: Vector = {
+    x: page.printableOrigin.x - region.minX,
+    y: page.printableOrigin.y - region.minY,
+  };
+
+  return [
+    {
+      image: artwork.image,
+      x: artwork.placement.x + toPaper.x,
+      y: artwork.placement.y + toPaper.y,
+      width: artwork.placement.width,
+      height: artwork.placement.height,
+      mirrored: artwork.mirrored,
+      clip: artwork.clip.map((polygon) => translatePolygon(polygon, toPaper)),
+      bounds: {
+        x: page.printableOrigin.x,
+        y: page.printableOrigin.y,
+        width: page.printableArea.width,
+        height: page.printableArea.height,
+      },
+    },
+  ];
+}
+
+function overlaps(a: BoundingBox, b: BoundingBox): boolean {
+  return (
+    a.minX < b.maxX && b.minX < a.maxX && a.minY < b.maxY && b.minY < a.maxY
+  );
 }
 
 function stroke(role: StrokeRole, path: Polygon): PageStroke {
@@ -372,7 +462,7 @@ export function describeCoverPage(
     ),
   ];
 
-  return { label: "INSTRUCCIONES", paper, strokes: [], texts };
+  return { label: "INSTRUCCIONES", paper, images: [], strokes: [], texts };
 }
 
 /** `100` en lugar de `100.0`, y `97.5` cuando la medida lo necesita. */

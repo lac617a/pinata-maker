@@ -7,7 +7,12 @@ import {
 } from "@/modules/geometry/template-geometry";
 
 import { InvalidTemplateDefinitionError } from "./errors";
-import type { PieceRole, Template, TemplatePiece } from "./template";
+import type {
+  PieceRole,
+  ReferenceImagePlacement,
+  Template,
+  TemplatePiece,
+} from "./template";
 
 /**
  * Versión del formato con el que se guarda una plantilla.
@@ -59,6 +64,18 @@ export type TemplateDefinition = {
   readonly depth: number;
   readonly derivationVersion: string;
   readonly pieces: readonly TemplatePieceDefinition[];
+  /**
+   * Dónde va la imagen de origen, en mm respecto a `FRONT`.
+   *
+   * Opcional, y por eso no cambia `schemaVersion`: un documento guardado
+   * antes de que existiera se sigue leyendo igual, solo que sin imagen.
+   */
+  readonly referenceImage?: {
+    readonly x: number;
+    readonly y: number;
+    readonly width: number;
+    readonly height: number;
+  };
 };
 
 /**
@@ -100,6 +117,9 @@ export function serializeTemplate(template: Template): TemplateDefinition {
         ),
       },
     })),
+    ...(template.referenceImage
+      ? { referenceImage: { ...template.referenceImage } }
+      : {}),
   };
 }
 
@@ -162,6 +182,21 @@ export function deserializeTemplate(value: unknown): Template {
       TEMPLATE_DEFINITION_LIMITS.maxIdentifierLength,
     ),
     pieces: pieces.map((piece) => toPiece(piece, countPoints)),
+    ...(definition.referenceImage === undefined
+      ? {}
+      : { referenceImage: toReferenceImage(definition.referenceImage) }),
+  };
+}
+
+function toReferenceImage(value: unknown): ReferenceImagePlacement {
+  const placement = asObject(value, "referenceImage");
+
+  return {
+    // Puede ser negativo: la imagen suele empezar antes que la silueta.
+    x: asNumber(placement.x, "referenceImage.x"),
+    y: asNumber(placement.y, "referenceImage.y"),
+    width: asPositive(placement.width, "referenceImage.width"),
+    height: asPositive(placement.height, "referenceImage.height"),
   };
 }
 

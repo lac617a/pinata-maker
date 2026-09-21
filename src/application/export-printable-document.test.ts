@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { createAsset } from "@/modules/assets/asset";
+import { InMemoryAssetRepository } from "@/modules/assets/in-memory-asset-repository";
 import { ExportNotFoundError } from "@/modules/exports/errors";
 import { InMemoryExportRepository } from "@/modules/exports/in-memory-export-repository";
 import { JsPdfPrintRenderer } from "@/modules/pdf-generation/infrastructure/jspdf-print-renderer";
@@ -20,6 +22,7 @@ import { DEFAULT_PRINT_CONFIGURATION } from "@/modules/printing/print-layout";
 import { ProjectNotFoundError } from "@/modules/projects/errors";
 import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
 import { InMemoryObjectStorage } from "@/modules/storage/in-memory-object-storage";
+import { ObjectStorageError } from "@/modules/storage/object-storage";
 import { TemplateVersionNotFoundError } from "@/modules/templates/errors";
 import { InMemoryTemplateVersionRepository } from "@/modules/templates/in-memory-template-version-repository";
 import { squareTemplate } from "@/modules/templates/template-version-repository.contract";
@@ -76,6 +79,8 @@ function services(): ExportServices & {
     repository: projects,
     templateVersions: new InMemoryTemplateVersionRepository(projects),
     exports: new InMemoryExportRepository(projects),
+    assets: new InMemoryAssetRepository(projects),
+    assetStorage: new InMemoryObjectStorage(),
     exportStorage,
     renderer,
     now: () => new Date(Date.UTC(2026, 0, 1, 10, ++clock)),
@@ -367,5 +372,102 @@ describe("Export printable document", () => {
     expect(header).toBe("%PDF-");
     expect(generated.byteSize).toBe(stored?.bytes.byteLength);
     expect(generated.byteSize).toBeGreaterThan(1000);
+  });
+});
+
+describe("Export printable document with the source image", () => {
+  const withImage = {
+    ...squareTemplate("Elefante"),
+    referenceImage: { x: -10, y: -10, width: 120, height: 120 },
+  };
+
+  /** Proyecto con su imagen guardada y una versión que salió de ella. */
+  async function projectWithImage(context: ReturnType<typeof services>) {
+    const project = await createProject(context, {
+      ownerId: owner,
+      name: "Elefante",
+    });
+
+    const asset = createAsset({
+      id: "aaaaaaaa-0000-4000-8000-0000000000a1",
+      projectId: project.id,
+      kind: "ORIGINAL_IMAGE",
+      mimeType: "image/png",
+      byteSize: 3,
+      originalName: "elefante.png",
+      now: new Date(Date.UTC(2026, 0, 1)),
+    });
+
+    await context.assets.save(asset, owner);
+    await context.assetStorage.put({
+      key: asset.storageKey,
+      contentType: asset.mimeType,
+      bytes: new Uint8Array([7, 8, 9]),
+    });
+
+    const version = await publishTemplateVersion(context, {
+      projectId: project.id,
+      userId: owner,
+      template: withImage,
+      sourceAssetId: asset.id,
+    });
+
+    return { project, asset, version };
+  }
+
+  it("should draw the stored image inside the faces", async () => {
+    const context = services();
+    const { version } = await projectWithImage(context);
+
+    await exportTemplateVersion(context, {
+      templateVersionId: version.id,
+      userId: owner,
+    });
+
+    const [document] = context.renderer.rendered;
+    const front = document.sections.find((section) =>
+      section.label.startsWith("FRONT"),
+    );
+
+    // Lo que se dibuja son los bytes guardados, no lo que tuviera el
+    // navegador: el documento sale de la versión.
+    expect([...(front?.artwork?.image.bytes ?? [])]).toEqual([7, 8, 9]);
+    expect(front?.artwork?.image.format).toBe("PNG");
+  });
+
+  it("should still export the contours when the image was deleted", async () => {
+    const context = services();
+    const { version, asset } = await projectWithImage(context);
+
+    await context.assets.delete(asset.id, owner);
+
+    const generated = await exportTemplateVersion(context, {
+      templateVersionId: version.id,
+      userId: owner,
+    });
+
+    // El molde sigue siendo válido sin su decoración.
+    expect(generated.pageCount).toBeGreaterThan(0);
+    expect(
+      context.renderer.rendered[0].sections.every(
+        (section) => section.artwork === undefined,
+      ),
+    ).toBe(true);
+  });
+
+  it("should fail instead of silently dropping an image it cannot read", async () => {
+    const context = services();
+    const { version, asset } = await projectWithImage(context);
+
+    await context.assetStorage.remove(asset.storageKey);
+
+    // La fila existe y el archivo no: entregar el PDF sin la figura sería
+    // un documento distinto del que se pidió, sin decirlo.
+    await expect(
+      exportTemplateVersion(context, {
+        templateVersionId: version.id,
+        userId: owner,
+      }),
+    ).rejects.toBeInstanceOf(ObjectStorageError);
   });
 });

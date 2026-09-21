@@ -272,7 +272,6 @@ export function TemplateStudio({
             template={derivation.result.template}
             print={print}
             imageUrl={image?.url ?? null}
-            imagePlacement={derivation.result.imagePlacement}
           />
         </>
       ) : null}

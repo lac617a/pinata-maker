@@ -1,3 +1,5 @@
+import { deflateSync } from "node:zlib";
+
 import { describe, expect, it } from "vitest";
 
 import { createPoint } from "@/modules/geometry/point";
@@ -8,7 +10,10 @@ import {
   UnsupportedPdfFeatureError,
 } from "@/modules/pdf-generation/errors";
 import { millimetersToPoints } from "@/modules/pdf-generation/pdf-units";
-import type { PrintDocument } from "@/modules/pdf-generation/print-renderer";
+import {
+  MAX_EMBEDDED_IMAGE_BYTES,
+  type PrintDocument,
+} from "@/modules/pdf-generation/print-renderer";
 import { DEFAULT_CALIBRATION_LENGTH_MM } from "@/modules/printing/calibration";
 import { DEFAULT_MARGIN_MM, uniformMargins } from "@/modules/printing/margins";
 import type {
@@ -279,6 +284,138 @@ describe("jsPDF print renderer", () => {
     };
 
     await expect(renderer.render(documentOf(oversized))).rejects.toThrow(
+      PdfResourceLimitError,
+    );
+  });
+});
+
+/**
+ * PNG opaco de 4 × 4 construido a mano.
+ *
+ * Opaco a propósito: sin canal alfa, jsPDF lo incrusta como un único objeto
+ * de imagen y se puede contar sin ambigüedad.
+ */
+function opaquePng(): Uint8Array {
+  const table = Array.from({ length: 256 }, (_unused, n) => {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    return c >>> 0;
+  });
+  const crc = (data: Buffer) => {
+    let c = 0xffffffff;
+    for (const byte of data) c = table[(c ^ byte) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  };
+  const chunk = (type: string, data: Buffer) => {
+    const length = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    const body = Buffer.concat([Buffer.from(type), data]);
+    const check = Buffer.alloc(4);
+    check.writeUInt32BE(crc(body));
+    return Buffer.concat([length, body, check]);
+  };
+
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(4, 0);
+  header.writeUInt32BE(4, 4);
+  header[8] = 8; // 8 bits por canal
+  header[9] = 2; // RGB, sin alfa
+
+  const rows = Buffer.alloc(4 * (1 + 4 * 3), 200);
+  for (let row = 0; row < 4; row++) rows[row * 13] = 0;
+
+  return new Uint8Array(
+    Buffer.concat([
+      Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+      chunk("IHDR", header),
+      chunk("IDAT", deflateSync(rows)),
+      chunk("IEND", Buffer.alloc(0)),
+    ]),
+  );
+}
+
+describe("jsPDF print renderer with artwork", () => {
+  const layout = layoutOn("A4", "PORTRAIT");
+
+  const withArtwork = (mirrored: boolean): PrintDocument => ({
+    sections: [
+      {
+        label: mirrored ? "BACK" : "FRONT",
+        layout,
+        artwork: {
+          image: { bytes: opaquePng(), format: "PNG" },
+          placement: { x: -20, y: -20, width: 840, height: 1040 },
+          mirrored,
+          clip: template.outerContours,
+        },
+      },
+    ],
+  });
+
+  it("should embed the image once for every sheet it appears on", async () => {
+    const document = await renderer.render(withArtwork(false), {
+      creationDate,
+    });
+
+    const text = asText(document.bytes);
+
+    // La figura cae en todas las hojas de la pieza. Incrustada en cada una,
+    // el documento pesaría la imagen multiplicada por el número de hojas.
+    expect(layout.pages.length).toBeGreaterThan(1);
+    expect(text.match(/\/Subtype \/Image/g)).toHaveLength(1);
+    expect(text.match(/\/I\d+ Do/g)).toHaveLength(layout.pages.length);
+  });
+
+  it("should clip the image before drawing it", async () => {
+    const document = await renderer.render(withArtwork(false), {
+      creationDate,
+    });
+
+    // `W n`: el trazado recorta y no se pinta. Sin recorte la imagen entera
+    // saldría en cada hoja, fuera de la silueta.
+    expect(asText(document.bytes)).toMatch(/W\s+n[\s\S]*?\/I\d+ Do/);
+  });
+
+  it("should flip the image of the back piece", async () => {
+    const front = asText(
+      (await renderer.render(withArtwork(false), { creationDate })).bytes,
+    );
+    const back = asText(
+      (await renderer.render(withArtwork(true), { creationDate })).bytes,
+    );
+
+    expect(front).not.toMatch(/-1\. 0\. 0\. 1\. [\d.]+ 0\. cm/);
+    expect(back).toMatch(/-1\. 0\. 0\. 1\. [\d.]+ 0\. cm/);
+  });
+
+  it("should keep the page count when a piece carries artwork", async () => {
+    const document = await renderer.render(withArtwork(false), {
+      creationDate,
+    });
+
+    expect(document.pageCount).toBe(layout.pages.length);
+  });
+
+  it("should refuse an image above the size limit", async () => {
+    const huge: PrintDocument = {
+      sections: [
+        {
+          label: "FRONT",
+          layout,
+          artwork: {
+            image: {
+              bytes: new Uint8Array(MAX_EMBEDDED_IMAGE_BYTES + 1),
+              format: "PNG",
+            },
+            placement: { x: 0, y: 0, width: 800, height: 1000 },
+            mirrored: false,
+            clip: template.outerContours,
+          },
+        },
+      ],
+    };
+
+    await expect(renderer.render(huge)).rejects.toBeInstanceOf(
       PdfResourceLimitError,
     );
   });

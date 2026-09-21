@@ -34,6 +34,15 @@ export interface ObjectStorage {
   remove(key: string): Promise<void>;
 
   /**
+   * Los bytes de un archivo guardado.
+   *
+   * Lo necesita el servidor para meter la imagen original en el PDF: el
+   * documento se genera desde la versión guardada, no desde lo que tenga el
+   * navegador en ese momento.
+   */
+  get(key: string): Promise<Uint8Array>;
+
+  /**
    * URL temporal para que el navegador reciba el archivo.
    *
    * Temporal y no pública: los archivos de un usuario no deben quedar

@@ -1,3 +1,4 @@
+import type { AssetRepository } from "@/modules/assets/asset-repository";
 import { ExportNotFoundError } from "@/modules/exports/errors";
 import {
   createProjectExport,
@@ -6,6 +7,8 @@ import {
 } from "@/modules/exports/export";
 import type { ExportRepository } from "@/modules/exports/export-repository";
 import {
+  type EmbeddedImage,
+  type EmbeddedImageFormat,
   PDF_GENERATOR_VERSION,
   type PrintRenderer,
 } from "@/modules/pdf-generation/print-renderer";
@@ -19,6 +22,7 @@ import {
   SIGNED_URL_TTL_SECONDS,
 } from "@/modules/storage/object-storage";
 import { TemplateVersionNotFoundError } from "@/modules/templates/errors";
+import type { Template } from "@/modules/templates/template";
 import type { TemplateVersionId } from "@/modules/templates/template-version";
 
 import { generatePrintableDocument } from "./generate-printable-document";
@@ -30,6 +34,10 @@ import {
 
 export type ExportServices = TemplateVersionServices & {
   readonly exports: ExportRepository;
+  /** Para encontrar la imagen de la que salió la versión. */
+  readonly assets: AssetRepository;
+  /** Bucket de las imágenes, de donde se leen sus bytes. */
+  readonly assetStorage: ObjectStorage;
   /** Bucket de los documentos, distinto del de las imágenes. */
   readonly exportStorage: ObjectStorage;
   /** La implementación concreta la decide quien monta el contexto. */
@@ -84,6 +92,12 @@ export async function exportTemplateVersion(
 
   const document = await generatePrintableDocument({
     template,
+    referenceImage: await loadReferenceImage(
+      services,
+      version.sourceAssetId,
+      template,
+      input.userId,
+    ),
     renderer: services.renderer,
     print: configuration,
     fileName: `${template.name}-v${version.versionNumber}.pdf`,
@@ -125,6 +139,50 @@ export async function exportTemplateVersion(
 
   return generated;
 }
+
+/**
+ * Los bytes de la imagen de la que salió la versión, si se puede dibujar.
+ *
+ * Una versión sin imagen de origen, o una plantilla que no dice dónde va,
+ * produce el documento con los contornos. Lo mismo si el usuario borró la
+ * imagen: la clave foránea queda a `null` y el molde sigue siendo válido
+ * (docs/storage.md §157). Lo que **no** se ignora es un fallo leyendo el
+ * archivo: entregar sin avisar un documento distinto del que se pidió sería
+ * peor que pedir que se reintente.
+ */
+async function loadReferenceImage(
+  services: ExportServices,
+  sourceAssetId: string | null,
+  template: Template,
+  userId: UserId,
+): Promise<EmbeddedImage | undefined> {
+  if (!sourceAssetId || !template.referenceImage) {
+    return undefined;
+  }
+
+  const asset = await services.assets.findById(sourceAssetId, userId);
+
+  if (!asset) {
+    return undefined;
+  }
+
+  const format = EMBEDDED_FORMATS[asset.mimeType];
+
+  if (!format) {
+    return undefined;
+  }
+
+  return {
+    bytes: await services.assetStorage.get(asset.storageKey),
+    format,
+  };
+}
+
+const EMBEDDED_FORMATS: Record<string, EmbeddedImageFormat> = {
+  "image/png": "PNG",
+  "image/jpeg": "JPEG",
+  "image/webp": "WEBP",
+};
 
 export async function listProjectExports(
   services: ExportServices,

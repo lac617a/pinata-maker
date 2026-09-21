@@ -109,6 +109,33 @@ describe("Template definition", () => {
     expect(front.geometry.foldLines[0].geometry.closed).toBe(false);
   });
 
+  it("should keep where the source image goes", () => {
+    const original = {
+      ...template(),
+      referenceImage: { x: -30, y: -12.5, width: 260, height: 190 },
+    };
+
+    // Sin esto el servidor no sabría dónde dibujar la figura al generar el
+    // PDF desde la versión guardada.
+    expect(roundTrip(original).referenceImage).toEqual(original.referenceImage);
+  });
+
+  it("should read a document saved before it had an image", () => {
+    // El campo es opcional para no invalidar lo que ya está publicado.
+    expect(roundTrip(template()).referenceImage).toBeUndefined();
+  });
+
+  it("should refuse an image placement without size", () => {
+    const definition = {
+      ...serializeTemplate(template()),
+      referenceImage: { x: 0, y: 0, width: 0, height: 100 },
+    };
+
+    expect(() => deserializeTemplate(definition)).toThrow(
+      InvalidTemplateDefinitionError,
+    );
+  });
+
   it("should declare the schema it was written with", () => {
     expect(serializeTemplate(template()).schemaVersion).toBe(
       TEMPLATE_SCHEMA_VERSION,

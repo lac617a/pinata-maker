@@ -1681,7 +1681,6 @@ calibración, la identidad de la hoja no puede omitirse.
 No implementado todavía, por decisión explícita:
 
 ```text
-imagen de referencia incrustada (§24)
 hoja de instrucciones del documento
 escalas distintas del tamaño real
 streaming (§58)
@@ -1772,3 +1771,60 @@ Comprobado sobre el documento generado: la fuente se declara con
 `/Encoding /WinAnsiEncoding`, «á» se codifica como `0xE1` y la raya de la
 lista de piezas como `0x97`. Ambos son sus valores correctos en esa
 codificación, así que se imprimen sin incrustar fuente (§38, §41).
+
+---
+
+# 93. La figura dentro de la pieza
+
+El documento dibuja la imagen de origen dentro del frente y de la espalda, a
+color. Es el elemento visual independiente de §24: nunca geometría, nunca
+fuente de verdad del molde.
+
+## Debajo de los trazos, recortada dos veces
+
+En cada hoja la imagen se coloca entera y se recorta por dos caminos que se
+intersecan:
+
+```text
+área imprimible   la imagen no invade los márgenes
+silueta           la imagen no sale de la pieza
+```
+
+Después se dibujan los trazos encima. La línea de corte se ve entera aunque
+la figura llegue hasta el borde.
+
+La traslación global → papel es la misma que ya sufre la geometría de la hoja
+(`printing/page-geometry.ts`): restar el origen de la región que cubre y
+sumar el del área imprimible. Nada se escala, así que al juntar las hojas la
+figura se recompone sin saltos.
+
+## Una sola copia de la imagen
+
+La figura aparece en docenas de hojas. Se incrusta una vez con un alias y
+cada hoja la referencia: sin eso el documento pesaría la imagen multiplicada
+por el número de hojas. Hay un techo de 15 MB por imagen (§74).
+
+## La espalda, volteada
+
+`BACK` es el reflejo de `FRONT`, así que su imagen también. jsPDF **no**
+refleja con un ancho negativo —lo corrompe en silencio—; se hace con una
+matriz `-1 0 0 1 2·eje 0` sobre el eje vertical de la propia imagen, dentro
+del estado gráfico recortado.
+
+Dónde va la imagen en cada cara lo decide `referenceImageOnFace`, del
+dominio. La vista previa usa la misma función, así que lo que se ve antes de
+descargar es lo que se imprime.
+
+## De dónde salen los bytes
+
+El documento se genera en el servidor desde la versión guardada. La plantilla
+lleva dónde va la imagen (`referenceImage`, `image-processing.md` §109) y la
+versión de qué imagen salió (`sourceAssetId`). El caso de uso lee el archivo
+del bucket con la sesión del usuario.
+
+Si el usuario borró la imagen, el documento sale con los contornos: el molde
+sigue siendo válido. Si la imagen existe pero no se puede leer, falla: un PDF
+distinto del pedido, entregado sin avisar, es peor que un reintento.
+
+`PDF_GENERATOR_VERSION` pasa a `1.1`: un documento dice con qué dibujo se
+hizo.

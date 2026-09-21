@@ -1,3 +1,4 @@
+import type { Polygon } from "@/modules/geometry/polygon";
 import type { Scale } from "@/modules/geometry/scale";
 import type { Millimeters } from "@/modules/geometry/units";
 import type { PrintLayout } from "@/modules/printing/print-layout";
@@ -15,6 +16,40 @@ import { PdfResourceLimitError } from "./errors";
 export type PrintSection = {
   readonly label: string;
   readonly layout: PrintLayout;
+  /** La figura dibujada dentro de la pieza, si la lleva. */
+  readonly artwork?: SectionArtwork;
+};
+
+/** Formatos que el documento sabe incrustar: los mismos que se suben. */
+export type EmbeddedImageFormat = "PNG" | "JPEG" | "WEBP";
+
+export type EmbeddedImage = {
+  readonly bytes: Uint8Array;
+  readonly format: EmbeddedImageFormat;
+};
+
+/**
+ * La imagen de origen dibujada dentro de una pieza.
+ *
+ * Es un elemento visual independiente y nunca geometría: se dibuja debajo
+ * de los trazos y recortada por la silueta, así que la línea de corte sigue
+ * encima y se ve entera (docs/pdf.md §24).
+ *
+ * Todas las medidas en mm y en coordenadas globales de la pieza, las mismas
+ * que usa su reparto en hojas.
+ */
+export type SectionArtwork = {
+  readonly image: EmbeddedImage;
+  readonly placement: {
+    readonly x: Millimeters;
+    readonly y: Millimeters;
+    readonly width: Millimeters;
+    readonly height: Millimeters;
+  };
+  /** Volteada sobre su propio eje vertical: la espalda de la figura. */
+  readonly mirrored: boolean;
+  /** Silueta que recorta la imagen. */
+  readonly clip: readonly Polygon[];
 };
 
 /**
@@ -94,7 +129,7 @@ export const PDF_CONTENT_TYPE = "application/pdf";
  * en el dibujo dejaría los documentos antiguos sin explicación.
  * Ver docs/storage.md §54.
  */
-export const PDF_GENERATOR_VERSION = "1.0";
+export const PDF_GENERATOR_VERSION = "1.1";
 
 export const DEFAULT_PDF_FILE_NAME = "pinata-template.pdf";
 
@@ -116,6 +151,15 @@ export const MAX_DOCUMENT_PAGES = 500;
 
 export const MAX_STROKES_PER_PAGE = 20_000;
 
+/**
+ * Peso máximo de una imagen incrustada.
+ *
+ * La subida ya limita el original a 10 MB (`IMAGE_LIMITS`); este techo es la
+ * defensa del propio documento, que no debe cargar en memoria cualquier cosa
+ * que le llegue. Ver docs/pdf.md §74.
+ */
+export const MAX_EMBEDDED_IMAGE_BYTES = 15 * 1024 * 1024;
+
 export function documentPageCount(document: PrintDocument): number {
   const template = document.sections.reduce(
     (total, section) => total + section.layout.pages.length,
@@ -126,6 +170,16 @@ export function documentPageCount(document: PrintDocument): number {
 }
 
 export function assertWithinDocumentLimits(document: PrintDocument): void {
+  for (const section of document.sections) {
+    const bytes = section.artwork?.image.bytes.byteLength ?? 0;
+
+    if (bytes > MAX_EMBEDDED_IMAGE_BYTES) {
+      throw new PdfResourceLimitError(
+        `Section ${section.label} embeds an image of ${bytes} bytes, above the limit of ${MAX_EMBEDDED_IMAGE_BYTES}.`,
+      );
+    }
+  }
+
   const pages = documentPageCount(document);
 
   if (pages > MAX_DOCUMENT_PAGES) {

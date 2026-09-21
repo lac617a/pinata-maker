@@ -11,6 +11,7 @@ import {
   describeCoverPage,
   describePage,
   type PageDrawing,
+  type PageImage,
   type PageStroke,
   type PageText,
 } from "@/modules/pdf-generation/page-drawing";
@@ -29,6 +30,7 @@ import {
   assertWithinPageLimits,
   DEFAULT_PDF_FILE_NAME,
   DEFAULT_PDF_METADATA,
+  type EmbeddedImage,
   PDF_CONTENT_TYPE,
   type PrintableDocument,
   type PrintDocument,
@@ -101,12 +103,14 @@ export class JsPdfPrintRenderer implements PrintRenderer {
         doc.setCreationDate(options.creationDate);
       }
 
+      const aliases = new ImageAliases();
+
       drawings.forEach((drawing, index) => {
         if (index > 0) {
           doc.addPage(paperFormatInPoints(drawing), orientationOf(drawing));
         }
 
-        drawPage(doc, drawing);
+        drawPage(doc, drawing, aliases);
       });
 
       assertRenderedPageSizes(doc, drawings);
@@ -137,7 +141,9 @@ export class JsPdfPrintRenderer implements PrintRenderer {
  */
 function describeDocument(document: PrintDocument): PageDrawing[] {
   const pages = document.sections.flatMap((section) =>
-    section.layout.pages.map((page) => describePage(page, section.label)),
+    section.layout.pages.map((page) =>
+      describePage(page, section.label, section.artwork),
+    ),
   );
 
   if (!document.cover) {
@@ -188,7 +194,17 @@ function orientationOf(drawing: PageDrawing): "portrait" | "landscape" {
   return drawing.paper.width > drawing.paper.height ? "landscape" : "portrait";
 }
 
-function drawPage(doc: jsPDF, drawing: PageDrawing): void {
+function drawPage(
+  doc: jsPDF,
+  drawing: PageDrawing,
+  aliases: ImageAliases,
+): void {
+  // Primero la figura: los trazos van encima y la línea de corte se ve
+  // entera aunque la imagen llegue hasta el borde. Ver docs/pdf.md §24.
+  for (const image of drawing.images) {
+    drawImage(doc, image, aliases.of(image.image));
+  }
+
   for (const stroke of drawing.strokes) {
     drawStroke(doc, stroke);
   }
@@ -222,6 +238,86 @@ function drawStroke(doc: jsPDF, stroke: PageStroke): void {
     "S",
     stroke.path.closed,
   );
+}
+
+/**
+ * Una imagen se incrusta una vez y se reutiliza en todas las hojas.
+ *
+ * La figura de la piñata aparece en docenas de hojas. Sin un alias común
+ * jsPDF la incrustaría en cada una y el documento pesaría decenas de megas.
+ */
+class ImageAliases {
+  private readonly known = new Map<EmbeddedImage, string>();
+
+  of(image: EmbeddedImage): string {
+    const existing = this.known.get(image);
+
+    if (existing) {
+      return existing;
+    }
+
+    const alias = `reference-${this.known.size + 1}`;
+    this.known.set(image, alias);
+
+    return alias;
+  }
+}
+
+/**
+ * La parte de la figura que cae en esta hoja.
+ *
+ * Dos recortes que se intersecan: el área imprimible, para no invadir los
+ * márgenes, y la silueta, para que la imagen no salga de la pieza. La imagen
+ * se coloca entera; es el recorte quien decide qué trozo se ve.
+ *
+ * La espalda se voltea con una matriz sobre el eje vertical de la propia
+ * imagen. jsPDF no refleja con un ancho negativo: lo corrompe.
+ */
+function drawImage(doc: jsPDF, image: PageImage, alias: string): void {
+  doc.saveGraphicsState();
+
+  doc.rect(
+    millimetersToPoints(image.bounds.x),
+    millimetersToPoints(image.bounds.y),
+    millimetersToPoints(image.bounds.width),
+    millimetersToPoints(image.bounds.height),
+    null,
+  );
+  doc.clip();
+  doc.discardPath();
+
+  for (const polygon of image.clip) {
+    const [start, ...rest] = pathInPoints(polygon);
+
+    doc.moveTo(start[0], start[1]);
+
+    for (const [x, y] of rest) {
+      doc.lineTo(x, y);
+    }
+
+    doc.close();
+  }
+
+  doc.clip();
+  doc.discardPath();
+
+  if (image.mirrored) {
+    const axis = millimetersToPoints(image.x + image.width / 2);
+
+    doc.setCurrentTransformationMatrix(doc.Matrix(-1, 0, 0, 1, 2 * axis, 0));
+  }
+
+  doc.addImage(
+    image.image.bytes,
+    image.image.format,
+    millimetersToPoints(image.x),
+    millimetersToPoints(image.y),
+    millimetersToPoints(image.width),
+    millimetersToPoints(image.height),
+    alias,
+  );
+
+  doc.restoreGraphicsState();
 }
 
 function drawText(doc: jsPDF, text: PageText): void {

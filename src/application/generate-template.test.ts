@@ -39,11 +39,13 @@ describe("Generate template", () => {
   it("should place the source image around the silhouette", () => {
     // La elipse deja margen transparente alrededor, así que la imagen empieza
     // antes que la silueta —en negativo— y termina después.
-    const { imagePlacement, template } = generateTemplate({
+    const { template } = generateTemplate({
       mask: ellipse,
       dimensions,
       depth: 200,
     });
+
+    const imagePlacement = template.referenceImage!;
 
     expect(imagePlacement.x).toBeLessThan(0);
     expect(imagePlacement.y).toBeLessThan(0);
@@ -56,11 +58,13 @@ describe("Generate template", () => {
   });
 
   it("should scale the image evenly in both directions", () => {
-    const { imagePlacement } = generateTemplate({
+    const { template } = generateTemplate({
       mask: ellipse,
       dimensions,
       depth: 200,
     });
+
+    const imagePlacement = template.referenceImage!;
 
     // La silueta se escala sin deformar; si la imagen no, la figura dibujada
     // dejaría de caer dentro del contorno que se recorta.

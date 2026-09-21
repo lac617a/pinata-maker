@@ -8,13 +8,17 @@ import {
 } from "@/modules/geometry/bounding-box";
 import type { Polygon } from "@/modules/geometry/polygon";
 import { templateGeometryBounds } from "@/modules/geometry/template-geometry";
-import type { ImagePlacement } from "@/modules/image-processing/contour-to-geometry";
 import {
   createPrintLayout,
   type PrintConfiguration,
   type PrintLayout,
 } from "@/modules/printing/print-layout";
-import type { Template, TemplatePiece } from "@/modules/templates/template";
+import {
+  referenceImageOnFace,
+  type ReferenceImagePlacement,
+  type Template,
+  type TemplatePiece,
+} from "@/modules/templates/template";
 import { formatMillimeters } from "@/presentation/client/format";
 
 /**
@@ -30,12 +34,10 @@ export function TemplatePreview({
   template,
   print,
   imageUrl,
-  imagePlacement,
 }: {
   template: Template;
   print: PrintConfiguration;
   imageUrl: string | null;
-  imagePlacement: ImagePlacement | null;
 }) {
   const pieces = template.pieces.map((piece) => ({
     piece,
@@ -45,9 +47,6 @@ export function TemplatePreview({
   const faces = pieces.filter(({ piece }) => piece.role !== "SIDE");
   const sides = pieces.filter(({ piece }) => piece.role === "SIDE");
 
-  const front = template.pieces.find((piece) => piece.role === "FRONT");
-  const faceWidth = front ? templateGeometryBounds(front.geometry).maxX : 0;
-
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -56,17 +55,7 @@ export function TemplatePreview({
             key={piece.id}
             piece={piece}
             layout={layout}
-            image={
-              imageUrl && imagePlacement
-                ? {
-                    url: imageUrl,
-                    placement: imagePlacement,
-                    // La espalda es el reflejo del frente dentro de su propio
-                    // ancho: x → ancho − x. Ver templates/perimeter-extrusion.
-                    mirrorWidth: piece.role === "BACK" ? faceWidth : null,
-                  }
-                : null
-            }
+            image={imageOn(template, piece, imageUrl)}
             className="h-80"
           />
         ))}
@@ -98,10 +87,21 @@ export function TemplatePreview({
 
 type PieceImage = {
   readonly url: string;
-  readonly placement: ImagePlacement;
-  /** Ancho de la cara, cuando la imagen debe dibujarse reflejada. */
-  readonly mirrorWidth: number | null;
+  readonly placement: ReferenceImagePlacement;
+  /** La espalda lleva la imagen volteada, no solo desplazada. */
+  readonly mirrored: boolean;
 };
+
+/** La misma regla que usa el PDF: `referenceImageOnFace` del dominio. */
+function imageOn(
+  template: Template,
+  piece: TemplatePiece,
+  url: string | null,
+): PieceImage | null {
+  const onFace = url ? referenceImageOnFace(template, piece) : null;
+
+  return url && onFace ? { url, ...onFace } : null;
+}
 
 function PieceCard({
   piece,
@@ -184,8 +184,10 @@ function PieceCard({
           <g clipPath={`url(#${clipId})`}>
             <g
               transform={
-                image.mirrorWidth !== null
-                  ? `translate(${image.mirrorWidth} 0) scale(-1 1)`
+                image.mirrored
+                  ? // Voltea la imagen sobre su propio eje vertical: el
+                    // rectángulo ya viene reflejado por el dominio.
+                    `translate(${2 * image.placement.x + image.placement.width} 0) scale(-1 1)`
                   : undefined
               }
             >

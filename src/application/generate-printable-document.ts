@@ -1,8 +1,10 @@
 import type {
+  EmbeddedImage,
   PrintableDocument,
   PrintDocument,
   PrintRenderer,
   PrintSection,
+  SectionArtwork,
 } from "@/modules/pdf-generation/print-renderer";
 import type {
   PaperFormat,
@@ -13,10 +15,21 @@ import {
   DEFAULT_PRINT_CONFIGURATION,
   type PrintConfiguration,
 } from "@/modules/printing/print-layout";
-import type { Template } from "@/modules/templates/template";
+import {
+  referenceImageOnFace,
+  type Template,
+  type TemplatePiece,
+} from "@/modules/templates/template";
 
 export type GeneratePrintableDocumentInput = {
   readonly template: Template;
+  /**
+   * La imagen de origen, para dibujarla dentro del frente y la espalda.
+   *
+   * Solo se usa si la plantilla dice dónde va (`referenceImage`). Sin ella el
+   * documento sale con los contornos, igual que antes.
+   */
+  readonly referenceImage?: EmbeddedImage;
   /** La implementación concreta la decide quien llama, no este caso de uso. */
   readonly renderer: PrintRenderer;
   readonly print?: PrintConfiguration;
@@ -42,6 +55,7 @@ export async function generatePrintableDocument(
   const sections: PrintSection[] = input.template.pieces.map((piece) => ({
     label: piece.id,
     layout: createPrintLayout(piece.geometry, configuration),
+    ...artworkFor(input, piece),
   }));
 
   const document: PrintDocument = {
@@ -83,6 +97,36 @@ export function countPrintableSheets(
 
   // La hoja de instrucciones cuenta: también se imprime.
   return templateSheets + 1;
+}
+
+/**
+ * La figura dentro de una cara, con la misma regla que la vista previa.
+ *
+ * Dónde va y si va volteada lo decide `referenceImageOnFace`, del dominio.
+ * Aquí solo se añade con qué se recorta: el contorno de la propia pieza.
+ */
+function artworkFor(
+  input: GeneratePrintableDocumentInput,
+  piece: TemplatePiece,
+): { artwork?: SectionArtwork } {
+  if (!input.referenceImage) {
+    return {};
+  }
+
+  const onFace = referenceImageOnFace(input.template, piece);
+
+  if (!onFace) {
+    return {};
+  }
+
+  return {
+    artwork: {
+      image: input.referenceImage,
+      placement: onFace.placement,
+      mirrored: onFace.mirrored,
+      clip: piece.geometry.outerContours,
+    },
+  };
 }
 
 function describePaper(
