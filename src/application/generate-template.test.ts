@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { createDimensions } from "../modules/geometry/dimensions";
-import { UnsupportedSilhouetteError } from "../modules/templates/errors";
-import { createAlphaMask, type AlphaMask } from "../modules/image-processing/mask";
-import { AmbiguousSubjectError } from "../modules/image-processing/errors";
-import { uniformMargins } from "../modules/printing/margins";
-import { createPrintLayout } from "../modules/printing/print-layout";
-import { templatePiecesWithRole } from "../modules/templates/template";
+import { createDimensions } from "@/modules/geometry/dimensions";
+import { AmbiguousSubjectError } from "@/modules/image-processing/errors";
+import {
+  type AlphaMask,
+  createAlphaMask,
+} from "@/modules/image-processing/mask";
+import { uniformMargins } from "@/modules/printing/margins";
+import { createPrintLayout } from "@/modules/printing/print-layout";
+import { UnsupportedSilhouetteError } from "@/modules/templates/errors";
+import { templatePiecesWithRole } from "@/modules/templates/template";
+
 import { generateTemplate } from "./generate-template";
 
 const WIDTH = 400;
@@ -68,9 +72,9 @@ describe("Generate template", () => {
     const onA4 = generateTemplate({ mask: ellipse, dimensions, depth: 200 });
 
     // Un A3 cabe más tira por hoja, así que hacen falta menos piezas.
-    expect(
-      templatePiecesWithRole(onA3.template, "SIDE").length,
-    ).toBeLessThan(templatePiecesWithRole(onA4.template, "SIDE").length);
+    expect(templatePiecesWithRole(onA3.template, "SIDE").length).toBeLessThan(
+      templatePiecesWithRole(onA4.template, "SIDE").length,
+    );
   });
 
   it("should report what the template will cost in paper", () => {
@@ -106,8 +110,7 @@ describe("Generate template", () => {
   it("should warn when it left other figures out", () => {
     const withSpeck = maskOf(
       (x, y) =>
-        Math.hypot((x - 200) / 150, (y - 250) / 200) <= 1 ||
-        (x < 5 && y < 5),
+        Math.hypot((x - 200) / 150, (y - 250) / 200) <= 1 || (x < 5 && y < 5),
     );
 
     const result = generateTemplate({
@@ -149,8 +152,8 @@ describe("Generate template", () => {
   });
 
   it("should produce the same template from the same mask", () => {
-    expect(
+    expect(generateTemplate({ mask: ellipse, dimensions, depth: 200 })).toEqual(
       generateTemplate({ mask: ellipse, dimensions, depth: 200 }),
-    ).toEqual(generateTemplate({ mask: ellipse, dimensions, depth: 200 }));
+    );
   });
 });

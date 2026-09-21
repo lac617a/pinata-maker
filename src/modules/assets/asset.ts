@@ -1,4 +1,5 @@
-import type { ProjectId } from "../projects/project";
+import type { ProjectId } from "@/modules/projects/project";
+
 import { InvalidAssetError } from "./errors";
 
 export type AssetId = string;

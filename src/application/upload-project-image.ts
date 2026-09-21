@@ -1,16 +1,13 @@
+import { type Asset, type AssetId, createAsset } from "@/modules/assets/asset";
+import type { AssetRepository } from "@/modules/assets/asset-repository";
+import { AssetNotFoundError } from "@/modules/assets/errors";
+import { validateImageUpload } from "@/modules/image-processing/image-validation";
+import type { ProjectId, UserId } from "@/modules/projects/project";
 import {
-  createAsset,
-  type Asset,
-  type AssetId,
-} from "../modules/assets/asset";
-import type { AssetRepository } from "../modules/assets/asset-repository";
-import {
-  SIGNED_URL_TTL_SECONDS,
   type ObjectStorage,
-} from "../modules/storage/object-storage";
-import { AssetNotFoundError } from "../modules/assets/errors";
-import { validateImageUpload } from "../modules/image-processing/image-validation";
-import type { ProjectId, UserId } from "../modules/projects/project";
+  SIGNED_URL_TTL_SECONDS,
+} from "@/modules/storage/object-storage";
+
 import { openProject, type ProjectServices } from "./manage-projects";
 
 export type AssetServices = ProjectServices & {

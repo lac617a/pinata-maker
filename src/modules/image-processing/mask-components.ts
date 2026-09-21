@@ -1,5 +1,5 @@
 import { AmbiguousSubjectError, EmptyMaskError } from "./errors";
-import { createBinaryMask, maskIndex, type BinaryMask } from "./mask";
+import { type BinaryMask, createBinaryMask, maskIndex } from "./mask";
 import type { PixelBounds } from "./pixel-contour";
 
 /**

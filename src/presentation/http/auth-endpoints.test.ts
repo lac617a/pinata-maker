@@ -3,18 +3,15 @@ import { describe, expect, it } from "vitest";
 import type {
   AuthGateway,
   SignUpOutcome,
-} from "../../modules/accounts/auth-gateway";
-import type { Credentials } from "../../modules/accounts/credentials";
+} from "@/modules/accounts/auth-gateway";
+import type { Credentials } from "@/modules/accounts/credentials";
 import {
   AuthenticationFailedError,
   AuthServiceError,
-} from "../../modules/accounts/errors";
-import type { UserId } from "../../modules/projects/project";
-import {
-  handleSignIn,
-  handleSignOut,
-  handleSignUp,
-} from "./auth-endpoints";
+} from "@/modules/accounts/errors";
+import type { UserId } from "@/modules/projects/project";
+
+import { handleSignIn, handleSignOut, handleSignUp } from "./auth-endpoints";
 
 /**
  * Servicio de autenticación de mentira.

@@ -1,5 +1,6 @@
-import type { Dimensions } from "../geometry/dimensions";
-import type { Millimeters } from "../geometry/units";
+import type { Dimensions } from "@/modules/geometry/dimensions";
+import type { Millimeters } from "@/modules/geometry/units";
+
 import { InvalidPaperFormatError } from "./errors";
 
 /**

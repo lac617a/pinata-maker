@@ -3,10 +3,11 @@ import {
   deleteProject,
   listProjects,
   openProject,
-  renameUserProject,
   type ProjectServices,
-} from "../../application/manage-projects";
-import type { Project, ProjectId, UserId } from "../../modules/projects/project";
+  renameUserProject,
+} from "@/application/manage-projects";
+import type { Project, ProjectId, UserId } from "@/modules/projects/project";
+
 import {
   jsonResponse,
   toErrorResponse,

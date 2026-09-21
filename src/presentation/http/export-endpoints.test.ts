@@ -1,24 +1,25 @@
 import { describe, expect, it } from "vitest";
 
-import type { ExportServices } from "../../application/export-printable-document";
-import { createProject } from "../../application/manage-projects";
-import { publishTemplateVersion } from "../../application/manage-template-versions";
-import { InMemoryExportRepository } from "../../modules/exports/in-memory-export-repository";
+import type { ExportServices } from "@/application/export-printable-document";
+import { createProject } from "@/application/manage-projects";
+import { publishTemplateVersion } from "@/application/manage-template-versions";
+import { InMemoryExportRepository } from "@/modules/exports/in-memory-export-repository";
 import type {
   PrintableDocument,
   PrintDocument,
   PrintRenderer,
   PrintRenderOptions,
-} from "../../modules/pdf-generation/print-renderer";
+} from "@/modules/pdf-generation/print-renderer";
 import {
   documentPageCount,
   PDF_CONTENT_TYPE,
   sanitizePdfFileName,
-} from "../../modules/pdf-generation/print-renderer";
-import { InMemoryProjectRepository } from "../../modules/projects/in-memory-project-repository";
-import { InMemoryObjectStorage } from "../../modules/storage/in-memory-object-storage";
-import { InMemoryTemplateVersionRepository } from "../../modules/templates/in-memory-template-version-repository";
-import { squareTemplate } from "../../modules/templates/template-version-repository.contract";
+} from "@/modules/pdf-generation/print-renderer";
+import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
+import { InMemoryObjectStorage } from "@/modules/storage/in-memory-object-storage";
+import { InMemoryTemplateVersionRepository } from "@/modules/templates/in-memory-template-version-repository";
+import { squareTemplate } from "@/modules/templates/template-version-repository.contract";
+
 import {
   handleDeleteExport,
   handleDownloadExport,
@@ -58,7 +59,8 @@ function services(): ExportServices & { exportStorage: InMemoryObjectStorage } {
     renderer: new FakeRenderer(),
     now: () => new Date(Date.UTC(2026, 0, 1, 10, ++clock)),
     newId: () => `pppppppp-0000-4000-8000-00000000000${++sequence}`,
-    newTemplateVersionId: () => `tttttttt-0000-4000-8000-00000000000${++sequence}`,
+    newTemplateVersionId: () =>
+      `tttttttt-0000-4000-8000-00000000000${++sequence}`,
     newExportId: () => `eeeeeeee-0000-4000-8000-00000000000${++sequence}`,
   };
 }

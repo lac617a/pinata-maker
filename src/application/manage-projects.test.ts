@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { InvalidProjectTransitionError } from "../modules/projects/errors";
-import { ProjectNotFoundError } from "../modules/projects/errors";
-import { InMemoryProjectRepository } from "../modules/projects/in-memory-project-repository";
+import { InvalidProjectTransitionError } from "@/modules/projects/errors";
+import { ProjectNotFoundError } from "@/modules/projects/errors";
+import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
+
 import {
   advanceProject,
   createProject,
   deleteProject,
   listProjects,
   openProject,
-  renameUserProject,
   type ProjectServices,
+  renameUserProject,
 } from "./manage-projects";
 
 const owner = "11111111-1111-1111-1111-111111111111";
@@ -59,9 +60,9 @@ describe("Manage projects", () => {
       name: "Elefante",
     });
 
-    await expect(
-      openProject(context, project.id, stranger),
-    ).rejects.toThrow(ProjectNotFoundError);
+    await expect(openProject(context, project.id, stranger)).rejects.toThrow(
+      ProjectNotFoundError,
+    );
   });
 
   it("should report a missing project the same way as a foreign one", async () => {
@@ -158,9 +159,9 @@ describe("Manage projects", () => {
       name: "Elefante",
     });
 
-    await expect(
-      deleteProject(context, project.id, stranger),
-    ).rejects.toThrow(ProjectNotFoundError);
+    await expect(deleteProject(context, project.id, stranger)).rejects.toThrow(
+      ProjectNotFoundError,
+    );
     expect(await listProjects(context, owner)).toHaveLength(1);
   });
 });

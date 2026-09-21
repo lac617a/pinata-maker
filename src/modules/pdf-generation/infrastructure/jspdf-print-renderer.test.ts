@@ -1,22 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import { createPoint } from "../../geometry/point";
-import { createPolygon } from "../../geometry/polygon";
-import { createTemplateGeometry } from "../../geometry/template-geometry";
-import { DEFAULT_CALIBRATION_LENGTH_MM } from "../../printing/calibration";
-import { DEFAULT_MARGIN_MM, uniformMargins } from "../../printing/margins";
+import { createPoint } from "@/modules/geometry/point";
+import { createPolygon } from "@/modules/geometry/polygon";
+import { createTemplateGeometry } from "@/modules/geometry/template-geometry";
+import {
+  PdfResourceLimitError,
+  UnsupportedPdfFeatureError,
+} from "@/modules/pdf-generation/errors";
+import { millimetersToPoints } from "@/modules/pdf-generation/pdf-units";
+import type { PrintDocument } from "@/modules/pdf-generation/print-renderer";
+import { DEFAULT_CALIBRATION_LENGTH_MM } from "@/modules/printing/calibration";
+import { DEFAULT_MARGIN_MM, uniformMargins } from "@/modules/printing/margins";
 import type {
   PaperFormat,
   PaperOrientation,
-} from "../../printing/paper-format";
+} from "@/modules/printing/paper-format";
 import {
   createPrintLayout,
   type PrintLayout,
-} from "../../printing/print-layout";
-import { DEFAULT_OVERLAP_MM } from "../../printing/tiling";
-import { PdfResourceLimitError, UnsupportedPdfFeatureError } from "../errors";
-import { millimetersToPoints } from "../pdf-units";
-import type { PrintDocument } from "../print-renderer";
+} from "@/modules/printing/print-layout";
+import { DEFAULT_OVERLAP_MM } from "@/modules/printing/tiling";
+
 import { JsPdfPrintRenderer } from "./jspdf-print-renderer";
 
 /** Silueta rectangular de 800 × 1000 mm, el caso de referencia del PRD. */
@@ -139,9 +143,7 @@ describe("jsPDF print renderer", () => {
       { creationDate },
     );
 
-    expect(document.pageCount).toBe(
-      front.pages.length + side.pages.length * 2,
-    );
+    expect(document.pageCount).toBe(front.pages.length + side.pages.length * 2);
   });
 
   it("should name the piece each sheet belongs to", async () => {

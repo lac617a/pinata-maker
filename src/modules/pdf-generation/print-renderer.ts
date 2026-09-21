@@ -1,6 +1,7 @@
-import type { Scale } from "../geometry/scale";
-import type { Millimeters } from "../geometry/units";
-import type { PrintLayout } from "../printing/print-layout";
+import type { Scale } from "@/modules/geometry/scale";
+import type { Millimeters } from "@/modules/geometry/units";
+import type { PrintLayout } from "@/modules/printing/print-layout";
+
 import { PdfResourceLimitError } from "./errors";
 
 /**

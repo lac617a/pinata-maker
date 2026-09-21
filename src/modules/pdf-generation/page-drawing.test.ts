@@ -1,15 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { createPoint } from "../geometry/point";
-import { createPolygon } from "../geometry/polygon";
-import { createTemplateGeometry } from "../geometry/template-geometry";
-import { DEFAULT_MARGIN_MM } from "../printing/margins";
-import { createPrintLayout, type PrintPage } from "../printing/print-layout";
+import { createPoint } from "@/modules/geometry/point";
+import { createPolygon } from "@/modules/geometry/polygon";
+import { createTemplateGeometry } from "@/modules/geometry/template-geometry";
+import { DEFAULT_MARGIN_MM } from "@/modules/printing/margins";
+import {
+  createPrintLayout,
+  type PrintPage,
+} from "@/modules/printing/print-layout";
+
 import {
   ALIGNMENT_ARM_MM,
   describePage,
-  PRINT_SCALE_WARNING,
   type PageStroke,
+  PRINT_SCALE_WARNING,
 } from "./page-drawing";
 
 /** Silueta rectangular de 800 × 1000 mm, el caso de referencia del PRD. */
@@ -27,7 +31,10 @@ const largeTemplate = createTemplateGeometry({
   ],
   foldLines: [
     {
-      geometry: createPolygon([createPoint(0, 500), createPoint(800, 500)], false),
+      geometry: createPolygon(
+        [createPoint(0, 500), createPoint(800, 500)],
+        false,
+      ),
     },
   ],
 });
@@ -35,8 +42,7 @@ const largeTemplate = createTemplateGeometry({
 const layout = createPrintLayout(largeTemplate);
 
 function strokesOf(page: PrintPage, role: PageStroke["role"]): PageStroke[] {
-  return describePage(page)
-    .strokes.filter((stroke) => stroke.role === role);
+  return describePage(page).strokes.filter((stroke) => stroke.role === role);
 }
 
 describe("Page drawing", () => {
@@ -171,12 +177,12 @@ describe("Page drawing", () => {
     for (const page of layout.pages) {
       const texts = describePage(page).texts;
 
-      expect(
-        texts.find((text) => text.role === "PAGE_LABEL")?.text,
-      ).toBe(`${page.id} (${page.pageNumber} / ${page.totalPages})`);
-      expect(
-        texts.find((text) => text.role === "PRINT_WARNING")?.text,
-      ).toBe(PRINT_SCALE_WARNING);
+      expect(texts.find((text) => text.role === "PAGE_LABEL")?.text).toBe(
+        `${page.id} (${page.pageNumber} / ${page.totalPages})`,
+      );
+      expect(texts.find((text) => text.role === "PRINT_WARNING")?.text).toBe(
+        PRINT_SCALE_WARNING,
+      );
     }
   });
 

@@ -3,9 +3,9 @@ import { cookies } from "next/headers";
 import {
   createRequestClient,
   readCurrentUserId,
-} from "../../infrastructure/supabase/request-client";
-import { SupabaseProjectRepository } from "../../modules/projects/infrastructure/supabase-project-repository";
-import type { ProjectRequestContext } from "../http/project-endpoints";
+} from "@/infrastructure/supabase/request-client";
+import { SupabaseProjectRepository } from "@/modules/projects/infrastructure/supabase-project-repository";
+import type { ProjectRequestContext } from "@/presentation/http/project-endpoints";
 
 /**
  * Monta lo que necesita un endpoint de proyectos para esta petición.

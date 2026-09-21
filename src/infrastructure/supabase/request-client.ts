@@ -1,7 +1,8 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { type CookieOptions, createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { UserId } from "../../modules/projects/project";
+import type { UserId } from "@/modules/projects/project";
+
 import {
   readSupabaseConfiguration,
   type SupabaseConfiguration,

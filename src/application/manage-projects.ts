@@ -1,14 +1,14 @@
+import { ProjectNotFoundError } from "@/modules/projects/errors";
 import {
   createProject as buildProject,
-  renameProject,
-  transitionProject,
   type Project,
   type ProjectId,
   type ProjectStatus,
+  renameProject,
+  transitionProject,
   type UserId,
-} from "../modules/projects/project";
-import { ProjectNotFoundError } from "../modules/projects/errors";
-import type { ProjectRepository } from "../modules/projects/project-repository";
+} from "@/modules/projects/project";
+import type { ProjectRepository } from "@/modules/projects/project-repository";
 
 /**
  * Lo que el caso de uso necesita del mundo exterior.

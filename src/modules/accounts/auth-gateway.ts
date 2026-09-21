@@ -1,4 +1,5 @@
-import type { UserId } from "../projects/project";
+import type { UserId } from "@/modules/projects/project";
+
 import type { Credentials } from "./credentials";
 
 /**

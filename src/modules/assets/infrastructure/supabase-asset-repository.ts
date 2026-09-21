@@ -1,9 +1,9 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
-import type { ProjectId, UserId } from "../../projects/project";
-import type { Asset, AssetId, AssetKind } from "../asset";
-import type { AssetRepository } from "../asset-repository";
-import { AssetStorageError } from "../errors";
+import type { Asset, AssetId, AssetKind } from "@/modules/assets/asset";
+import type { AssetRepository } from "@/modules/assets/asset-repository";
+import { AssetStorageError } from "@/modules/assets/errors";
+import type { ProjectId, UserId } from "@/modules/projects/project";
 
 /** Forma de la tabla, no la del dominio. Ver docs/storage.md §29 y §31. */
 type AssetRow = {
@@ -47,10 +47,7 @@ export class SupabaseAssetRepository implements AssetRepository {
     return data ? toAsset(data) : null;
   }
 
-  async listByProject(
-    projectId: ProjectId,
-    _userId: UserId,
-  ): Promise<Asset[]> {
+  async listByProject(projectId: ProjectId, _userId: UserId): Promise<Asset[]> {
     const { data, error } = await this.client
       .from(TABLE)
       .select(COLUMNS)

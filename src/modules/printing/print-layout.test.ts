@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { createPoint } from "../geometry/point";
-import { createPolygon } from "../geometry/polygon";
+import { createPoint } from "@/modules/geometry/point";
+import { createPolygon } from "@/modules/geometry/polygon";
 import {
   createTemplateGeometry,
   isTemplateGeometryEmpty,
-} from "../geometry/template-geometry";
+} from "@/modules/geometry/template-geometry";
+
 import { DEFAULT_MARGIN_MM } from "./margins";
 import { createPrintLayout, PRINT_SCALE_ACTUAL_SIZE } from "./print-layout";
 
@@ -61,9 +62,7 @@ describe("Print layout", () => {
     expect(layout.pages[0].id).toBe("A1");
     expect(layout.pages[0].pageNumber).toBe(1);
     expect(layout.pages[19].id).toBe("D5");
-    expect(
-      layout.pages.every((page) => page.totalPages === 20),
-    ).toBe(true);
+    expect(layout.pages.every((page) => page.totalPages === 20)).toBe(true);
   });
 
   it("should give each page the part of the template it must print", () => {
@@ -96,9 +95,12 @@ describe("Print layout", () => {
     const firstPage = layout.pages[0];
 
     expect(firstPage.alignmentMarks).toHaveLength(4);
-    expect(
-      firstPage.alignmentMarks.map((mark) => mark.connectsTo),
-    ).toEqual(["A2", "A2", "B1", "B1"]);
+    expect(firstPage.alignmentMarks.map((mark) => mark.connectsTo)).toEqual([
+      "A2",
+      "A2",
+      "B1",
+      "B1",
+    ]);
   });
 
   it("should not add alignment marks to a single-page document", () => {

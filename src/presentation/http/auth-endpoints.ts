@@ -1,5 +1,6 @@
-import type { AuthGateway } from "../../modules/accounts/auth-gateway";
-import { createCredentials } from "../../modules/accounts/credentials";
+import type { AuthGateway } from "@/modules/accounts/auth-gateway";
+import { createCredentials } from "@/modules/accounts/credentials";
+
 import { jsonResponse, toErrorResponse } from "./error-response";
 
 export type AuthRequestContext = {

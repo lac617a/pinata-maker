@@ -1,5 +1,9 @@
-import type { Millimeters } from "../geometry/units";
-import { curvatureRadiusAt, type SilhouetteProfile } from "./silhouette-profile";
+import type { Millimeters } from "@/modules/geometry/units";
+
+import {
+  curvatureRadiusAt,
+  type SilhouetteProfile,
+} from "./silhouette-profile";
 
 /**
  * Configuración física de las pestañas.

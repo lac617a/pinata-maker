@@ -1,12 +1,13 @@
-import type { BoundingBox } from "../geometry/bounding-box";
-import { clipPolygonToRectangle } from "../geometry/clip";
-import { translatePolygon, type Polygon } from "../geometry/polygon";
+import type { BoundingBox } from "@/modules/geometry/bounding-box";
+import { clipPolygonToRectangle } from "@/modules/geometry/clip";
+import type { Vector } from "@/modules/geometry/point";
+import { type Polygon, translatePolygon } from "@/modules/geometry/polygon";
 import type {
   CutLine,
   FoldLine,
   TemplateGeometry,
-} from "../geometry/template-geometry";
-import type { Vector } from "../geometry/point";
+} from "@/modules/geometry/template-geometry";
+
 import type { PrintPageRegion } from "./tiling";
 
 /**

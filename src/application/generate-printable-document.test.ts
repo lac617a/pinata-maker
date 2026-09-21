@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createDimensions } from "../modules/geometry/dimensions";
-import { JsPdfPrintRenderer } from "../modules/pdf-generation/infrastructure/jspdf-print-renderer";
-import { createAlphaMask } from "../modules/image-processing/mask";
+import { createDimensions } from "@/modules/geometry/dimensions";
+import { createAlphaMask } from "@/modules/image-processing/mask";
+import { JsPdfPrintRenderer } from "@/modules/pdf-generation/infrastructure/jspdf-print-renderer";
+
 import {
   countPrintableSheets,
   generatePrintableDocument,

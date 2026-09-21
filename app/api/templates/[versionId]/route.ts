@@ -1,5 +1,5 @@
-import { handleGetTemplateVersion } from "../../../../src/presentation/http/template-endpoints";
-import { templateRequestContext } from "../../../../src/presentation/next/template-request-context";
+import { handleGetTemplateVersion } from "@/presentation/http/template-endpoints";
+import { templateRequestContext } from "@/presentation/next/template-request-context";
 
 type RouteParams = { params: Promise<{ versionId: string }> };
 

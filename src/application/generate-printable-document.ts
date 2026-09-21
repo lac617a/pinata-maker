@@ -3,17 +3,17 @@ import type {
   PrintDocument,
   PrintRenderer,
   PrintSection,
-} from "../modules/pdf-generation/print-renderer";
+} from "@/modules/pdf-generation/print-renderer";
 import type {
   PaperFormat,
   PaperOrientation,
-} from "../modules/printing/paper-format";
+} from "@/modules/printing/paper-format";
 import {
   createPrintLayout,
   DEFAULT_PRINT_CONFIGURATION,
   type PrintConfiguration,
-} from "../modules/printing/print-layout";
-import type { Template } from "../modules/templates/template";
+} from "@/modules/printing/print-layout";
+import type { Template } from "@/modules/templates/template";
 
 export type GeneratePrintableDocumentInput = {
   readonly template: Template;
@@ -76,7 +76,8 @@ export function countPrintableSheets(
   print: PrintConfiguration = DEFAULT_PRINT_CONFIGURATION,
 ): number {
   const templateSheets = template.pieces.reduce(
-    (total, piece) => total + createPrintLayout(piece.geometry, print).pages.length,
+    (total, piece) =>
+      total + createPrintLayout(piece.geometry, print).pages.length,
     0,
   );
 

@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createProject, type ProjectServices } from "../../application/manage-projects";
-import { InMemoryProjectRepository } from "../../modules/projects/in-memory-project-repository";
+import {
+  createProject,
+  type ProjectServices,
+} from "@/application/manage-projects";
+import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
+
 import {
   handleCreateProject,
   handleDeleteProject,
@@ -112,9 +116,9 @@ describe("Project endpoints", () => {
       await handleListProjects(context(owner, shared))
     ).json();
 
-    expect(body.projects.map((project: { name: string }) => project.name)).toEqual(
-      ["Mío"],
-    );
+    expect(
+      body.projects.map((project: { name: string }) => project.name),
+    ).toEqual(["Mío"]);
   });
 
   it("should answer 404 for a project of somebody else", async () => {
@@ -181,9 +185,9 @@ describe("Project endpoints", () => {
     );
 
     expect(response.status).toBe(404);
-    expect(
-      (await shared.repository.findById(project.id, owner))?.name,
-    ).toBe("Elefante");
+    expect((await shared.repository.findById(project.id, owner))?.name).toBe(
+      "Elefante",
+    );
   });
 
   it("should delete a project of the user", async () => {

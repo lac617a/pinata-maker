@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { createProject } from "../../application/manage-projects";
-import type { TemplateVersionServices } from "../../application/manage-template-versions";
-import { InMemoryProjectRepository } from "../../modules/projects/in-memory-project-repository";
-import { InMemoryTemplateVersionRepository } from "../../modules/templates/in-memory-template-version-repository";
+import { createProject } from "@/application/manage-projects";
+import type { TemplateVersionServices } from "@/application/manage-template-versions";
+import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
+import { InMemoryTemplateVersionRepository } from "@/modules/templates/in-memory-template-version-repository";
 import {
   serializeTemplate,
   TEMPLATE_DEFINITION_LIMITS,
-} from "../../modules/templates/template-definition";
-import { squareTemplate } from "../../modules/templates/template-version-repository.contract";
+} from "@/modules/templates/template-definition";
+import { squareTemplate } from "@/modules/templates/template-version-repository.contract";
+
 import {
   handleGetTemplateVersion,
   handleListTemplateVersions,
@@ -29,7 +30,8 @@ function services(): TemplateVersionServices {
     templateVersions: new InMemoryTemplateVersionRepository(projects),
     now: () => new Date(Date.UTC(2026, 0, 1, 10, ++clock)),
     newId: () => `pppppppp-0000-4000-8000-00000000000${++sequence}`,
-    newTemplateVersionId: () => `tttttttt-0000-4000-8000-00000000000${++sequence}`,
+    newTemplateVersionId: () =>
+      `tttttttt-0000-4000-8000-00000000000${++sequence}`,
   };
 }
 
@@ -131,9 +133,9 @@ describe("Template version endpoints", () => {
 
     const body = await response.json();
 
-    expect(body.versions.map((v: { versionNumber: number }) => v.versionNumber)).toEqual([
-      2, 1,
-    ]);
+    expect(
+      body.versions.map((v: { versionNumber: number }) => v.versionNumber),
+    ).toEqual([2, 1]);
     expect(body.versions[0]).not.toHaveProperty("template");
   });
 
@@ -243,10 +245,14 @@ describe("Template version endpoints", () => {
     const shared = services();
 
     const responses = await Promise.all([
-      handlePublishTemplateVersion(publishRequest({ template: template() }), "x", {
-        services: shared,
-        userId: null,
-      }),
+      handlePublishTemplateVersion(
+        publishRequest({ template: template() }),
+        "x",
+        {
+          services: shared,
+          userId: null,
+        },
+      ),
       handleListTemplateVersions("x", { services: shared, userId: null }),
       handleGetTemplateVersion("x", { services: shared, userId: null }),
     ]);
@@ -293,10 +299,13 @@ describe("Template version endpoints", () => {
       userId: stranger,
     });
 
-    const missing = await handleGetTemplateVersion("tttttttt-0000-4000-8000-0000000000ff", {
-      services: shared,
-      userId: stranger,
-    });
+    const missing = await handleGetTemplateVersion(
+      "tttttttt-0000-4000-8000-0000000000ff",
+      {
+        services: shared,
+        userId: stranger,
+      },
+    );
 
     expect(foreign.status).toBe(404);
     expect(await foreign.json()).toEqual(await missing.json());

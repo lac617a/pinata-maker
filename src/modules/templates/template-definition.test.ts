@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { createPolygon } from "../geometry/polygon";
-import { createTemplateGeometry } from "../geometry/template-geometry";
+import { createPolygon } from "@/modules/geometry/polygon";
+import { createTemplateGeometry } from "@/modules/geometry/template-geometry";
+
 import { InvalidTemplateDefinitionError } from "./errors";
-import { TEMPLATE_DERIVATION_VERSION, type Template } from "./template";
+import { type Template, TEMPLATE_DERIVATION_VERSION } from "./template";
 import {
   deserializeTemplate,
   serializeTemplate,
@@ -76,7 +77,9 @@ function template(): Template {
 
 /** Lo que de verdad ocurre al guardar: el documento pasa por JSON. */
 function roundTrip(value: Template): Template {
-  return deserializeTemplate(JSON.parse(JSON.stringify(serializeTemplate(value))));
+  return deserializeTemplate(
+    JSON.parse(JSON.stringify(serializeTemplate(value))),
+  );
 }
 
 describe("Template definition", () => {
@@ -198,7 +201,14 @@ describe("Template definition", () => {
           geometry: {
             ...front.geometry,
             outerContours: [
-              { closed: true, points: [[0, 0], [10, 0], [10, 10, 10]] },
+              {
+                closed: true,
+                points: [
+                  [0, 0],
+                  [10, 0],
+                  [10, 10, 10],
+                ],
+              },
             ],
           },
         },
@@ -262,7 +272,10 @@ describe("Template definition", () => {
       pieces: [
         {
           ...front,
-          geometry: { ...front.geometry, outerContours: [{ points, closed: true }] },
+          geometry: {
+            ...front.geometry,
+            outerContours: [{ points, closed: true }],
+          },
         },
         ...rest,
       ],

@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { createPoint } from "../geometry/point";
-import { createPolygon } from "../geometry/polygon";
-import { deriveAssembly, validateAssembly, type Assembly } from "./assembly";
+import { createPoint } from "@/modules/geometry/point";
+import { createPolygon } from "@/modules/geometry/polygon";
+
+import { type Assembly, deriveAssembly, validateAssembly } from "./assembly";
 import { InvalidAssemblyError } from "./errors";
 import { deriveTemplateFromSilhouette } from "./perimeter-extrusion";
-import { templatePiecesWithRole, type Template } from "./template";
+import { type Template, templatePiecesWithRole } from "./template";
 
 const square = createPolygon(
   [
@@ -17,7 +18,10 @@ const square = createPolygon(
   true,
 );
 
-const template = deriveTemplateFromSilhouette({ silhouette: square, depth: 200 });
+const template = deriveTemplateFromSilhouette({
+  silhouette: square,
+  depth: 200,
+});
 const assembly = deriveAssembly(template);
 const sides = templatePiecesWithRole(template, "SIDE").map((side) => side.id);
 

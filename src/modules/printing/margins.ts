@@ -1,5 +1,12 @@
-import { createDimensions, type Dimensions } from "../geometry/dimensions";
-import { isFiniteMillimeters, type Millimeters } from "../geometry/units";
+import {
+  createDimensions,
+  type Dimensions,
+} from "@/modules/geometry/dimensions";
+import {
+  isFiniteMillimeters,
+  type Millimeters,
+} from "@/modules/geometry/units";
+
 import { EmptyPrintableAreaError, InvalidMarginError } from "./errors";
 import type { PaperSize } from "./paper-format";
 
@@ -39,7 +46,12 @@ export function createMargins(margins: Margins): Margins {
 }
 
 export function uniformMargins(value: Millimeters): Margins {
-  return createMargins({ top: value, right: value, bottom: value, left: value });
+  return createMargins({
+    top: value,
+    right: value,
+    bottom: value,
+    left: value,
+  });
 }
 
 /**

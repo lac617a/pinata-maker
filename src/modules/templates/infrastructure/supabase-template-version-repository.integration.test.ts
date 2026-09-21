@@ -1,13 +1,21 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { readSupabaseConfiguration } from "../../../infrastructure/supabase/environment";
-import { SupabaseAuthGateway } from "../../accounts/infrastructure/supabase-auth-gateway";
-import { createProject, type Project, type UserId } from "../../projects/project";
-import { SupabaseProjectRepository } from "../../projects/infrastructure/supabase-project-repository";
-import { TemplateVersionConflictError } from "../errors";
-import { createTemplateVersion, type TemplateVersion } from "../template-version";
-import { squareTemplate } from "../template-version-repository.contract";
+import { readSupabaseConfiguration } from "@/infrastructure/supabase/environment";
+import { SupabaseAuthGateway } from "@/modules/accounts/infrastructure/supabase-auth-gateway";
+import { SupabaseProjectRepository } from "@/modules/projects/infrastructure/supabase-project-repository";
+import {
+  createProject,
+  type Project,
+  type UserId,
+} from "@/modules/projects/project";
+import { TemplateVersionConflictError } from "@/modules/templates/errors";
+import {
+  createTemplateVersion,
+  type TemplateVersion,
+} from "@/modules/templates/template-version";
+import { squareTemplate } from "@/modules/templates/template-version-repository.contract";
+
 import { SupabaseTemplateVersionRepository } from "./supabase-template-version-repository";
 
 /**

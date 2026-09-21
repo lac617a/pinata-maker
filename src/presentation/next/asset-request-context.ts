@@ -1,16 +1,16 @@
 import { cookies } from "next/headers";
 
-import { SupabaseAssetRepository } from "../../modules/assets/infrastructure/supabase-asset-repository";
-import {
-  PROJECT_ASSETS_BUCKET,
-  SupabaseObjectStorage,
-} from "../../infrastructure/supabase/supabase-object-storage";
 import {
   createRequestClient,
   readCurrentUserId,
-} from "../../infrastructure/supabase/request-client";
-import { SupabaseProjectRepository } from "../../modules/projects/infrastructure/supabase-project-repository";
-import type { AssetRequestContext } from "../http/asset-endpoints";
+} from "@/infrastructure/supabase/request-client";
+import {
+  PROJECT_ASSETS_BUCKET,
+  SupabaseObjectStorage,
+} from "@/infrastructure/supabase/supabase-object-storage";
+import { SupabaseAssetRepository } from "@/modules/assets/infrastructure/supabase-asset-repository";
+import { SupabaseProjectRepository } from "@/modules/projects/infrastructure/supabase-project-repository";
+import type { AssetRequestContext } from "@/presentation/http/asset-endpoints";
 
 export async function assetRequestContext(): Promise<AssetRequestContext> {
   const store = await cookies();

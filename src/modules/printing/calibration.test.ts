@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { createDimensions } from "../geometry/dimensions";
-import { createPoint } from "../geometry/point";
-import { createPolygon } from "../geometry/polygon";
-import { createTemplateGeometry } from "../geometry/template-geometry";
+import { createDimensions } from "@/modules/geometry/dimensions";
+import { createPoint } from "@/modules/geometry/point";
+import { createPolygon } from "@/modules/geometry/polygon";
+import { createTemplateGeometry } from "@/modules/geometry/template-geometry";
+
 import {
   CALIBRATION_BAND_HEIGHT_MM,
   placeCalibrationMark,
@@ -15,7 +16,10 @@ const emptyPage = createTemplateGeometry({});
 
 function horizontalCutLine(y: number, fromX: number, toX: number) {
   return {
-    geometry: createPolygon([createPoint(fromX, y), createPoint(toX, y)], false),
+    geometry: createPolygon(
+      [createPoint(fromX, y), createPoint(toX, y)],
+      false,
+    ),
   };
 }
 

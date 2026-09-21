@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { ProjectNotFoundError } from "../modules/projects/errors";
-import { InMemoryProjectRepository } from "../modules/projects/in-memory-project-repository";
+import { ProjectNotFoundError } from "@/modules/projects/errors";
+import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
 import {
   TemplateVersionConflictError,
   TemplateVersionNotFoundError,
-} from "../modules/templates/errors";
-import { InMemoryTemplateVersionRepository } from "../modules/templates/in-memory-template-version-repository";
-import { squareTemplate } from "../modules/templates/template-version-repository.contract";
+} from "@/modules/templates/errors";
+import { InMemoryTemplateVersionRepository } from "@/modules/templates/in-memory-template-version-repository";
+import { squareTemplate } from "@/modules/templates/template-version-repository.contract";
+
 import { createProject } from "./manage-projects";
 import {
   listTemplateVersions,
@@ -236,7 +237,11 @@ describe("Manage template versions", () => {
     const context = services();
 
     await expect(
-      openTemplateVersion(context, "bbbbbbbb-0000-4000-8000-0000000000ff", owner),
+      openTemplateVersion(
+        context,
+        "bbbbbbbb-0000-4000-8000-0000000000ff",
+        owner,
+      ),
     ).rejects.toBeInstanceOf(TemplateVersionNotFoundError);
   });
 

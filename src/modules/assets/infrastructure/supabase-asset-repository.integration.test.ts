@@ -1,16 +1,21 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { readSupabaseConfiguration } from "../../../infrastructure/supabase/environment";
-import { SupabaseAuthGateway } from "../../accounts/infrastructure/supabase-auth-gateway";
-import { createProject, type Project, type UserId } from "../../projects/project";
-import { SupabaseProjectRepository } from "../../projects/infrastructure/supabase-project-repository";
-import { createAsset, type Asset } from "../asset";
-import { SupabaseAssetRepository } from "./supabase-asset-repository";
+import { readSupabaseConfiguration } from "@/infrastructure/supabase/environment";
 import {
   PROJECT_ASSETS_BUCKET,
   SupabaseObjectStorage,
-} from "../../../infrastructure/supabase/supabase-object-storage";
+} from "@/infrastructure/supabase/supabase-object-storage";
+import { SupabaseAuthGateway } from "@/modules/accounts/infrastructure/supabase-auth-gateway";
+import { type Asset, createAsset } from "@/modules/assets/asset";
+import { SupabaseProjectRepository } from "@/modules/projects/infrastructure/supabase-project-repository";
+import {
+  createProject,
+  type Project,
+  type UserId,
+} from "@/modules/projects/project";
+
+import { SupabaseAssetRepository } from "./supabase-asset-repository";
 
 /**
  * Comprobación contra la base de datos y el object storage reales.

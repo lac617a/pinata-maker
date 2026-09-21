@@ -1,9 +1,10 @@
-import type { ProjectId } from "../projects/project";
 import type {
   PaperFormat,
   PaperOrientation,
-} from "../printing/paper-format";
-import type { TemplateVersionId } from "../templates/template-version";
+} from "@/modules/printing/paper-format";
+import type { ProjectId } from "@/modules/projects/project";
+import type { TemplateVersionId } from "@/modules/templates/template-version";
+
 import { InvalidExportError } from "./errors";
 
 export type ExportId = string;

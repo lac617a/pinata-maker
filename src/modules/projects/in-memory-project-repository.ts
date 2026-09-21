@@ -1,4 +1,9 @@
-import { projectBelongsTo, type Project, type ProjectId, type UserId } from "./project";
+import {
+  type Project,
+  projectBelongsTo,
+  type ProjectId,
+  type UserId,
+} from "./project";
 import type { ProjectRepository } from "./project-repository";
 
 /**

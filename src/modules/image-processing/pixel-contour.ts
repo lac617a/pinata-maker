@@ -45,9 +45,7 @@ const MINIMUM_CONTOUR_POINTS = 3;
  * lugar de repararse: una geometría corrupta no debe entrar al dominio
  * disfrazada de geometría válida. Ver docs/image-processing.md §37, §38 y §39.
  */
-export function cleanPixelContour(
-  points: readonly PixelPoint[],
-): PixelPoint[] {
+export function cleanPixelContour(points: readonly PixelPoint[]): PixelPoint[] {
   for (const point of points) {
     if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) {
       throw new InvalidContourError(
@@ -111,9 +109,7 @@ export function removeCollinearPixels(
   return kept.length >= MINIMUM_CONTOUR_POINTS ? kept : [...points];
 }
 
-export function pixelContourBounds(
-  points: readonly PixelPoint[],
-): PixelBounds {
+export function pixelContourBounds(points: readonly PixelPoint[]): PixelBounds {
   if (points.length === 0) {
     throw new InvalidContourError(
       "An empty contour has no bounds in the image.",

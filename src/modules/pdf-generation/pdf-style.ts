@@ -1,4 +1,5 @@
-import type { Millimeters } from "../geometry/units";
+import type { Millimeters } from "@/modules/geometry/units";
+
 import type { StrokeRole, TextRole } from "./page-drawing";
 
 /**

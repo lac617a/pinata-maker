@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 
-import { SupabaseAuthGateway } from "../../modules/accounts/infrastructure/supabase-auth-gateway";
-import { createRequestClient } from "../../infrastructure/supabase/request-client";
-import type { AuthRequestContext } from "../http/auth-endpoints";
+import { createRequestClient } from "@/infrastructure/supabase/request-client";
+import { SupabaseAuthGateway } from "@/modules/accounts/infrastructure/supabase-auth-gateway";
+import type { AuthRequestContext } from "@/presentation/http/auth-endpoints";
 
 /** A dónde vuelve el usuario tras confirmar el correo. */
 const SITE_URL_VARIABLE = "NEXT_PUBLIC_SITE_URL";

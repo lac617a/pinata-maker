@@ -1,25 +1,26 @@
+import { ExportNotFoundError } from "@/modules/exports/errors";
 import {
   createProjectExport,
   type ExportId,
   type ProjectExport,
-} from "../modules/exports/export";
-import type { ExportRepository } from "../modules/exports/export-repository";
-import { ExportNotFoundError } from "../modules/exports/errors";
+} from "@/modules/exports/export";
+import type { ExportRepository } from "@/modules/exports/export-repository";
 import {
   PDF_GENERATOR_VERSION,
   type PrintRenderer,
-} from "../modules/pdf-generation/print-renderer";
+} from "@/modules/pdf-generation/print-renderer";
 import {
   DEFAULT_PRINT_CONFIGURATION,
   type PrintConfiguration,
-} from "../modules/printing/print-layout";
-import type { ProjectId, UserId } from "../modules/projects/project";
-import { TemplateVersionNotFoundError } from "../modules/templates/errors";
-import type { TemplateVersionId } from "../modules/templates/template-version";
+} from "@/modules/printing/print-layout";
+import type { ProjectId, UserId } from "@/modules/projects/project";
 import {
-  SIGNED_URL_TTL_SECONDS,
   type ObjectStorage,
-} from "../modules/storage/object-storage";
+  SIGNED_URL_TTL_SECONDS,
+} from "@/modules/storage/object-storage";
+import { TemplateVersionNotFoundError } from "@/modules/templates/errors";
+import type { TemplateVersionId } from "@/modules/templates/template-version";
+
 import { generatePrintableDocument } from "./generate-printable-document";
 import { openProject } from "./manage-projects";
 import {
@@ -115,7 +116,9 @@ export async function exportTemplateVersion(
     // El archivo ya está subido y la fila no. Sin esto quedaría un documento
     // que nadie referencia, ocupando espacio para siempre. Mismo orden que en
     // la subida de imágenes. Ver docs/storage.md §148.
-    await services.exportStorage.remove(generated.storageKey).catch(() => undefined);
+    await services.exportStorage
+      .remove(generated.storageKey)
+      .catch(() => undefined);
 
     throw error;
   }

@@ -1,12 +1,12 @@
 import {
-  boundingBoxDimensions,
   type BoundingBox,
-} from "../geometry/bounding-box";
+  boundingBoxDimensions,
+} from "@/modules/geometry/bounding-box";
 import {
-  templateGeometryBounds,
   type TemplateGeometry,
-} from "../geometry/template-geometry";
-import type { Millimeters, SquareMillimeters } from "../geometry/units";
+  templateGeometryBounds,
+} from "@/modules/geometry/template-geometry";
+import type { Millimeters, SquareMillimeters } from "@/modules/geometry/units";
 
 /**
  * Papel que la plantilla convierte en una piñata.
@@ -81,7 +81,10 @@ export function templatePieceById(
 export type TemplateFootprint = {
   readonly pieceCount: number;
   readonly totalArea: SquareMillimeters;
-  readonly largestPiece: { readonly id: string; readonly area: SquareMillimeters };
+  readonly largestPiece: {
+    readonly id: string;
+    readonly area: SquareMillimeters;
+  };
 };
 
 export function templateFootprint(template: Template): TemplateFootprint {

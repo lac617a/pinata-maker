@@ -1,6 +1,7 @@
-import type { Dimensions } from "../geometry/dimensions";
-import type { Point } from "../geometry/point";
-import type { Millimeters } from "../geometry/units";
+import type { Dimensions } from "@/modules/geometry/dimensions";
+import type { Point } from "@/modules/geometry/point";
+import type { Millimeters } from "@/modules/geometry/units";
+
 import { pageLabel, type PrintPageRegion } from "./tiling";
 
 export type PageEdge = "TOP" | "RIGHT" | "BOTTOM" | "LEFT";
@@ -48,9 +49,7 @@ export type AlignmentInput = {
  * Los bordes exteriores de la retícula no reciben marcas: no hay ninguna hoja
  * con la que alinearlos.
  */
-export function generateAlignmentMarks(
-  input: AlignmentInput,
-): AlignmentMark[] {
+export function generateAlignmentMarks(input: AlignmentInput): AlignmentMark[] {
   const { page, rows, columns, printableArea, overlap } = input;
   const { row, column } = page;
 

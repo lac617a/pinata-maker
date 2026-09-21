@@ -1,4 +1,5 @@
-import { InMemoryProjectRepository } from "../projects/in-memory-project-repository";
+import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
+
 import { describeExportRepository } from "./export-repository.contract";
 import { InMemoryExportRepository } from "./in-memory-export-repository";
 

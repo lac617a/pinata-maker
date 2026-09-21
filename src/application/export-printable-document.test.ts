@@ -1,34 +1,35 @@
 import { describe, expect, it } from "vitest";
 
-import { ExportNotFoundError } from "../modules/exports/errors";
-import { InMemoryExportRepository } from "../modules/exports/in-memory-export-repository";
-import { JsPdfPrintRenderer } from "../modules/pdf-generation/infrastructure/jspdf-print-renderer";
+import { ExportNotFoundError } from "@/modules/exports/errors";
+import { InMemoryExportRepository } from "@/modules/exports/in-memory-export-repository";
+import { JsPdfPrintRenderer } from "@/modules/pdf-generation/infrastructure/jspdf-print-renderer";
 import type {
   PrintableDocument,
   PrintDocument,
   PrintRenderer,
   PrintRenderOptions,
-} from "../modules/pdf-generation/print-renderer";
+} from "@/modules/pdf-generation/print-renderer";
 import {
   documentPageCount,
   PDF_CONTENT_TYPE,
   PDF_GENERATOR_VERSION,
   sanitizePdfFileName,
-} from "../modules/pdf-generation/print-renderer";
-import { InMemoryProjectRepository } from "../modules/projects/in-memory-project-repository";
-import { ProjectNotFoundError } from "../modules/projects/errors";
-import { DEFAULT_PRINT_CONFIGURATION } from "../modules/printing/print-layout";
-import { uniformMargins } from "../modules/printing/margins";
-import { InMemoryObjectStorage } from "../modules/storage/in-memory-object-storage";
-import { InMemoryTemplateVersionRepository } from "../modules/templates/in-memory-template-version-repository";
-import { TemplateVersionNotFoundError } from "../modules/templates/errors";
-import { squareTemplate } from "../modules/templates/template-version-repository.contract";
+} from "@/modules/pdf-generation/print-renderer";
+import { uniformMargins } from "@/modules/printing/margins";
+import { DEFAULT_PRINT_CONFIGURATION } from "@/modules/printing/print-layout";
+import { ProjectNotFoundError } from "@/modules/projects/errors";
+import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
+import { InMemoryObjectStorage } from "@/modules/storage/in-memory-object-storage";
+import { TemplateVersionNotFoundError } from "@/modules/templates/errors";
+import { InMemoryTemplateVersionRepository } from "@/modules/templates/in-memory-template-version-repository";
+import { squareTemplate } from "@/modules/templates/template-version-repository.contract";
+
 import {
   deleteProjectExport,
   downloadExport,
+  type ExportServices,
   exportTemplateVersion,
   listProjectExports,
-  type ExportServices,
 } from "./export-printable-document";
 import { createProject } from "./manage-projects";
 import { publishTemplateVersion } from "./manage-template-versions";
@@ -79,7 +80,8 @@ function services(): ExportServices & {
     renderer,
     now: () => new Date(Date.UTC(2026, 0, 1, 10, ++clock)),
     newId: () => `pppppppp-0000-4000-8000-00000000000${++sequence}`,
-    newTemplateVersionId: () => `tttttttt-0000-4000-8000-00000000000${++sequence}`,
+    newTemplateVersionId: () =>
+      `tttttttt-0000-4000-8000-00000000000${++sequence}`,
     newExportId: () => `eeeeeeee-0000-4000-8000-00000000000${++sequence}`,
   };
 }
@@ -256,7 +258,10 @@ describe("Export printable document", () => {
   it("should not export a version that belongs to another project", async () => {
     const context = services();
     const { version } = await publishedVersion(context);
-    const other = await createProject(context, { ownerId: owner, name: "Otro" });
+    const other = await createProject(context, {
+      ownerId: owner,
+      name: "Otro",
+    });
 
     await expect(
       exportTemplateVersion(context, {

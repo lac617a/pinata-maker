@@ -1,4 +1,5 @@
-import type { ProjectId, UserId } from "../projects/project";
+import type { ProjectId, UserId } from "@/modules/projects/project";
+
 import type { ExportId, ProjectExport } from "./export";
 
 /**
@@ -20,10 +21,7 @@ export interface ExportRepository {
   findById(id: ExportId, userId: UserId): Promise<ProjectExport | null>;
 
   /** Exports de un proyecto, del más reciente al más antiguo. */
-  listByProject(
-    projectId: ProjectId,
-    userId: UserId,
-  ): Promise<ProjectExport[]>;
+  listByProject(projectId: ProjectId, userId: UserId): Promise<ProjectExport[]>;
 
   create(projectExport: ProjectExport, userId: UserId): Promise<void>;
 

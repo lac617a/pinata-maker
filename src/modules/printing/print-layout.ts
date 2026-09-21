@@ -1,32 +1,29 @@
 import {
-  boundingBoxDimensions,
   type BoundingBox,
-} from "../geometry/bounding-box";
-import type { Dimensions } from "../geometry/dimensions";
-import { createPoint, type Point } from "../geometry/point";
-import type { Scale } from "../geometry/scale";
+  boundingBoxDimensions,
+} from "@/modules/geometry/bounding-box";
+import type { Dimensions } from "@/modules/geometry/dimensions";
+import { createPoint, type Point } from "@/modules/geometry/point";
+import type { Scale } from "@/modules/geometry/scale";
 import {
-  templateGeometryBounds,
   type TemplateGeometry,
-} from "../geometry/template-geometry";
-import type { Millimeters } from "../geometry/units";
-import { generateAlignmentMarks, type AlignmentMark } from "./alignment";
+  templateGeometryBounds,
+} from "@/modules/geometry/template-geometry";
+import type { Millimeters } from "@/modules/geometry/units";
+
+import { type AlignmentMark, generateAlignmentMarks } from "./alignment";
 import {
+  type CalibrationMark,
   DEFAULT_CALIBRATION_LENGTH_MM,
   placeCalibrationMark,
-  type CalibrationMark,
 } from "./calibration";
-import {
-  DEFAULT_MARGIN_MM,
-  uniformMargins,
-  type Margins,
-} from "./margins";
+import { DEFAULT_MARGIN_MM, type Margins, uniformMargins } from "./margins";
 import { clipGeometryToPage, type TemplatePageGeometry } from "./page-geometry";
 import {
-  paperSize,
   type PaperFormat,
   type PaperOrientation,
   type PaperSize,
+  paperSize,
 } from "./paper-format";
 import {
   calculatePageLayout,

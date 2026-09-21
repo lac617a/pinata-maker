@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { createPolygon } from "../geometry/polygon";
-import { createTemplateGeometry } from "../geometry/template-geometry";
-import { createProject, type UserId } from "../projects/project";
-import type { ProjectRepository } from "../projects/project-repository";
+import { createPolygon } from "@/modules/geometry/polygon";
+import { createTemplateGeometry } from "@/modules/geometry/template-geometry";
+import { createProject, type UserId } from "@/modules/projects/project";
+import type { ProjectRepository } from "@/modules/projects/project-repository";
+
 import { TemplateVersionConflictError } from "./errors";
-import {
-  TEMPLATE_DERIVATION_VERSION,
-  type Template,
-} from "./template";
+import { type Template, TEMPLATE_DERIVATION_VERSION } from "./template";
 import { createTemplateVersion } from "./template-version";
 import type { TemplateVersionRepository } from "./template-version-repository";
 
@@ -68,8 +66,7 @@ export function squareTemplate(name = "Cuadrado"): Template {
 export function describeTemplateVersionRepository(
   implementation: string,
   createRepository: () =>
-    | Promise<TemplateVersionRepositorySetup>
-    | TemplateVersionRepositorySetup,
+    Promise<TemplateVersionRepositorySetup> | TemplateVersionRepositorySetup,
 ): void {
   const owner: UserId = "11111111-1111-1111-1111-111111111111";
   const stranger: UserId = "22222222-2222-2222-2222-222222222222";

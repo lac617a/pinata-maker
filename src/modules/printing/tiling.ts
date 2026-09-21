@@ -1,16 +1,20 @@
 import {
+  type BoundingBox,
   boundingBoxDimensions,
   createBoundingBox,
-  type BoundingBox,
-} from "../geometry/bounding-box";
-import { createDimensions, type Dimensions } from "../geometry/dimensions";
+} from "@/modules/geometry/bounding-box";
+import {
+  createDimensions,
+  type Dimensions,
+} from "@/modules/geometry/dimensions";
 import {
   GEOMETRY_TOLERANCE_MM,
   isFiniteMillimeters,
   type Millimeters,
-} from "../geometry/units";
-import { calculatePrintableArea, type Margins } from "./margins";
+} from "@/modules/geometry/units";
+
 import { InvalidOverlapError } from "./errors";
+import { calculatePrintableArea, type Margins } from "./margins";
 import type { PaperSize } from "./paper-format";
 
 /** Solapamiento inicial recomendado por el producto. Ver docs/printing.md §45. */
@@ -155,7 +159,11 @@ export function pageLabel(row: number, column: number): string {
 function rowLabel(row: number): string {
   let label = "";
 
-  for (let remaining = row; remaining >= 0; remaining = Math.floor(remaining / 26) - 1) {
+  for (
+    let remaining = row;
+    remaining >= 0;
+    remaining = Math.floor(remaining / 26) - 1
+  ) {
     label = String.fromCharCode(65 + (remaining % 26)) + label;
   }
 

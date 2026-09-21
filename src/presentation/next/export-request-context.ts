@@ -3,16 +3,16 @@ import { cookies } from "next/headers";
 import {
   createRequestClient,
   readCurrentUserId,
-} from "../../infrastructure/supabase/request-client";
+} from "@/infrastructure/supabase/request-client";
 import {
   PROJECT_EXPORTS_BUCKET,
   SupabaseObjectStorage,
-} from "../../infrastructure/supabase/supabase-object-storage";
-import { SupabaseExportRepository } from "../../modules/exports/infrastructure/supabase-export-repository";
-import { JsPdfPrintRenderer } from "../../modules/pdf-generation/infrastructure/jspdf-print-renderer";
-import { SupabaseProjectRepository } from "../../modules/projects/infrastructure/supabase-project-repository";
-import { SupabaseTemplateVersionRepository } from "../../modules/templates/infrastructure/supabase-template-version-repository";
-import type { ExportRequestContext } from "../http/export-endpoints";
+} from "@/infrastructure/supabase/supabase-object-storage";
+import { SupabaseExportRepository } from "@/modules/exports/infrastructure/supabase-export-repository";
+import { JsPdfPrintRenderer } from "@/modules/pdf-generation/infrastructure/jspdf-print-renderer";
+import { SupabaseProjectRepository } from "@/modules/projects/infrastructure/supabase-project-repository";
+import { SupabaseTemplateVersionRepository } from "@/modules/templates/infrastructure/supabase-template-version-repository";
+import type { ExportRequestContext } from "@/presentation/http/export-endpoints";
 
 /**
  * Único punto donde se juntan Next, Supabase, el renderer y el dominio.

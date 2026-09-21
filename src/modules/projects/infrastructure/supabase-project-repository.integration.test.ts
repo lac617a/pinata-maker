@@ -1,9 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { readSupabaseConfiguration } from "../../../infrastructure/supabase/environment";
-import { SupabaseAuthGateway } from "../../accounts/infrastructure/supabase-auth-gateway";
-import { createProject, type Project, type UserId } from "../project";
+import { readSupabaseConfiguration } from "@/infrastructure/supabase/environment";
+import { SupabaseAuthGateway } from "@/modules/accounts/infrastructure/supabase-auth-gateway";
+import {
+  createProject,
+  type Project,
+  type UserId,
+} from "@/modules/projects/project";
+
 import { SupabaseProjectRepository } from "./supabase-project-repository";
 
 /**
@@ -122,7 +127,10 @@ describe.skipIf(!configured)("Supabase project repository", () => {
     await repository.save(saved);
 
     expect(
-      await repository.findById(saved.id, "00000000-0000-4000-8000-000000000000"),
+      await repository.findById(
+        saved.id,
+        "00000000-0000-4000-8000-000000000000",
+      ),
     ).toBeNull();
   });
 

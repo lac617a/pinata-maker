@@ -1,13 +1,13 @@
-import { boundingBoxFromPoints, type BoundingBox } from "./bounding-box";
+import { type BoundingBox, boundingBoxFromPoints } from "./bounding-box";
 import { InvalidGeometryError } from "./errors";
-import { isFiniteMillimeters } from "./units";
 import {
   distanceBetween,
-  translatePoint,
   type Point,
+  translatePoint,
   type Vector,
 } from "./point";
 import type { Millimeters } from "./units";
+import { isFiniteMillimeters } from "./units";
 
 /**
  * Secuencia ordenada de puntos físicos.

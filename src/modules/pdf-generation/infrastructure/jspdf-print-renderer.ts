@@ -1,34 +1,42 @@
 import { jsPDF } from "jspdf";
 
-import type { Polygon } from "../../geometry/polygon";
-import { PRINT_SCALE_ACTUAL_SIZE } from "../../printing/print-layout";
+import type { Polygon } from "@/modules/geometry/polygon";
 import {
   InvalidPdfGeometryError,
   PdfRenderError,
   UnsupportedPdfFeatureError,
-} from "../errors";
+} from "@/modules/pdf-generation/errors";
 import {
+  type CoverEntry,
   describeCoverPage,
   describePage,
-  type CoverEntry,
   type PageDrawing,
   type PageStroke,
   type PageText,
-} from "../page-drawing";
-import { millimetersToPoints, pointsEqual, type Points } from "../pdf-units";
-import { DOCUMENT_FONT, STROKE_STYLES, TEXT_SIZES } from "../pdf-style";
+} from "@/modules/pdf-generation/page-drawing";
+import {
+  DOCUMENT_FONT,
+  STROKE_STYLES,
+  TEXT_SIZES,
+} from "@/modules/pdf-generation/pdf-style";
+import {
+  millimetersToPoints,
+  type Points,
+  pointsEqual,
+} from "@/modules/pdf-generation/pdf-units";
 import {
   assertWithinDocumentLimits,
   assertWithinPageLimits,
   DEFAULT_PDF_FILE_NAME,
   DEFAULT_PDF_METADATA,
   PDF_CONTENT_TYPE,
-  sanitizePdfFileName,
   type PrintableDocument,
   type PrintDocument,
   type PrintRenderer,
   type PrintRenderOptions,
-} from "../print-renderer";
+  sanitizePdfFileName,
+} from "@/modules/pdf-generation/print-renderer";
+import { PRINT_SCALE_ACTUAL_SIZE } from "@/modules/printing/print-layout";
 
 /**
  * Implementación del renderer sobre jsPDF.

@@ -1,7 +1,11 @@
-import { createBoundingBox } from "../geometry/bounding-box";
-import type { Dimensions } from "../geometry/dimensions";
-import type { Point } from "../geometry/point";
-import { isFiniteMillimeters, type Millimeters } from "../geometry/units";
+import { createBoundingBox } from "@/modules/geometry/bounding-box";
+import type { Dimensions } from "@/modules/geometry/dimensions";
+import type { Point } from "@/modules/geometry/point";
+import {
+  isFiniteMillimeters,
+  type Millimeters,
+} from "@/modules/geometry/units";
+
 import { InvalidCalibrationError } from "./errors";
 import {
   pageGeometryIntersectsRectangle,

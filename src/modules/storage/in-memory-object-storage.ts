@@ -1,6 +1,6 @@
 import {
-  ObjectStorageError,
   type ObjectStorage,
+  ObjectStorageError,
   type StoredFile,
 } from "./object-storage";
 

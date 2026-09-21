@@ -1,8 +1,13 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
-import { ProjectStorageError } from "../errors";
-import type { Project, ProjectId, ProjectStatus, UserId } from "../project";
-import type { ProjectRepository } from "../project-repository";
+import { ProjectStorageError } from "@/modules/projects/errors";
+import type {
+  Project,
+  ProjectId,
+  ProjectStatus,
+  UserId,
+} from "@/modules/projects/project";
+import type { ProjectRepository } from "@/modules/projects/project-repository";
 
 /**
  * Fila de `public.projects`.

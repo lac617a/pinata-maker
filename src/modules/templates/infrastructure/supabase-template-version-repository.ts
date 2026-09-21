@@ -1,20 +1,20 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
-import type { ProjectId, UserId } from "../../projects/project";
+import type { ProjectId, UserId } from "@/modules/projects/project";
 import {
   TemplateStorageError,
   TemplateVersionConflictError,
-} from "../errors";
+} from "@/modules/templates/errors";
 import {
   deserializeTemplate,
   serializeTemplate,
-} from "../template-definition";
+} from "@/modules/templates/template-definition";
 import type {
   TemplateVersion,
   TemplateVersionId,
   TemplateVersionSummary,
-} from "../template-version";
-import type { TemplateVersionRepository } from "../template-version-repository";
+} from "@/modules/templates/template-version";
+import type { TemplateVersionRepository } from "@/modules/templates/template-version-repository";
 
 /** Forma de la tabla, no la del dominio. Ver docs/storage.md §29 y §31. */
 type TemplateVersionRow = {
@@ -58,9 +58,7 @@ const UNIQUE_VIOLATION = "23505";
  * El filtro por usuario lo aplica RLS a través del proyecto, igual que en
  * assets: una versión no tiene dueño propio.
  */
-export class SupabaseTemplateVersionRepository
-  implements TemplateVersionRepository
-{
+export class SupabaseTemplateVersionRepository implements TemplateVersionRepository {
   constructor(private readonly client: SupabaseClient) {}
 
   async findById(
@@ -92,7 +90,10 @@ export class SupabaseTemplateVersionRepository
       .returns<TemplateVersionRow[]>();
 
     if (error) {
-      throw storageError(`list template versions of project ${projectId}`, error);
+      throw storageError(
+        `list template versions of project ${projectId}`,
+        error,
+      );
     }
 
     return (data ?? []).map(toSummary);
@@ -111,7 +112,10 @@ export class SupabaseTemplateVersionRepository
       .maybeSingle<TemplateVersionRow>();
 
     if (error) {
-      throw storageError(`read the latest version of project ${projectId}`, error);
+      throw storageError(
+        `read the latest version of project ${projectId}`,
+        error,
+      );
     }
 
     return data ? toSummary(data) : null;

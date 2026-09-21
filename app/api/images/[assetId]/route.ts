@@ -1,5 +1,5 @@
-import { handleDeleteProjectImage } from "../../../../src/presentation/http/asset-endpoints";
-import { assetRequestContext } from "../../../../src/presentation/next/asset-request-context";
+import { handleDeleteProjectImage } from "@/presentation/http/asset-endpoints";
+import { assetRequestContext } from "@/presentation/next/asset-request-context";
 
 type RouteParams = { params: Promise<{ assetId: string }> };
 

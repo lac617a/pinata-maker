@@ -1,10 +1,14 @@
-import { translatePoint, type Point, type Vector } from "../geometry/point";
-import { translatePolygon, type Polygon } from "../geometry/polygon";
-import type { Millimeters } from "../geometry/units";
-import type { AlignmentMark, PageEdge } from "../printing/alignment";
-import type { CalibrationMark } from "../printing/calibration";
-import type { PaperSize } from "../printing/paper-format";
-import type { PrintPage } from "../printing/print-layout";
+import {
+  type Point,
+  translatePoint,
+  type Vector,
+} from "@/modules/geometry/point";
+import { type Polygon, translatePolygon } from "@/modules/geometry/polygon";
+import type { Millimeters } from "@/modules/geometry/units";
+import type { AlignmentMark, PageEdge } from "@/modules/printing/alignment";
+import type { CalibrationMark } from "@/modules/printing/calibration";
+import type { PaperSize } from "@/modules/printing/paper-format";
+import type { PrintPage } from "@/modules/printing/print-layout";
 
 /**
  * Significado físico de un trazo.
@@ -13,12 +17,7 @@ import type { PrintPage } from "../printing/print-layout";
  * pertenece al layout. Ver docs/pdf.md §25.
  */
 export type StrokeRole =
-  | "CONTOUR"
-  | "HOLE"
-  | "CUT"
-  | "FOLD"
-  | "ALIGNMENT"
-  | "CALIBRATION";
+  "CONTOUR" | "HOLE" | "CUT" | "FOLD" | "ALIGNMENT" | "CALIBRATION";
 
 export type TextRole =
   | "PAGE_LABEL"

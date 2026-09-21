@@ -1,8 +1,13 @@
-import { boundingBoxDimensions } from "../geometry/bounding-box";
-import type { Dimensions } from "../geometry/dimensions";
-import type { Point } from "../geometry/point";
-import { createPolygon, polygonBounds, type Polygon } from "../geometry/polygon";
-import { millimetersEqual, type Millimeters } from "../geometry/units";
+import { boundingBoxDimensions } from "@/modules/geometry/bounding-box";
+import type { Dimensions } from "@/modules/geometry/dimensions";
+import type { Point } from "@/modules/geometry/point";
+import {
+  createPolygon,
+  type Polygon,
+  polygonBounds,
+} from "@/modules/geometry/polygon";
+import { type Millimeters, millimetersEqual } from "@/modules/geometry/units";
+
 import { InvalidContourError } from "./errors";
 import {
   cleanPixelContour,

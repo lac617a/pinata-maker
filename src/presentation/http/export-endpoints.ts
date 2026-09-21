@@ -1,22 +1,23 @@
 import {
   deleteProjectExport,
   downloadExport,
+  type ExportServices,
   exportTemplateVersion,
   listProjectExports,
-  type ExportServices,
-} from "../../application/export-printable-document";
-import type { ExportId, ProjectExport } from "../../modules/exports/export";
-import { InvalidExportError } from "../../modules/exports/errors";
+} from "@/application/export-printable-document";
+import { InvalidExportError } from "@/modules/exports/errors";
+import type { ExportId, ProjectExport } from "@/modules/exports/export";
 import {
   PAPER_FORMATS,
   type PaperFormat,
   type PaperOrientation,
-} from "../../modules/printing/paper-format";
+} from "@/modules/printing/paper-format";
 import {
   DEFAULT_PRINT_CONFIGURATION,
   type PrintConfiguration,
-} from "../../modules/printing/print-layout";
-import type { ProjectId, UserId } from "../../modules/projects/project";
+} from "@/modules/printing/print-layout";
+import type { ProjectId, UserId } from "@/modules/projects/project";
+
 import {
   jsonResponse,
   toErrorResponse,
@@ -152,7 +153,9 @@ function toPayload(generated: ProjectExport) {
 }
 
 /** Un cuerpo que no es JSON es un error del cliente, no una excepción. */
-async function readJsonBody(request: Request): Promise<Record<string, unknown>> {
+async function readJsonBody(
+  request: Request,
+): Promise<Record<string, unknown>> {
   try {
     const body = await request.json();
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createProject, transitionProject, type Project } from "./project";
+import { createProject, type Project, transitionProject } from "./project";
 import type { ProjectRepository } from "./project-repository";
 
 /**
@@ -29,9 +29,11 @@ export function describeProjectRepository(
 
       await repository.save(saved);
 
-      expect(
-        await repository.findById(saved.id, owner),
-      ).toMatchObject({ id: saved.id, name: "Elefante", status: "DRAFT" });
+      expect(await repository.findById(saved.id, owner)).toMatchObject({
+        id: saved.id,
+        name: "Elefante",
+        status: "DRAFT",
+      });
     });
 
     it("should hide a project from anyone else", async () => {
@@ -49,7 +51,10 @@ export function describeProjectRepository(
       const repository = await createRepository();
 
       expect(
-        await repository.findById("aaaaaaaa-0000-4000-8000-00000000ffff", owner),
+        await repository.findById(
+          "aaaaaaaa-0000-4000-8000-00000000ffff",
+          owner,
+        ),
       ).toBeNull();
     });
 
@@ -70,7 +75,11 @@ export function describeProjectRepository(
     it("should list the most recently updated project first", async () => {
       const repository = await createRepository();
 
-      const older = project("aaaaaaaa-0000-4000-8000-000000000005", owner, "Viejo");
+      const older = project(
+        "aaaaaaaa-0000-4000-8000-000000000005",
+        owner,
+        "Viejo",
+      );
       const newer = transitionProject(
         project("aaaaaaaa-0000-4000-8000-000000000006", owner, "Nuevo"),
         "PROCESSING",
@@ -91,7 +100,11 @@ export function describeProjectRepository(
 
       await repository.save(saved);
       await repository.save(
-        transitionProject(saved, "PROCESSING", new Date("2026-03-01T10:00:00Z")),
+        transitionProject(
+          saved,
+          "PROCESSING",
+          new Date("2026-03-01T10:00:00Z"),
+        ),
       );
 
       const found = await repository.findById(saved.id, owner);

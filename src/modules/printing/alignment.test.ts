@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { createBoundingBox } from "../geometry/bounding-box";
-import { generateAlignmentMarks, type AlignmentMark } from "./alignment";
+import { createBoundingBox } from "@/modules/geometry/bounding-box";
+
+import { type AlignmentMark, generateAlignmentMarks } from "./alignment";
 import { uniformMargins } from "./margins";
 import { paperSize } from "./paper-format";
 import { calculatePageLayout, type PrintPageRegion } from "./tiling";
@@ -72,9 +73,7 @@ describe("Alignment marks", () => {
   });
 
   it("should place two marks per shared edge so the sheet cannot be rotated", () => {
-    const rightMarks = marksFor(0, 0).filter(
-      (mark) => mark.edge === "RIGHT",
-    );
+    const rightMarks = marksFor(0, 0).filter((mark) => mark.edge === "RIGHT");
 
     expect(rightMarks).toHaveLength(2);
     expect(rightMarks[0].position.y).not.toBe(rightMarks[1].position.y);
@@ -121,12 +120,8 @@ describe("Alignment marks", () => {
   it("should name the page each mark connects to", () => {
     const marks = marksFor(1, 1);
 
-    expect(
-      marks.find((mark) => mark.edge === "TOP")?.connectsTo,
-    ).toBe("A2");
-    expect(
-      marks.find((mark) => mark.edge === "LEFT")?.connectsTo,
-    ).toBe("B1");
+    expect(marks.find((mark) => mark.edge === "TOP")?.connectsTo).toBe("A2");
+    expect(marks.find((mark) => mark.edge === "LEFT")?.connectsTo).toBe("B1");
   });
 
   it("should keep every mark inside the printable area", () => {

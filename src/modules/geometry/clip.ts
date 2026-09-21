@@ -1,6 +1,6 @@
 import type { BoundingBox } from "./bounding-box";
-import { pointsEqual, type Point } from "./point";
-import { createPolygon, polygonSegments, type Polygon } from "./polygon";
+import { type Point, pointsEqual } from "./point";
+import { createPolygon, type Polygon, polygonSegments } from "./polygon";
 import { GEOMETRY_TOLERANCE_MM } from "./units";
 
 /**

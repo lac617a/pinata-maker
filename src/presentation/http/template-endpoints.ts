@@ -3,15 +3,16 @@ import {
   openTemplateVersion,
   publishTemplateVersion,
   type TemplateVersionServices,
-} from "../../application/manage-template-versions";
-import type { ProjectId, UserId } from "../../modules/projects/project";
-import { InvalidTemplateDefinitionError } from "../../modules/templates/errors";
-import { deserializeTemplate } from "../../modules/templates/template-definition";
+} from "@/application/manage-template-versions";
+import type { ProjectId, UserId } from "@/modules/projects/project";
+import { InvalidTemplateDefinitionError } from "@/modules/templates/errors";
+import { deserializeTemplate } from "@/modules/templates/template-definition";
 import type {
   TemplateVersion,
   TemplateVersionId,
   TemplateVersionSummary,
-} from "../../modules/templates/template-version";
+} from "@/modules/templates/template-version";
+
 import {
   jsonResponse,
   toErrorResponse,
@@ -135,7 +136,9 @@ function toSummaryPayload(version: TemplateVersionSummary | TemplateVersion) {
 }
 
 /** Un cuerpo que no es JSON es un error del cliente, no una excepción. */
-async function readJsonBody(request: Request): Promise<Record<string, unknown>> {
+async function readJsonBody(
+  request: Request,
+): Promise<Record<string, unknown>> {
   try {
     const body = await request.json();
 

@@ -1,8 +1,8 @@
 import { InvalidGeometryError } from "./errors";
 import {
   isFiniteMillimeters,
-  millimetersEqual,
   type Millimeters,
+  millimetersEqual,
 } from "./units";
 
 /**

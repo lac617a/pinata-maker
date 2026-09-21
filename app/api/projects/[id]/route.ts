@@ -2,8 +2,8 @@ import {
   handleDeleteProject,
   handleGetProject,
   handleRenameProject,
-} from "../../../../src/presentation/http/project-endpoints";
-import { projectRequestContext } from "../../../../src/presentation/next/project-request-context";
+} from "@/presentation/http/project-endpoints";
+import { projectRequestContext } from "@/presentation/next/project-request-context";
 
 type RouteParams = { params: Promise<{ id: string }> };
 

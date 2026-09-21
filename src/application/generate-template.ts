@@ -1,33 +1,36 @@
-import type { Dimensions } from "../modules/geometry/dimensions";
-import type { Millimeters } from "../modules/geometry/units";
-import { traceMaskOutline } from "../modules/image-processing/contour-extraction";
+import type { Dimensions } from "@/modules/geometry/dimensions";
+import type { Millimeters } from "@/modules/geometry/units";
+import { traceMaskOutline } from "@/modules/image-processing/contour-extraction";
 import {
   convertContourToPhysicalGeometry,
   DEFAULT_SIMPLIFICATION_TOLERANCE_MM,
-} from "../modules/image-processing/contour-to-geometry";
-import { thresholdAlphaMask, type AlphaMask } from "../modules/image-processing/mask";
+} from "@/modules/image-processing/contour-to-geometry";
+import {
+  type AlphaMask,
+  thresholdAlphaMask,
+} from "@/modules/image-processing/mask";
 import {
   isolateComponent,
   labelForegroundComponents,
   selectMainSubject,
-} from "../modules/image-processing/mask-components";
-import { calculatePrintableArea } from "../modules/printing/margins";
-import { paperSize } from "../modules/printing/paper-format";
+} from "@/modules/image-processing/mask-components";
+import { calculatePrintableArea } from "@/modules/printing/margins";
+import { paperSize } from "@/modules/printing/paper-format";
 import {
   DEFAULT_PRINT_CONFIGURATION,
   type PaperConfiguration,
-} from "../modules/printing/print-layout";
+} from "@/modules/printing/print-layout";
 import {
   DEFAULT_EXTRUSION_CONFIGURATION,
   deriveTemplateFromSilhouette,
-  sideSegmentLengthFor,
   type ExtrusionConfiguration,
-} from "../modules/templates/perimeter-extrusion";
+  sideSegmentLengthFor,
+} from "@/modules/templates/perimeter-extrusion";
 import {
-  templateFootprint,
   type Template,
   type TemplateFootprint,
-} from "../modules/templates/template";
+  templateFootprint,
+} from "@/modules/templates/template";
 
 /**
  * Condición que el usuario debe conocer aunque la plantilla sea válida.

@@ -169,7 +169,10 @@ export function toErrorResponse(error: unknown): Response {
   if (!known) {
     console.error("Unhandled request failure", error);
 
-    return jsonResponse({ code: "UNEXPECTED", message: UNEXPECTED.message }, UNEXPECTED.status);
+    return jsonResponse(
+      { code: "UNEXPECTED", message: UNEXPECTED.message },
+      UNEXPECTED.status,
+    );
   }
 
   return jsonResponse({ code, message: known.message }, known.status);

@@ -1,8 +1,8 @@
 import {
   handleExportTemplateVersion,
   handleListProjectExports,
-} from "../../../../../src/presentation/http/export-endpoints";
-import { exportRequestContext } from "../../../../../src/presentation/next/export-request-context";
+} from "@/presentation/http/export-endpoints";
+import { exportRequestContext } from "@/presentation/next/export-request-context";
 
 type RouteParams = { params: Promise<{ id: string }> };
 

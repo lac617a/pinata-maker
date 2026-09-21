@@ -8,10 +8,10 @@ import {
 import {
   IMAGE_LIMITS,
   imageAspectRatio,
-  validateImageMetadata,
-  validateImageUpload,
   type ImageMetadata,
   type ImageUpload,
+  validateImageMetadata,
+  validateImageUpload,
 } from "./image-validation";
 
 const upload: ImageUpload = {
@@ -31,10 +31,18 @@ describe("Image upload validation", () => {
   it("should accept the formats the product supports", () => {
     expect(validateImageUpload(upload)).toBe("image/png");
     expect(
-      validateImageUpload({ ...upload, fileName: "a.jpg", mimeType: "image/jpeg" }),
+      validateImageUpload({
+        ...upload,
+        fileName: "a.jpg",
+        mimeType: "image/jpeg",
+      }),
     ).toBe("image/jpeg");
     expect(
-      validateImageUpload({ ...upload, fileName: "a.webp", mimeType: "image/webp" }),
+      validateImageUpload({
+        ...upload,
+        fileName: "a.webp",
+        mimeType: "image/webp",
+      }),
     ).toBe("image/webp");
   });
 
@@ -95,7 +103,10 @@ describe("Image metadata validation", () => {
 
   it("should reject an image larger than the system processes", () => {
     expect(() =>
-      validateImageMetadata({ ...metadata, height: IMAGE_LIMITS.maxHeight + 1 }),
+      validateImageMetadata({
+        ...metadata,
+        height: IMAGE_LIMITS.maxHeight + 1,
+      }),
     ).toThrow(InvalidImageDimensionsError);
   });
 
@@ -106,12 +117,14 @@ describe("Image metadata validation", () => {
   });
 
   it("should reject dimensions that are not whole pixel counts", () => {
-    expect(() =>
-      validateImageMetadata({ ...metadata, width: 1000.5 }),
-    ).toThrow(InvalidImageDimensionsError);
+    expect(() => validateImageMetadata({ ...metadata, width: 1000.5 })).toThrow(
+      InvalidImageDimensionsError,
+    );
   });
 
   it("should derive the aspect ratio of the image", () => {
-    expect(imageAspectRatio({ ...metadata, width: 2000, height: 1000 })).toBe(2);
+    expect(imageAspectRatio({ ...metadata, width: 2000, height: 1000 })).toBe(
+      2,
+    );
   });
 });

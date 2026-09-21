@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createProject, type UserId } from "../projects/project";
-import type { ProjectRepository } from "../projects/project-repository";
-import { createAsset, type Asset } from "./asset";
+import { createProject, type UserId } from "@/modules/projects/project";
+import type { ProjectRepository } from "@/modules/projects/project-repository";
+
+import { type Asset, createAsset } from "./asset";
 import type { AssetRepository } from "./asset-repository";
 
 /**
@@ -45,7 +46,11 @@ export function describeAssetRepository(
     return { assets, projects, project };
   }
 
-  const asset = (projectId: string, at: string, originalName = "foto.png"): Asset =>
+  const asset = (
+    projectId: string,
+    at: string,
+    originalName = "foto.png",
+  ): Asset =>
     createAsset({
       id: crypto.randomUUID(),
       projectId,

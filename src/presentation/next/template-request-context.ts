@@ -3,10 +3,10 @@ import { cookies } from "next/headers";
 import {
   createRequestClient,
   readCurrentUserId,
-} from "../../infrastructure/supabase/request-client";
-import { SupabaseProjectRepository } from "../../modules/projects/infrastructure/supabase-project-repository";
-import { SupabaseTemplateVersionRepository } from "../../modules/templates/infrastructure/supabase-template-version-repository";
-import type { TemplateRequestContext } from "../http/template-endpoints";
+} from "@/infrastructure/supabase/request-client";
+import { SupabaseProjectRepository } from "@/modules/projects/infrastructure/supabase-project-repository";
+import { SupabaseTemplateVersionRepository } from "@/modules/templates/infrastructure/supabase-template-version-repository";
+import type { TemplateRequestContext } from "@/presentation/http/template-endpoints";
 
 export async function templateRequestContext(): Promise<TemplateRequestContext> {
   const store = await cookies();

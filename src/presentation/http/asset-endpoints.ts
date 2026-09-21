@@ -1,14 +1,15 @@
 import {
+  type AssetServices,
   deleteProjectImage,
   listProjectImages,
   uploadProjectImage,
-  type AssetServices,
   type ViewableAsset,
-} from "../../application/upload-project-image";
-import { InvalidAssetError } from "../../modules/assets/errors";
-import { IMAGE_LIMITS } from "../../modules/image-processing/image-validation";
-import type { AssetId } from "../../modules/assets/asset";
-import type { ProjectId, UserId } from "../../modules/projects/project";
+} from "@/application/upload-project-image";
+import type { AssetId } from "@/modules/assets/asset";
+import { InvalidAssetError } from "@/modules/assets/errors";
+import { IMAGE_LIMITS } from "@/modules/image-processing/image-validation";
+import type { ProjectId, UserId } from "@/modules/projects/project";
+
 import {
   jsonResponse,
   toErrorResponse,

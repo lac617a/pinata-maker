@@ -1,10 +1,11 @@
-import { InvalidGeometryError } from "../geometry/errors";
-import { createPolygon, type Polygon } from "../geometry/polygon";
-import type { Point } from "../geometry/point";
+import { InvalidGeometryError } from "@/modules/geometry/errors";
+import type { Point } from "@/modules/geometry/point";
+import { createPolygon, type Polygon } from "@/modules/geometry/polygon";
 import {
   createTemplateGeometry,
   type TemplateGeometry,
-} from "../geometry/template-geometry";
+} from "@/modules/geometry/template-geometry";
+
 import { InvalidTemplateDefinitionError } from "./errors";
 import type { PieceRole, Template, TemplatePiece } from "./template";
 

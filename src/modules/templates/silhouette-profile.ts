@@ -1,10 +1,11 @@
-import { distanceBetween, type Point } from "../geometry/point";
-import { polygonPerimeter, type Polygon } from "../geometry/polygon";
+import { distanceBetween, type Point } from "@/modules/geometry/point";
+import { type Polygon, polygonPerimeter } from "@/modules/geometry/polygon";
 import {
-  radiansToDegrees,
   type Degrees,
   type Millimeters,
-} from "../geometry/units";
+  radiansToDegrees,
+} from "@/modules/geometry/units";
+
 import { UnsupportedSilhouetteError } from "./errors";
 
 /**

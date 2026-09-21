@@ -1,9 +1,9 @@
 import { InvalidContourError } from "./errors";
-import { isForeground, type BinaryMask } from "./mask";
+import { type BinaryMask, isForeground } from "./mask";
 import {
   cleanPixelContour,
-  removeCollinearPixels,
   type PixelPoint,
+  removeCollinearPixels,
 } from "./pixel-contour";
 
 /**

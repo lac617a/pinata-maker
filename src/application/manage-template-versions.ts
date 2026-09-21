@@ -1,19 +1,20 @@
-import type { AssetId } from "../modules/assets/asset";
-import type { ProjectId, UserId } from "../modules/projects/project";
+import type { AssetId } from "@/modules/assets/asset";
+import type { ProjectId, UserId } from "@/modules/projects/project";
 import {
   TemplateVersionConflictError,
   TemplateVersionNotFoundError,
-} from "../modules/templates/errors";
-import type { Template } from "../modules/templates/template";
-import { deserializeTemplate } from "../modules/templates/template-definition";
+} from "@/modules/templates/errors";
+import type { Template } from "@/modules/templates/template";
+import { deserializeTemplate } from "@/modules/templates/template-definition";
 import {
   createTemplateVersion,
   nextVersionNumber,
   type TemplateVersion,
   type TemplateVersionId,
   type TemplateVersionSummary,
-} from "../modules/templates/template-version";
-import type { TemplateVersionRepository } from "../modules/templates/template-version-repository";
+} from "@/modules/templates/template-version";
+import type { TemplateVersionRepository } from "@/modules/templates/template-version-repository";
+
 import { openProject, type ProjectServices } from "./manage-projects";
 
 export type TemplateVersionServices = ProjectServices & {

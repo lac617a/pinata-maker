@@ -1,30 +1,34 @@
-import { boundingBoxDimensions } from "../geometry/bounding-box";
-import { createPoint, type Point } from "../geometry/point";
+import { boundingBoxDimensions } from "@/modules/geometry/bounding-box";
+import { createPoint, type Point } from "@/modules/geometry/point";
 import {
   createPolygon,
+  type Polygon,
   polygonBounds,
   translatePolygon,
-  type Polygon,
-} from "../geometry/polygon";
+} from "@/modules/geometry/polygon";
 import {
   createTemplateGeometry,
   type FoldLine,
   type TemplateGeometry,
-} from "../geometry/template-geometry";
+} from "@/modules/geometry/template-geometry";
 import {
-  isFiniteMillimeters,
   type Degrees,
+  isFiniteMillimeters,
   type Millimeters,
-} from "../geometry/units";
+} from "@/modules/geometry/units";
+
 import {
   InvalidTemplateConfigurationError,
   UnsupportedSilhouetteError,
 } from "./errors";
-import { profileSilhouette, type SilhouetteProfile } from "./silhouette-profile";
+import {
+  profileSilhouette,
+  type SilhouetteProfile,
+} from "./silhouette-profile";
 import { distributeTabs, type Tab, type TabConfiguration } from "./tabs";
 import {
-  TEMPLATE_DERIVATION_VERSION,
   type Template,
+  TEMPLATE_DERIVATION_VERSION,
   type TemplatePiece,
 } from "./template";
 
@@ -160,12 +164,14 @@ function transverseFoldPositions(
   profile: SilhouetteProfile,
   configuration: ExtrusionConfiguration,
 ): Millimeters[] {
-  return profile.vertices
-    .filter((vertex) => vertex.turnAngle >= configuration.foldAngleThreshold)
-    .map((vertex) => vertex.arcPosition)
-    // La posición 0 es la costura del anillo: ahí ya hay un corte.
-    .filter((position) => position > 0 && position < profile.perimeter)
-    .sort((a, b) => a - b);
+  return (
+    profile.vertices
+      .filter((vertex) => vertex.turnAngle >= configuration.foldAngleThreshold)
+      .map((vertex) => vertex.arcPosition)
+      // La posición 0 es la costura del anillo: ahí ya hay un corte.
+      .filter((position) => position > 0 && position < profile.perimeter)
+      .sort((a, b) => a - b)
+  );
 }
 
 /**
@@ -285,12 +291,14 @@ function buildSidePiece(input: SidePieceInput): TemplatePiece {
       createPoint(length + tabWidth, bodyBottom),
       createPoint(length, bodyBottom),
       // Borde largo inferior, de vuelta: se pega a BACK.
-      ...[...tabs].reverse().flatMap((tab) => [
-        createPoint(local(tab.end), bodyBottom),
-        createPoint(local(tab.end), bodyBottom + tabWidth),
-        createPoint(local(tab.start), bodyBottom + tabWidth),
-        createPoint(local(tab.start), bodyBottom),
-      ]),
+      ...[...tabs]
+        .reverse()
+        .flatMap((tab) => [
+          createPoint(local(tab.end), bodyBottom),
+          createPoint(local(tab.end), bodyBottom + tabWidth),
+          createPoint(local(tab.start), bodyBottom + tabWidth),
+          createPoint(local(tab.start), bodyBottom),
+        ]),
       createPoint(0, bodyBottom),
     ],
     true,
@@ -378,9 +386,7 @@ function assertSupported(input: ExtrusionInput): void {
   }
 }
 
-function assertValidConfiguration(
-  configuration: ExtrusionConfiguration,
-): void {
+function assertValidConfiguration(configuration: ExtrusionConfiguration): void {
   const positive: (keyof ExtrusionConfiguration)[] = [
     "tabWidth",
     "tabLength",
@@ -415,5 +421,4 @@ function assertValidConfiguration(
       `minimumTabLength (${configuration.minimumTabLength} mm) cannot exceed tabLength (${configuration.tabLength} mm).`,
     );
   }
-
 }

@@ -1,5 +1,6 @@
-import type { ProjectId, UserId } from "../projects/project";
-import type { ProjectRepository } from "../projects/project-repository";
+import type { ProjectId, UserId } from "@/modules/projects/project";
+import type { ProjectRepository } from "@/modules/projects/project-repository";
+
 import type { ExportId, ProjectExport } from "./export";
 import type { ExportRepository } from "./export-repository";
 
@@ -15,10 +16,7 @@ export class InMemoryExportRepository implements ExportRepository {
 
   constructor(private readonly projects: ProjectRepository) {}
 
-  async findById(
-    id: ExportId,
-    userId: UserId,
-  ): Promise<ProjectExport | null> {
+  async findById(id: ExportId, userId: UserId): Promise<ProjectExport | null> {
     const found = this.exports.get(id);
 
     if (!found || !(await this.ownsProject(found.projectId, userId))) {

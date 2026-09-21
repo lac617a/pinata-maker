@@ -1,14 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { boundingBoxDimensions } from "../geometry/bounding-box";
-import { createPoint } from "../geometry/point";
+import { boundingBoxDimensions } from "@/modules/geometry/bounding-box";
+import { createPoint } from "@/modules/geometry/point";
 import {
   createPolygon,
+  type Polygon,
   polygonBounds,
   polygonPerimeter,
-  type Polygon,
-} from "../geometry/polygon";
-import { templateGeometryBounds } from "../geometry/template-geometry";
+} from "@/modules/geometry/polygon";
+import { templateGeometryBounds } from "@/modules/geometry/template-geometry";
+
 import {
   InvalidTemplateConfigurationError,
   UnsupportedSilhouetteError,
@@ -48,7 +49,10 @@ const depth = 200;
 
 describe("Perimeter extrusion", () => {
   it("should produce a front, a back and at least one side piece", () => {
-    const template = deriveTemplateFromSilhouette({ silhouette: square, depth });
+    const template = deriveTemplateFromSilhouette({
+      silhouette: square,
+      depth,
+    });
 
     expect(templatePiecesWithRole(template, "FRONT")).toHaveLength(1);
     expect(templatePiecesWithRole(template, "BACK")).toHaveLength(1);
@@ -58,7 +62,10 @@ describe("Perimeter extrusion", () => {
   });
 
   it("should keep the physical size of the figure", () => {
-    const template = deriveTemplateFromSilhouette({ silhouette: square, depth });
+    const template = deriveTemplateFromSilhouette({
+      silhouette: square,
+      depth,
+    });
 
     expect(template.width).toBe(400);
     expect(template.height).toBe(400);
@@ -86,21 +93,22 @@ describe("Perimeter extrusion", () => {
 
     expect(xs(back)).not.toEqual(xs(front));
     // El reflejo conserva el tamaño: solo cambia de lado.
-    expect(boundingBoxDimensions(templateGeometryBounds(back.geometry))).toEqual(
-      boundingBoxDimensions(templateGeometryBounds(front.geometry)),
-    );
+    expect(
+      boundingBoxDimensions(templateGeometryBounds(back.geometry)),
+    ).toEqual(boundingBoxDimensions(templateGeometryBounds(front.geometry)));
   });
 
   it("should spread the whole perimeter across the side pieces", () => {
-    const template = deriveTemplateFromSilhouette({ silhouette: square, depth });
+    const template = deriveTemplateFromSilhouette({
+      silhouette: square,
+      depth,
+    });
     const sides = templatePiecesWithRole(template, "SIDE");
 
     // Cada pieza mide su tramo más la pestaña de unión, que monta sobre la
     // pieza siguiente y por eso no cuenta como perímetro.
     const covered = sides.reduce((total, side) => {
-      const size = boundingBoxDimensions(
-        templateGeometryBounds(side.geometry),
-      );
+      const size = boundingBoxDimensions(templateGeometryBounds(side.geometry));
       return total + size.width - DEFAULT_EXTRUSION_CONFIGURATION.tabWidth;
     }, 0);
 
@@ -108,7 +116,10 @@ describe("Perimeter extrusion", () => {
   });
 
   it("should make the side strip exactly as wide as the depth", () => {
-    const template = deriveTemplateFromSilhouette({ silhouette: square, depth });
+    const template = deriveTemplateFromSilhouette({
+      silhouette: square,
+      depth,
+    });
     const [side] = templatePiecesWithRole(template, "SIDE");
 
     const height = boundingBoxDimensions(
@@ -120,7 +131,10 @@ describe("Perimeter extrusion", () => {
   });
 
   it("should break the strip where the figure turns", () => {
-    const template = deriveTemplateFromSilhouette({ silhouette: square, depth });
+    const template = deriveTemplateFromSilhouette({
+      silhouette: square,
+      depth,
+    });
     const sides = templatePiecesWithRole(template, "SIDE");
 
     // Las cuatro esquinas de 90° superan el umbral de doblez, y el lado de
@@ -142,7 +156,10 @@ describe("Perimeter extrusion", () => {
   });
 
   it("should give every side piece tabs on both long edges", () => {
-    const template = deriveTemplateFromSilhouette({ silhouette: square, depth });
+    const template = deriveTemplateFromSilhouette({
+      silhouette: square,
+      depth,
+    });
 
     for (const side of templatePiecesWithRole(template, "SIDE")) {
       const { tabWidth } = DEFAULT_EXTRUSION_CONFIGURATION;
@@ -172,10 +189,7 @@ describe("Perimeter extrusion", () => {
 
       return side.geometry.foldLines
         .filter((line) => line.geometry.points.every((p) => p.y === tabWidth))
-        .map(
-          (line) =>
-            line.geometry.points[1].x - line.geometry.points[0].x,
-        );
+        .map((line) => line.geometry.points[1].x - line.geometry.points[0].x);
     };
 
     const wide = tabLengthsOn(400);
@@ -185,7 +199,10 @@ describe("Perimeter extrusion", () => {
   });
 
   it("should never let a tab cross a fold line", () => {
-    const template = deriveTemplateFromSilhouette({ silhouette: square, depth });
+    const template = deriveTemplateFromSilhouette({
+      silhouette: square,
+      depth,
+    });
     const { tabWidth } = DEFAULT_EXTRUSION_CONFIGURATION;
 
     for (const side of templatePiecesWithRole(template, "SIDE")) {
@@ -228,7 +245,10 @@ describe("Perimeter extrusion", () => {
   });
 
   it("should report what the template will cost in paper", () => {
-    const template = deriveTemplateFromSilhouette({ silhouette: square, depth });
+    const template = deriveTemplateFromSilhouette({
+      silhouette: square,
+      depth,
+    });
     const footprint = templateFootprint(template);
 
     expect(footprint.pieceCount).toBe(template.pieces.length);
@@ -242,7 +262,11 @@ describe("Perimeter extrusion", () => {
         silhouette: square,
         holes: [
           createPolygon(
-            [createPoint(100, 100), createPoint(200, 100), createPoint(150, 200)],
+            [
+              createPoint(100, 100),
+              createPoint(200, 100),
+              createPoint(150, 200),
+            ],
             true,
           ),
         ],
@@ -268,13 +292,16 @@ describe("Perimeter extrusion", () => {
   });
 
   it("should derive the same template from the same silhouette", () => {
-    expect(
+    expect(deriveTemplateFromSilhouette({ silhouette: square, depth })).toEqual(
       deriveTemplateFromSilhouette({ silhouette: square, depth }),
-    ).toEqual(deriveTemplateFromSilhouette({ silhouette: square, depth }));
+    );
   });
 
   it("should start every piece at the origin", () => {
-    const template = deriveTemplateFromSilhouette({ silhouette: square, depth });
+    const template = deriveTemplateFromSilhouette({
+      silhouette: square,
+      depth,
+    });
 
     for (const piece of template.pieces) {
       const bounds = templateGeometryBounds(piece.geometry);

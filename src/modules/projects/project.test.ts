@@ -1,16 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  InvalidProjectError,
-  InvalidProjectTransitionError,
-} from "./errors";
+import { InvalidProjectError, InvalidProjectTransitionError } from "./errors";
 import {
   createProject,
-  projectBelongsTo,
   PROJECT_NAME_MAX_LENGTH,
+  projectBelongsTo,
+  type ProjectStatus,
   renameProject,
   transitionProject,
-  type ProjectStatus,
 } from "./project";
 
 const now = new Date("2026-01-01T10:00:00Z");

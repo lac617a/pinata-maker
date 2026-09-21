@@ -1,5 +1,6 @@
-import type { ProjectId, UserId } from "../projects/project";
-import type { ProjectRepository } from "../projects/project-repository";
+import type { ProjectId, UserId } from "@/modules/projects/project";
+import type { ProjectRepository } from "@/modules/projects/project-repository";
+
 import { TemplateVersionConflictError } from "./errors";
 import {
   summarizeTemplateVersion,
@@ -16,9 +17,7 @@ import type { TemplateVersionRepository } from "./template-version-repository";
  * el de assets: una versión es de quien sea su proyecto. En Supabase esa
  * misma regla la aplica RLS con un `exists` sobre `projects`.
  */
-export class InMemoryTemplateVersionRepository
-  implements TemplateVersionRepository
-{
+export class InMemoryTemplateVersionRepository implements TemplateVersionRepository {
   private readonly versions = new Map<TemplateVersionId, TemplateVersion>();
 
   constructor(private readonly projects: ProjectRepository) {}

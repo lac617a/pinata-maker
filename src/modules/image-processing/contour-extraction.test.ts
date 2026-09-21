@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createDimensions } from "../geometry/dimensions";
+import { createDimensions } from "@/modules/geometry/dimensions";
+
 import { traceMaskOutline } from "./contour-extraction";
 import { convertContourToPhysicalGeometry } from "./contour-to-geometry";
 import { InvalidContourError } from "./errors";
-import { createBinaryMask, type BinaryMask } from "./mask";
+import { type BinaryMask, createBinaryMask } from "./mask";
 import type { PixelPoint } from "./pixel-contour";
 
 /** Máscara escrita a mano: `#` es figura y `.` es fondo. */
@@ -28,12 +29,7 @@ function sorted(points: readonly PixelPoint[]): PixelPoint[] {
 describe("Contour extraction", () => {
   it("should trace a rectangle as its four corners", () => {
     const outline = traceMaskOutline(
-      maskOf([
-        ".....",
-        ".###.",
-        ".###.",
-        ".....",
-      ]),
+      maskOf([".....", ".###.", ".###.", "....."]),
     );
 
     // El trazo sigue el borde exterior de los pixels, no sus centros: la
@@ -60,13 +56,7 @@ describe("Contour extraction", () => {
 
   it("should keep every corner of a shape that is not a rectangle", () => {
     const outline = traceMaskOutline(
-      maskOf([
-        "......",
-        ".##...",
-        ".##...",
-        ".####.",
-        "......",
-      ]),
+      maskOf(["......", ".##...", ".##...", ".####.", "......"]),
     );
 
     expect(outline.outer).toHaveLength(6);
@@ -74,13 +64,7 @@ describe("Contour extraction", () => {
 
   it("should separate the hole of a figure from its outline", () => {
     const outline = traceMaskOutline(
-      maskOf([
-        "......",
-        ".####.",
-        ".#..#.",
-        ".####.",
-        "......",
-      ]),
+      maskOf(["......", ".####.", ".#..#.", ".####.", "......"]),
     );
 
     expect(sorted(outline.outer)).toEqual([
@@ -108,14 +92,9 @@ describe("Contour extraction", () => {
   });
 
   it("should refuse a mask that contains more than one figure", () => {
-    expect(() =>
-      traceMaskOutline(
-        maskOf([
-          "#..#",
-          "#..#",
-        ]),
-      ),
-    ).toThrow(InvalidContourError);
+    expect(() => traceMaskOutline(maskOf(["#..#", "#..#"]))).toThrow(
+      InvalidContourError,
+    );
   });
 
   it("should refuse a mask without any figure", () => {
@@ -128,12 +107,7 @@ describe("Contour extraction", () => {
     // La costura que importa: lo que sale de la máscara entra en el único
     // punto donde los pixels se convierten en milímetros.
     const outline = traceMaskOutline(
-      maskOf([
-        "......",
-        ".####.",
-        ".####.",
-        "......",
-      ]),
+      maskOf(["......", ".####.", ".####.", "......"]),
     );
 
     const physical = convertContourToPhysicalGeometry({
@@ -148,13 +122,7 @@ describe("Contour extraction", () => {
   });
 
   it("should trace the same mask the same way every time", () => {
-    const mask = maskOf([
-      "......",
-      ".####.",
-      ".#..#.",
-      ".####.",
-      "......",
-    ]);
+    const mask = maskOf(["......", ".####.", ".#..#.", ".####.", "......"]);
 
     expect(traceMaskOutline(mask)).toEqual(traceMaskOutline(mask));
   });

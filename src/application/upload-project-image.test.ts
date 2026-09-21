@@ -1,18 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { InMemoryAssetRepository } from "../modules/assets/in-memory-asset-repository";
-import { InMemoryObjectStorage } from "../modules/storage/in-memory-object-storage";
-import { AssetNotFoundError } from "../modules/assets/errors";
-import { UnsupportedImageFormatError } from "../modules/image-processing/errors";
-import { IMAGE_LIMITS } from "../modules/image-processing/image-validation";
-import { InMemoryProjectRepository } from "../modules/projects/in-memory-project-repository";
-import { ProjectNotFoundError } from "../modules/projects/errors";
+import { AssetNotFoundError } from "@/modules/assets/errors";
+import { InMemoryAssetRepository } from "@/modules/assets/in-memory-asset-repository";
+import { UnsupportedImageFormatError } from "@/modules/image-processing/errors";
+import { IMAGE_LIMITS } from "@/modules/image-processing/image-validation";
+import { ProjectNotFoundError } from "@/modules/projects/errors";
+import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
+import { InMemoryObjectStorage } from "@/modules/storage/in-memory-object-storage";
+
 import { createProject } from "./manage-projects";
 import {
+  type AssetServices,
   deleteProjectImage,
   listProjectImages,
   uploadProjectImage,
-  type AssetServices,
 } from "./upload-project-image";
 
 const owner = "11111111-1111-1111-1111-111111111111";

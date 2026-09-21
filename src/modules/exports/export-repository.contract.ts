@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { createProject, type UserId } from "../projects/project";
-import type { ProjectRepository } from "../projects/project-repository";
+import { createProject, type UserId } from "@/modules/projects/project";
+import type { ProjectRepository } from "@/modules/projects/project-repository";
+
 import { createProjectExport, type ProjectExport } from "./export";
 import type { ExportRepository } from "./export-repository";
 
@@ -18,7 +19,8 @@ export type ExportRepositorySetup = {
 
 export function describeExportRepository(
   implementation: string,
-  createRepository: () => Promise<ExportRepositorySetup> | ExportRepositorySetup,
+  createRepository: () =>
+    Promise<ExportRepositorySetup> | ExportRepositorySetup,
 ): void {
   const owner: UserId = "11111111-1111-1111-1111-111111111111";
   const stranger: UserId = "22222222-2222-2222-2222-222222222222";
@@ -103,7 +105,10 @@ export function describeExportRepository(
     it("should refuse to store an export in a project of somebody else", async () => {
       const { exports, project } = await setup();
 
-      await exports.create(generated(project.id, "2026-01-02T10:00:00Z"), stranger);
+      await exports.create(
+        generated(project.id, "2026-01-02T10:00:00Z"),
+        stranger,
+      );
 
       expect(await exports.listByProject(project.id, owner)).toHaveLength(0);
     });

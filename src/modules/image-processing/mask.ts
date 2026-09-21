@@ -119,11 +119,7 @@ export function isForeground(mask: BinaryMask, x: Pixels, y: Pixels): boolean {
   return mask.foreground[maskIndex(mask, x, y)] === 1;
 }
 
-function assertMaskSize(
-  width: Pixels,
-  height: Pixels,
-  length: number,
-): void {
+function assertMaskSize(width: Pixels, height: Pixels, length: number): void {
   if (
     !Number.isInteger(width) ||
     !Number.isInteger(height) ||

@@ -63,8 +63,5 @@ export function boundingBoxFromPoints(points: readonly Point[]): BoundingBox {
  * Ver docs/geometry.md §44.
  */
 export function boundingBoxDimensions(bounds: BoundingBox): Dimensions {
-  return createDimensions(
-    bounds.maxX - bounds.minX,
-    bounds.maxY - bounds.minY,
-  );
+  return createDimensions(bounds.maxX - bounds.minX, bounds.maxY - bounds.minY);
 }

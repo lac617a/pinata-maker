@@ -1,5 +1,5 @@
 import { InvalidAssemblyError } from "./errors";
-import { templatePiecesWithRole, type Template } from "./template";
+import { type Template, templatePiecesWithRole } from "./template";
 
 /** Ver docs/assembly.md §10. */
 export type ConnectionType = "TAB" | "EDGE" | "FOLD";
@@ -19,11 +19,7 @@ export type AssemblyConnection = {
 
 /** Ver docs/assembly.md §28. */
 export type AssemblyActionType =
-  | "IDENTIFY"
-  | "FOLD"
-  | "ATTACH"
-  | "ALIGN"
-  | "CLOSE";
+  "IDENTIFY" | "FOLD" | "ATTACH" | "ALIGN" | "CLOSE";
 
 export type AssemblyAction = {
   readonly type: AssemblyActionType;
@@ -110,10 +106,7 @@ function assemblySteps(sideIds: readonly string[]): AssemblyStep[] {
  *
  * Ver docs/assembly.md §105.
  */
-export function validateAssembly(
-  template: Template,
-  assembly: Assembly,
-): void {
+export function validateAssembly(template: Template, assembly: Assembly): void {
   const sides = templatePiecesWithRole(template, "SIDE").map((side) => side.id);
   const connected = new Set(
     assembly.connections.flatMap(({ fromPiece, toPiece }) => [

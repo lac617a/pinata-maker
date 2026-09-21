@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { createDimensions } from "../geometry/dimensions";
+import { createDimensions } from "@/modules/geometry/dimensions";
+
 import { convertContourToPhysicalGeometry } from "./contour-to-geometry";
 import { InvalidContourError } from "./errors";
 import type { PixelPoint } from "./pixel-contour";

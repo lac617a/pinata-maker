@@ -74,10 +74,7 @@ if (url && anonKey) {
   }
 
   // Migración 0003: versiones de plantilla.
-  const versions = await client
-    .from("template_versions")
-    .select("id")
-    .limit(1);
+  const versions = await client.from("template_versions").select("id").limit(1);
   const versionsMissing = TABLE_MISSING_CODES.includes(
     versions.error?.code ?? "",
   );
@@ -85,7 +82,9 @@ if (url && anonKey) {
   report(
     "la tabla template_versions existe",
     !versionsMissing,
-    versionsMissing ? "aplica supabase/migrations/0003_template_versions.sql" : "",
+    versionsMissing
+      ? "aplica supabase/migrations/0003_template_versions.sql"
+      : "",
   );
 
   if (!versionsMissing) {
@@ -98,7 +97,9 @@ if (url && anonKey) {
 
   // Migración 0004: exports y su bucket privado.
   const exports = await client.from("exports").select("id").limit(1);
-  const exportsMissing = TABLE_MISSING_CODES.includes(exports.error?.code ?? "");
+  const exportsMissing = TABLE_MISSING_CODES.includes(
+    exports.error?.code ?? "",
+  );
 
   report(
     "la tabla exports existe",
@@ -113,7 +114,6 @@ if (url && anonKey) {
       exports.error ? `denegado (${exports.error.code})` : "lista vacía",
     );
   }
-
 }
 
 // Los buckets no se comprueban aquí.
@@ -125,7 +125,9 @@ if (url && anonKey) {
 // sube un archivo, lo firma y comprueba que la URL pública no lo sirve.
 
 for (const { check, passed, detail } of results) {
-  console.log(`${passed ? "OK  " : "FALLA"} ${check}${detail ? ` — ${detail}` : ""}`);
+  console.log(
+    `${passed ? "OK  " : "FALLA"} ${check}${detail ? ` — ${detail}` : ""}`,
+  );
 }
 
 process.exit(results.every((result) => result.passed) ? 0 : 1);

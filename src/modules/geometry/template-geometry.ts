@@ -1,4 +1,4 @@
-import { boundingBoxFromPoints, type BoundingBox } from "./bounding-box";
+import { type BoundingBox, boundingBoxFromPoints } from "./bounding-box";
 import { InvalidGeometryError } from "./errors";
 import type { Point } from "./point";
 import type { Polygon } from "./polygon";

@@ -1,9 +1,15 @@
 import type { AuthError, SupabaseClient } from "@supabase/supabase-js";
 
-import type { UserId } from "../../projects/project";
-import type { AuthGateway, SignUpOutcome } from "../auth-gateway";
-import type { Credentials } from "../credentials";
-import { AuthenticationFailedError, AuthServiceError } from "../errors";
+import type {
+  AuthGateway,
+  SignUpOutcome,
+} from "@/modules/accounts/auth-gateway";
+import type { Credentials } from "@/modules/accounts/credentials";
+import {
+  AuthenticationFailedError,
+  AuthServiceError,
+} from "@/modules/accounts/errors";
+import type { UserId } from "@/modules/projects/project";
 
 /**
  * Autenticación sobre Supabase Auth.

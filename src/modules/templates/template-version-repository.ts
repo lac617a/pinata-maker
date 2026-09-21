@@ -1,4 +1,5 @@
-import type { ProjectId, UserId } from "../projects/project";
+import type { ProjectId, UserId } from "@/modules/projects/project";
+
 import type {
   TemplateVersion,
   TemplateVersionId,

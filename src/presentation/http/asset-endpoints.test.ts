@@ -1,17 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { createProject } from "../../application/manage-projects";
-import type { AssetServices } from "../../application/upload-project-image";
-import { InMemoryAssetRepository } from "../../modules/assets/in-memory-asset-repository";
-import { InMemoryObjectStorage } from "../../modules/storage/in-memory-object-storage";
-import { IMAGE_LIMITS } from "../../modules/image-processing/image-validation";
-import { InMemoryProjectRepository } from "../../modules/projects/in-memory-project-repository";
+import { createProject } from "@/application/manage-projects";
+import type { AssetServices } from "@/application/upload-project-image";
+import { InMemoryAssetRepository } from "@/modules/assets/in-memory-asset-repository";
+import { IMAGE_LIMITS } from "@/modules/image-processing/image-validation";
+import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
+import { InMemoryObjectStorage } from "@/modules/storage/in-memory-object-storage";
+
 import {
+  type AssetRequestContext,
   handleDeleteProjectImage,
   handleListProjectImages,
   handleUploadProjectImage,
   IMAGE_FIELD,
-  type AssetRequestContext,
 } from "./asset-endpoints";
 
 const owner = "11111111-1111-1111-1111-111111111111";
@@ -34,11 +35,7 @@ function services(): AssetServices & { storage: InMemoryObjectStorage } {
   };
 }
 
-function upload(file: {
-  name: string;
-  type: string;
-  size?: number;
-}): Request {
+function upload(file: { name: string; type: string; size?: number }): Request {
   const form = new FormData();
   const bytes = new Uint8Array(new ArrayBuffer(file.size ?? 8));
 

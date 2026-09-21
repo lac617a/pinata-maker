@@ -1,4 +1,8 @@
-import { isFiniteMillimeters, type Millimeters } from "../geometry/units";
+import {
+  isFiniteMillimeters,
+  type Millimeters,
+} from "@/modules/geometry/units";
+
 import { InvalidPdfGeometryError } from "./errors";
 
 /**

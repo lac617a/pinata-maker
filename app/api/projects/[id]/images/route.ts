@@ -1,8 +1,8 @@
 import {
   handleListProjectImages,
   handleUploadProjectImage,
-} from "../../../../../src/presentation/http/asset-endpoints";
-import { assetRequestContext } from "../../../../../src/presentation/next/asset-request-context";
+} from "@/presentation/http/asset-endpoints";
+import { assetRequestContext } from "@/presentation/next/asset-request-context";
 
 type RouteParams = { params: Promise<{ id: string }> };
 

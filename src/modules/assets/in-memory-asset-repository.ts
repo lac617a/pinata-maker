@@ -1,5 +1,6 @@
-import type { ProjectId, UserId } from "../projects/project";
-import type { ProjectRepository } from "../projects/project-repository";
+import type { ProjectId, UserId } from "@/modules/projects/project";
+import type { ProjectRepository } from "@/modules/projects/project-repository";
+
 import type { Asset, AssetId } from "./asset";
 import type { AssetRepository } from "./asset-repository";
 
@@ -25,10 +26,7 @@ export class InMemoryAssetRepository implements AssetRepository {
     return { ...asset };
   }
 
-  async listByProject(
-    projectId: ProjectId,
-    userId: UserId,
-  ): Promise<Asset[]> {
+  async listByProject(projectId: ProjectId, userId: UserId): Promise<Asset[]> {
     if (!(await this.ownsProject(projectId, userId))) {
       return [];
     }

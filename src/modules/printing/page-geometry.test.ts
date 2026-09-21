@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { createBoundingBox } from "../geometry/bounding-box";
-import { createPoint } from "../geometry/point";
-import { createPolygon } from "../geometry/polygon";
+import { createBoundingBox } from "@/modules/geometry/bounding-box";
+import { createPoint } from "@/modules/geometry/point";
+import { createPolygon } from "@/modules/geometry/polygon";
 import {
   createTemplateGeometry,
   isTemplateGeometryEmpty,
-} from "../geometry/template-geometry";
+} from "@/modules/geometry/template-geometry";
+
 import { uniformMargins } from "./margins";
 import { clipGeometryToPage } from "./page-geometry";
 import { paperSize } from "./paper-format";

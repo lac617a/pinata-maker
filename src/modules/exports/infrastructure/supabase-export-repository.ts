@@ -1,14 +1,14 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
-import type { ProjectId, UserId } from "../../projects/project";
+import { ExportStorageError } from "@/modules/exports/errors";
+import type { ExportId, ProjectExport } from "@/modules/exports/export";
+import type { ExportRepository } from "@/modules/exports/export-repository";
 import type {
   PaperFormat,
   PaperOrientation,
-} from "../../printing/paper-format";
-import { PAPER_FORMATS } from "../../printing/paper-format";
-import type { ExportId, ProjectExport } from "../export";
-import type { ExportRepository } from "../export-repository";
-import { ExportStorageError } from "../errors";
+} from "@/modules/printing/paper-format";
+import { PAPER_FORMATS } from "@/modules/printing/paper-format";
+import type { ProjectId, UserId } from "@/modules/projects/project";
 
 /** Forma de la tabla, no la del dominio. Ver docs/storage.md §29 y §31. */
 type ExportRow = {
@@ -40,10 +40,7 @@ const COLUMNS =
 export class SupabaseExportRepository implements ExportRepository {
   constructor(private readonly client: SupabaseClient) {}
 
-  async findById(
-    id: ExportId,
-    _userId: UserId,
-  ): Promise<ProjectExport | null> {
+  async findById(id: ExportId, _userId: UserId): Promise<ProjectExport | null> {
     const { data, error } = await this.client
       .from(TABLE)
       .select(COLUMNS)
@@ -81,11 +78,10 @@ export class SupabaseExportRepository implements ExportRepository {
    * Un archivo generado es inmutable: volver a generar produce otro export.
    * Ver docs/storage.md §55.
    */
-  async create(
-    projectExport: ProjectExport,
-    _userId: UserId,
-  ): Promise<void> {
-    const { error } = await this.client.from(TABLE).insert(toRow(projectExport));
+  async create(projectExport: ProjectExport, _userId: UserId): Promise<void> {
+    const { error } = await this.client
+      .from(TABLE)
+      .insert(toRow(projectExport));
 
     if (error) {
       throw storageError(`store export ${projectExport.id}`, error);

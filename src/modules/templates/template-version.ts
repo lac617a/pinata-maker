@@ -1,11 +1,12 @@
-import type { AssetId } from "../assets/asset";
-import type { ProjectId } from "../projects/project";
+import type { AssetId } from "@/modules/assets/asset";
+import type { ProjectId } from "@/modules/projects/project";
+
 import { InvalidTemplateDefinitionError } from "./errors";
+import type { Template } from "./template";
 import {
   serializeTemplate,
   type TemplateDefinition,
 } from "./template-definition";
-import type { Template } from "./template";
 
 /**
  * Identidad de una versión publicada.

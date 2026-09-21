@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { AmbiguousSubjectError, EmptyMaskError } from "./errors";
-import { createBinaryMask, foregroundPixelCount, type BinaryMask } from "./mask";
+import {
+  type BinaryMask,
+  createBinaryMask,
+  foregroundPixelCount,
+} from "./mask";
 import {
   isolateComponent,
   labelForegroundComponents,
@@ -25,12 +29,7 @@ function maskOf(rows: readonly string[]): BinaryMask {
 describe("Mask components", () => {
   it("should group the pixels of a figure into a single region", () => {
     const labeling = labelForegroundComponents(
-      maskOf([
-        "....",
-        ".##.",
-        ".##.",
-        "....",
-      ]),
+      maskOf(["....", ".##.", ".##.", "...."]),
     );
 
     expect(labeling.components).toHaveLength(1);
@@ -46,9 +45,9 @@ describe("Mask components", () => {
   it("should join two parts that touch by a corner", () => {
     // Misma vecindad que usa la extracción del contorno: el papel no se
     // separa por una esquina.
-    expect(labelForegroundComponents(maskOf(["#.", ".#"])).components).toHaveLength(
-      1,
-    );
+    expect(
+      labelForegroundComponents(maskOf(["#.", ".#"])).components,
+    ).toHaveLength(1);
   });
 
   it("should tell apart regions that do not touch", () => {
@@ -58,12 +57,7 @@ describe("Mask components", () => {
   });
 
   it("should order the regions by size", () => {
-    const labeling = labelForegroundComponents(
-      maskOf([
-        "#..##",
-        "...##",
-      ]),
-    );
+    const labeling = labelForegroundComponents(maskOf(["#..##", "...##"]));
 
     expect(labeling.components.map((component) => component.area)).toEqual([
       4, 1,
@@ -78,13 +72,7 @@ describe("Mask components", () => {
 
   it("should keep the largest region and report what it left out", () => {
     const labeling = labelForegroundComponents(
-      maskOf([
-        "####.",
-        "####.",
-        "####.",
-        ".....",
-        "....#",
-      ]),
+      maskOf(["####.", "####.", "####.", ".....", "....#"]),
     );
 
     const subject = selectMainSubject(labeling);
@@ -95,24 +83,13 @@ describe("Mask components", () => {
   });
 
   it("should refuse to choose between two figures of comparable size", () => {
-    const labeling = labelForegroundComponents(
-      maskOf([
-        "##.##",
-        "##.##",
-      ]),
-    );
+    const labeling = labelForegroundComponents(maskOf(["##.##", "##.##"]));
 
     expect(() => selectMainSubject(labeling)).toThrow(AmbiguousSubjectError);
   });
 
   it("should leave only the chosen region in the mask", () => {
-    const mask = maskOf([
-      "####.",
-      "####.",
-      "####.",
-      ".....",
-      "....#",
-    ]);
+    const mask = maskOf(["####.", "####.", "####.", ".....", "....#"]);
 
     const labeling = labelForegroundComponents(mask);
     const isolated = isolateComponent(

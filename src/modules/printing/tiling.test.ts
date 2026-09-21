@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  type BoundingBox,
   boundingBoxDimensions,
   createBoundingBox,
-  type BoundingBox,
-} from "../geometry/bounding-box";
+} from "@/modules/geometry/bounding-box";
+
 import { InvalidOverlapError } from "./errors";
 import { uniformMargins } from "./margins";
 import { paperSize } from "./paper-format";

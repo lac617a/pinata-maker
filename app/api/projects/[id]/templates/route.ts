@@ -1,8 +1,8 @@
 import {
   handleListTemplateVersions,
   handlePublishTemplateVersion,
-} from "../../../../../src/presentation/http/template-endpoints";
-import { templateRequestContext } from "../../../../../src/presentation/next/template-request-context";
+} from "@/presentation/http/template-endpoints";
+import { templateRequestContext } from "@/presentation/next/template-request-context";
 
 type RouteParams = { params: Promise<{ id: string }> };
 

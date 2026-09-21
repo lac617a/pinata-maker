@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { InvalidPaperFormatError } from "./errors";
-import { PAPER_FORMATS, paperSize, type PaperFormat } from "./paper-format";
+import { PAPER_FORMATS, type PaperFormat, paperSize } from "./paper-format";
 
 describe("PaperFormat", () => {
   it("should expose the official portrait dimensions of every supported format", () => {

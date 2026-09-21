@@ -1,10 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
-  ObjectStorageError,
   type ObjectStorage,
+  ObjectStorageError,
   type StoredFile,
-} from "../../modules/storage/object-storage";
+} from "@/modules/storage/object-storage";
 
 /**
  * Bucket de las imágenes que sube el usuario. Lo crea la migración 0002.
