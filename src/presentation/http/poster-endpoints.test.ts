@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { UsageServices } from "@/application/daily-usage";
 import type { ExportServices } from "@/application/export-printable-document";
 import { createProject } from "@/application/manage-projects";
 import { createAsset } from "@/modules/assets/asset";
@@ -13,6 +14,8 @@ import {
 import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
 import { InMemoryObjectStorage } from "@/modules/storage/in-memory-object-storage";
 import { InMemoryTemplateVersionRepository } from "@/modules/templates/in-memory-template-version-repository";
+import { InMemoryUsageCounter } from "@/modules/usage/in-memory-usage-counter";
+import { DEFAULT_USAGE_LIMITS } from "@/modules/usage/usage";
 
 import { handleExportPoster } from "./poster-endpoints";
 
@@ -43,6 +46,14 @@ function services(): ExportServices {
     newTemplateVersionId: () =>
       `tttttttt-0000-4000-8000-0000000000${++sequence}`,
     newExportId: () => `eeeeeeee-0000-4000-8000-0000000000${++sequence}`,
+  };
+}
+
+function usage(): UsageServices {
+  return {
+    usage: new InMemoryUsageCounter(),
+    limits: DEFAULT_USAGE_LIMITS,
+    now: () => new Date(Date.UTC(2026, 8, 21, 10)),
   };
 }
 
@@ -92,7 +103,7 @@ describe("Poster endpoints", () => {
         paper: { format: "LETTER", orientation: "PORTRAIT" },
       }),
       project.id,
-      { services: shared, userId: owner },
+      { services: shared, userId: owner, usage: usage() },
     );
 
     const body = await response.json();
@@ -106,6 +117,48 @@ describe("Poster endpoints", () => {
     expect(body.export).not.toHaveProperty("storageKey");
   });
 
+  it("should count the poster in the daily limit of the account", async () => {
+    const shared = services();
+    const { project, asset } = await projectWithImage(shared);
+
+    const response = await handleExportPoster(
+      posterRequest({ assetId: asset.id, width: 600 }),
+      project.id,
+      { services: shared, userId: owner, usage: usage() },
+    );
+
+    expect((await response.json()).usage).toMatchObject({
+      level: "REGISTERED",
+      limit: 20,
+      remaining: 19,
+    });
+  });
+
+  it("should answer 429 when the account has used all of today", async () => {
+    const shared = services();
+    const { project, asset } = await projectWithImage(shared);
+    const spent = usage();
+
+    await spent.usage.consume([`user:${owner}`], "2026-09-21", 1);
+
+    const response = await handleExportPoster(
+      posterRequest({ assetId: asset.id, width: 600 }),
+      project.id,
+      {
+        services: shared,
+        userId: owner,
+        usage: { ...spent, limits: { ...DEFAULT_USAGE_LIMITS, REGISTERED: 1 } },
+      },
+    );
+
+    expect(response.status).toBe(429);
+    expect((await response.json()).code).toBe("USAGE_LIMIT_REACHED");
+    // Se niega antes de generar: no queda ningún documento guardado.
+    expect((shared.exportStorage as InMemoryObjectStorage).keys()).toHaveLength(
+      0,
+    );
+  });
+
   it("should refuse a request that gives both sides", async () => {
     const shared = services();
     const { project, asset } = await projectWithImage(shared);
@@ -114,7 +167,7 @@ describe("Poster endpoints", () => {
     const response = await handleExportPoster(
       posterRequest({ assetId: asset.id, width: 600, height: 600 }),
       project.id,
-      { services: shared, userId: owner },
+      { services: shared, userId: owner, usage: usage() },
     );
 
     expect(response.status).toBe(400);
@@ -128,7 +181,7 @@ describe("Poster endpoints", () => {
     const response = await handleExportPoster(
       posterRequest({ assetId: asset.id, width: 600, crop: { x: "0" } }),
       project.id,
-      { services: shared, userId: owner },
+      { services: shared, userId: owner, usage: usage() },
     );
 
     expect(response.status).toBe(400);
@@ -146,7 +199,7 @@ describe("Poster endpoints", () => {
         crop: { x: 0, y: 0, width: 720, height: 720 },
       }),
       project.id,
-      { services: shared, userId: owner },
+      { services: shared, userId: owner, usage: usage() },
     );
 
     expect(response.status).toBe(201);
@@ -160,7 +213,7 @@ describe("Poster endpoints", () => {
     const response = await handleExportPoster(
       posterRequest({ width: 600 }),
       project.id,
-      { services: shared, userId: owner },
+      { services: shared, userId: owner, usage: usage() },
     );
 
     expect(response.status).toBe(400);
@@ -170,7 +223,7 @@ describe("Poster endpoints", () => {
     const response = await handleExportPoster(
       posterRequest({ assetId: "x", width: 600 }),
       "x",
-      { services: services(), userId: null },
+      { services: services(), userId: null, usage: usage() },
     );
 
     expect(response.status).toBe(401);
@@ -183,7 +236,7 @@ describe("Poster endpoints", () => {
     const response = await handleExportPoster(
       posterRequest({ assetId: asset.id, width: 600 }),
       project.id,
-      { services: shared, userId: stranger },
+      { services: shared, userId: stranger, usage: usage() },
     );
 
     expect(response.status).toBe(404);

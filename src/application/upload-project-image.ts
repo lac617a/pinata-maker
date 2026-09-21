@@ -52,7 +52,7 @@ export async function uploadProjectImage(
     byteSize: input.bytes.byteLength,
   });
 
-  assertContentMatches(mimeType, input.bytes);
+  assertImageContent(mimeType, input.bytes);
 
   const asset = createAsset({
     id: services.newAssetId(),
@@ -90,7 +90,7 @@ export async function uploadProjectImage(
  * (docs/storage.md §44 y §122). Con ella se aplican además los límites de
  * dimensiones, que antes esperaban a un decodificador (docs/storage.md §150).
  */
-function assertContentMatches(mimeType: string, bytes: Uint8Array): void {
+export function assertImageContent(mimeType: string, bytes: Uint8Array): void {
   const header = readImageHeader(bytes);
 
   if (header.format !== mimeType) {

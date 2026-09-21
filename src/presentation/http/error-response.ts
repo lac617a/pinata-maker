@@ -98,6 +98,24 @@ const KNOWN_ERRORS: Record<string, ErrorPresentation> = {
     message:
       "Ese recorte no sirve: tiene que caer dentro de la imagen y no ser diminuto.",
   },
+  USAGE_LIMIT_REACHED: {
+    // 429 es «demasiadas peticiones»: es lo que pasa, y el navegador y
+    // cualquier proxy lo entienden como un límite, no como un fallo.
+    status: 429,
+    message: "Ya usaste los PDF de hoy. Se renuevan a medianoche (UTC).",
+  },
+  USAGE_COUNTER_UNAVAILABLE: {
+    status: 503,
+    message: "No pudimos comprobar tu límite diario. Inténtalo de nuevo.",
+  },
+  INVALID_USAGE_LIMITS: {
+    status: 503,
+    message: "Algo falló por nuestra parte. Inténtalo de nuevo en un momento.",
+  },
+  USAGE_NOT_CONFIGURED: {
+    status: 503,
+    message: "Algo falló por nuestra parte. Inténtalo de nuevo en un momento.",
+  },
   INVALID_EXPORT: {
     status: 400,
     message: "No pudimos preparar esa descarga con lo que nos has pedido.",

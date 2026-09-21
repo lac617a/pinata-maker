@@ -1,5 +1,5 @@
 import { handleExportPoster } from "@/presentation/http/poster-endpoints";
-import { exportRequestContext } from "@/presentation/next/export-request-context";
+import { posterRequestContext } from "@/presentation/next/export-request-context";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -9,5 +9,5 @@ export async function POST(
 ): Promise<Response> {
   const { id } = await params;
 
-  return handleExportPoster(request, id, await exportRequestContext());
+  return handleExportPoster(request, id, await posterRequestContext());
 }

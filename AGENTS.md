@@ -288,6 +288,22 @@ Use it whenever dealing with persistence or files.
 
 ---
 
+### usage.md
+
+Defines:
+
+```text
+access levels
+daily limits
+anonymous identification
+when usage is counted
+usage API
+```
+
+Use it whenever an action counts against the daily limit.
+
+---
+
 ### roadmap.md
 
 Defines:

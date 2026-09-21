@@ -1,3 +1,8 @@
+import {
+  assertUsageLeft,
+  consumeUsage,
+  type UsageServices,
+} from "@/application/daily-usage";
 import { exportPoster } from "@/application/export-poster";
 import type { ImageCrop } from "@/modules/posters/crop";
 import {
@@ -6,6 +11,8 @@ import {
 } from "@/modules/posters/errors";
 import type { PosterSizeRequest } from "@/modules/posters/poster";
 import type { ProjectId } from "@/modules/projects/project";
+import type { UsageStatus } from "@/modules/usage/usage";
+import { registeredSubject } from "@/modules/usage/usage-subject";
 
 import {
   jsonResponse,
@@ -18,24 +25,37 @@ import {
   readJsonBody,
   toPayload,
 } from "./export-endpoints";
+import { toUsagePayload } from "./usage-payload";
+
+export type PosterRequestContext = ExportRequestContext & {
+  readonly usage: UsageServices;
+};
 
 /**
  * Genera el póster de una imagen del proyecto (docs/PRD.md §44).
  *
  * La petición dice qué imagen, qué parte de ella, qué lado y en qué papel. Todo lo demás —la
  * proporción, el reparto en hojas— lo decide el servidor con lo guardado.
+ *
+ * Cuenta para el límite diario de la cuenta (docs/usage.md §8): se mira antes
+ * de trabajar y se cobra con el PDF hecho, antes de guardarlo.
  */
 export async function handleExportPoster(
   request: Request,
   projectId: ProjectId,
-  context: ExportRequestContext,
+  context: PosterRequestContext,
 ): Promise<Response> {
   if (!context.userId) {
     return unauthorizedResponse();
   }
 
+  const subject = registeredSubject(context.userId);
+
   try {
     const body = await readJsonBody(request);
+    let usage: UsageStatus | null = null;
+
+    await assertUsageLeft(context.usage, subject);
 
     const generated = await exportPoster(context.services, {
       projectId,
@@ -44,9 +64,15 @@ export async function handleExportPoster(
       size: asSize(body),
       crop: asCrop(body.crop),
       print: asPrintConfiguration(body.paper),
+      consume: async () => {
+        usage = await consumeUsage(context.usage, subject);
+      },
     });
 
-    return jsonResponse({ export: toPayload(generated) }, 201);
+    return jsonResponse(
+      { export: toPayload(generated), usage: usage && toUsagePayload(usage) },
+      201,
+    );
   } catch (error) {
     return toErrorResponse(error);
   }
@@ -68,7 +94,7 @@ function asAssetId(value: unknown): string {
  * Pedir los dos obligaría a elegir cuál manda o a deformar la figura; es
  * mejor que la petición lo diga. Ver docs/PRD.md §44.
  */
-function asSize(body: Record<string, unknown>): PosterSizeRequest {
+export function asSize(body: Record<string, unknown>): PosterSizeRequest {
   const width = body.width;
   const height = body.height;
 
@@ -90,7 +116,7 @@ function asSize(body: Record<string, unknown>): PosterSizeRequest {
  * números; si caen dentro de la imagen lo decide el caso de uso, que es el
  * que conoce su tamaño.
  */
-function asCrop(value: unknown): ImageCrop | undefined {
+export function asCrop(value: unknown): ImageCrop | undefined {
   if (value === undefined || value === null) {
     return undefined;
   }

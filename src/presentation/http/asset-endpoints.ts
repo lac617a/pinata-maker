@@ -95,7 +95,7 @@ export async function handleDeleteProjectImage(
  * archivo enorme para después rechazarlo es justo lo que un atacante
  * buscaría. Ver docs/AGENTS.md §46.
  */
-async function readImageFile(request: Request): Promise<File> {
+export async function readImageFile(request: Request): Promise<File> {
   const form = await request.formData().catch(() => null);
   const file = form?.get(IMAGE_FIELD);
 

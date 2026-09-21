@@ -8,6 +8,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const URL_VARIABLE = "NEXT_PUBLIC_SUPABASE_URL";
+const USAGE_SECRET_VARIABLE = "USAGE_HASH_SECRET";
 const ANON_KEY_VARIABLE = "NEXT_PUBLIC_SUPABASE_ANON_KEY";
 
 const results = [];
@@ -21,6 +22,13 @@ const anonKey = process.env[ANON_KEY_VARIABLE]?.trim();
 
 report(`${URL_VARIABLE} definida`, Boolean(url));
 report(`${ANON_KEY_VARIABLE} definida`, Boolean(anonKey));
+
+// Solo si existe y su longitud: el valor no se imprime nunca.
+// Ver docs/usage.md §5.
+report(
+  `${USAGE_SECRET_VARIABLE} definida (32 caracteres o más)`,
+  (process.env[USAGE_SECRET_VARIABLE]?.trim().length ?? 0) >= 32,
+);
 
 if (url && anonKey) {
   const client = createClient(url, anonKey, {
@@ -114,6 +122,34 @@ if (url && anonKey) {
       exports.error ? `denegado (${exports.error.code})` : "lista vacía",
     );
   }
+
+  // Migración 0008: el contador de uso. La tabla no se lee directamente;
+  // se pregunta a su función con una huella que no es de nadie.
+  const today = new Date().toISOString().slice(0, 10);
+  const usage = await client.rpc("usage_used", {
+    subjects: ["visitor:check-supabase"],
+    usage_day: today,
+  });
+  const usageMissing = ["PGRST202", "42883"].includes(usage.error?.code ?? "");
+
+  report(
+    "el contador de uso existe y un anónimo puede consultarlo",
+    !usage.error && typeof usage.data === "number",
+    usageMissing
+      ? "aplica supabase/migrations/0008_usage_counters.sql"
+      : (usage.error?.code ?? ""),
+  );
+
+  const counters = await client
+    .from("usage_counters")
+    .select("subject")
+    .limit(1);
+
+  report(
+    "la tabla usage_counters no se lee directamente",
+    Boolean(counters.error) || (counters.data?.length ?? 0) === 0,
+    counters.error ? `denegado (${counters.error.code})` : "lista vacía",
+  );
 }
 
 // Los buckets no se comprueban aquí.

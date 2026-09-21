@@ -217,6 +217,37 @@ describe("Export poster", () => {
     expect(rendered[0].sections[0].artwork?.image.orientation).toBe(6);
   });
 
+  it("should charge the daily limit before storing, and store nothing when it is spent", async () => {
+    const { context } = services();
+    const { project, asset } = await projectWithImage(context);
+    let charged = 0;
+
+    await exportPoster(context, {
+      projectId: project.id,
+      userId: owner,
+      assetId: asset.id,
+      size: { width: 600 },
+      consume: async () => {
+        charged++;
+      },
+    });
+
+    await expect(
+      exportPoster(context, {
+        projectId: project.id,
+        userId: owner,
+        assetId: asset.id,
+        size: { width: 600 },
+        consume: async () => {
+          throw new Error("limit reached");
+        },
+      }),
+    ).rejects.toThrow("limit reached");
+
+    expect(charged).toBe(1);
+    expect(context.exportStorage.keys()).toHaveLength(1);
+  });
+
   it("should name the file after the project and its width", async () => {
     const { context } = services();
     const { project, asset } = await projectWithImage(context);
