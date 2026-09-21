@@ -2388,3 +2388,98 @@ autenticación: el flujo de Supabase Auth en la aplicación
 El repositorio de proyectos fija el patrón que los demás deben seguir:
 interfaz en el dominio, contrato compartido, adaptador en `infrastructure/`,
 y el usuario en cada operación.
+
+---
+
+# 147. Implementación de referencia: assets
+
+Segunda parte de la persistencia. Guarda la imagen original que sube el
+usuario.
+
+```text
+src/modules/assets/
+├── asset.ts                      Entidad y ruta de almacenamiento
+├── asset-repository.ts           Interfaz de la fila
+├── asset-storage.ts              Interfaz del archivo
+├── in-memory-asset-repository.ts
+├── in-memory-asset-storage.ts
+├── errors.ts
+└── infrastructure/
+    ├── supabase-asset-repository.ts
+    └── supabase-asset-storage.ts
+
+supabase/migrations/0002_assets.sql   Tabla, RLS, bucket y sus políticas
+```
+
+---
+
+# 148. La fila y el archivo son dos cosas
+
+`AssetRepository` y `AssetStorage` están separados a propósito: una fila de
+base de datos y un archivo en object storage fallan por separado, y quien
+orquesta necesita poder deshacer una si falla la otra.
+
+El orden importa en las dos direcciones:
+
+```text
+subir    archivo primero, fila después
+         si falla la fila, se borra el archivo
+
+borrar   fila primero, archivo después
+```
+
+Un archivo sin fila es desperdicio: ocupa espacio y nadie lo referencia. Una
+fila sin archivo es una imagen rota para el usuario. Entre las dos, se
+prefiere el desperdicio.
+
+---
+
+# 149. Solo el original
+
+El MVP guarda un único tipo de asset, `ORIGINAL_IMAGE`. §38 enumera otros,
+pero nada los produce todavía: `PROCESSED_IMAGE` llegará con la eliminación
+de fondo y `PDF` con la entrega del documento (`AGENTS.md` §7).
+
+El original es inmutable (§47): subir otra imagen **crea un asset nuevo**, no
+sustituye el anterior. Por eso la subida al bucket usa `upsert: false`, y una
+clave repetida es un error y no una sustitución silenciosa.
+
+---
+
+# 150. Las dimensiones no se validan todavía
+
+`validateImageUpload` comprueba formato, extensión y peso. Las dimensiones
+—`validateImageMetadata`, que ya existe— exigen decodificar la imagen, y el
+decodificador llega con la eliminación de fondo.
+
+Es una carencia consciente, no un olvido: hoy una imagen de 10 × 10 px se
+acepta y fallará más tarde, al extraer el contorno, con un error del dominio.
+
+---
+
+# 151. El bucket es privado
+
+Las imágenes se sirven con una **URL firmada y caducable** de diez minutos,
+no por una ruta pública. Diez minutos bastan para mostrar una imagen y no
+para repartirla.
+
+Las políticas de `storage.objects` resuelven la propiedad desde la propia
+ruta: `projects/{projectId}/assets/{assetId}/original.ext`, de donde
+`storage.foldername(name)[2]` da el proyecto. Por eso la ruta es determinista
+y nunca lleva el nombre del archivo del usuario (§41, §42).
+
+---
+
+# 152. Una subida sin sesión se rechaza sin leerla
+
+El endpoint comprueba la sesión **antes** de leer el cuerpo de la petición.
+Un usuario no autenticado no consigue que el servidor cargue diez megas en
+memoria.
+
+Como efecto, el servidor responde y cierra mientras el cliente todavía
+escribe. Comprobado en un navegador real subiendo 3 MB: `fetch` recibe el
+401 con su cuerpo, limpio. `curl` en cambio informa de un código `000`
+aunque imprima la respuesta, porque considera la conexión interrumpida.
+
+El tamaño se comprueba además sobre `File.size` antes de leer los bytes
+(`AGENTS.md` §46).
