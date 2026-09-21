@@ -53,9 +53,28 @@ si alguien la enlaza. Lo protegen su `noindex` y que sin sesión redirige a
 
 # 4. Lo que falta
 
-* Una imagen para Open Graph: hoy un enlace compartido enseña título y
-  descripción, sin imagen.
 * Contenido que posicione más allá de la portada: guías sobre cómo hacer una
   piñata de cartón o cómo ensamblarla (`PRD.md` §42 lo pide). Cada guía, una
   página en `PUBLIC_PAGES`.
 * Medir los Core Web Vitals de la portada y de `/crear` una vez desplegado.
+
+---
+
+# 5. The share picture
+
+`app/opengraph-image.tsx` draws the picture WhatsApp, Facebook and X show
+for a shared link: 1200 x 630, the title, the domain and the landing's "4"
+over its real sheet grid (3 x 3 A4, the same `posterLayout` as the PDF). It
+is generated at build time, so it cannot drift from the product.
+
+* The fonts are the site's, fetched as TTF at build time. If the CDN fails,
+  the picture falls back to the default font instead of failing the deploy.
+* ImageResponse cannot read CSS variables: its colours mirror the theme
+  tokens, and change with them.
+* Pages that declare their own Open Graph replace the inherited one, image
+  included. `publicPageMetadata` names `SHARE_IMAGE` explicitly, so every
+  public page carries it. `twitter:card` is `summary_large_image`.
+
+After a deploy, WhatsApp and Facebook may keep showing a cached preview for
+a while. Facebook's Sharing Debugger refreshes it on demand.
+

@@ -23,6 +23,18 @@ export const PUBLIC_PAGES: readonly {
 const SITE_NAME = "Piñata Maker";
 
 /**
+ * The share picture, app/opengraph-image.tsx. Pages that declare their own
+ * Open Graph replace the one inherited from the root, image included, so
+ * every public page names it explicitly (docs/seo.md §5).
+ */
+export const SHARE_IMAGE = {
+  url: "/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: "Piñata Maker: tu imagen ampliada a tamaño real y repartida en hojas para imprimir",
+} as const;
+
+/**
  * Metadatos de una página pública: título, descripción, URL canónica y
  * Open Graph, que es lo que enseñan WhatsApp o Facebook al compartir el
  * enlace. Relativos: `metadataBase` del layout raíz los completa.
@@ -47,6 +59,7 @@ export function publicPageMetadata({
       siteName: SITE_NAME,
       locale: "es",
       type: "website",
+      images: [SHARE_IMAGE],
     },
   };
 }

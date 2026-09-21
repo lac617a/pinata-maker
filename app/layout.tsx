@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   title: "Piñata Maker",
   description:
     "Tu imagen ampliada a tamaño real y repartida en hojas para hacer piñatas.",
+  // Large picture on X; the image itself is app/opengraph-image.tsx.
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({

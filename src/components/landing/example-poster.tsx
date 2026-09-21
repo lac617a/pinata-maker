@@ -122,7 +122,7 @@ function Figure({
       <g>
         <rect width={w} height={h} fill="var(--illustration-1)" />
         <path
-          d={`M ${w * 0.58} ${h * 0.06} L ${w * 0.78} ${h * 0.06} L ${w * 0.78} ${h * 0.6} L ${w * 0.9} ${h * 0.6} L ${w * 0.9} ${h * 0.74} L ${w * 0.78} ${h * 0.74} L ${w * 0.78} ${h * 0.94} L ${w * 0.58} ${h * 0.94} L ${w * 0.58} ${h * 0.74} L ${w * 0.1} ${h * 0.74} L ${w * 0.1} ${h * 0.6} Z M ${w * 0.58} ${h * 0.24} L ${w * 0.28} ${h * 0.6} L ${w * 0.58} ${h * 0.6} Z`}
+          d={fourPath(w, h)}
           fill="var(--illustration-2)"
           fillRule="evenodd"
         />
@@ -154,4 +154,12 @@ function Figure({
       />
     </g>
   );
+}
+
+/**
+ * The example "4", as an SVG path filling a w x h box. Shared with the share
+ * image (app/opengraph-image.tsx), so both show the same figure.
+ */
+export function fourPath(w: number, h: number): string {
+  return `M ${w * 0.58} ${h * 0.06} L ${w * 0.78} ${h * 0.06} L ${w * 0.78} ${h * 0.6} L ${w * 0.9} ${h * 0.6} L ${w * 0.9} ${h * 0.74} L ${w * 0.78} ${h * 0.74} L ${w * 0.78} ${h * 0.94} L ${w * 0.58} ${h * 0.94} L ${w * 0.58} ${h * 0.74} L ${w * 0.1} ${h * 0.74} L ${w * 0.1} ${h * 0.6} Z M ${w * 0.58} ${h * 0.24} L ${w * 0.28} ${h * 0.6} L ${w * 0.58} ${h * 0.6} Z`;
 }
