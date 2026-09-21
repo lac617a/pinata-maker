@@ -9,6 +9,9 @@ documentación del subsistema, en ese orden (`AGENTS.md` §6).
 
 Debe actualizarse al terminar cada fase.
 
+Los huecos entre lo construido y lo que hace falta para funcionar con usuarios
+de verdad están en §8.
+
 Cada feature termina en un commit: el historial es lo que explica qué se hizo
 y cuándo. La regla completa está en `AGENTS.md` §54.
 
@@ -639,6 +642,12 @@ posicionar.
    método es evadible; hay que decidir cuánto esfuerzo merece.
 7. ¿Qué herramientas justifican registrarse y cuáles el nivel de pago? Sin una
    respuesta, el registro no ofrece nada a cambio.
+8. ¿El producto es solo en español? Afecta a URLs, metadatos y mercado, y
+   meter i18n después de la fase F es reescribir la fase F (§8.10).
+9. ¿Con qué se prueba la interfaz? La suite de dominio no cubre navegador a
+   propósito, y la fase F se queda sin red si no se decide antes (§8.9).
+10. ¿La imagen se sube a través del servidor o directamente al object storage
+    con una URL firmada? Hoy pasa entera por memoria del servidor (§8.5).
 
 ---
 
@@ -700,3 +709,126 @@ posicionar.
 | AC-13 | Descargar el PDF | API lista; falta interfaz (F) |
 | AC-14 | Reabrir el proyecto | API lista; falta interfaz (F) |
 | AC-15 | Aislamiento entre usuarios | **Hecho y probado** para proyectos |
+
+---
+
+# 8. Lo que no estaba contemplado
+
+Repaso del proyecto a fecha de hoy. No son requisitos —los requisitos están en
+`PRD.md`— sino huecos entre lo que hay construido y lo que hace falta para que
+esto funcione con usuarios de verdad. Cada uno dice qué pasa si se ignora.
+
+## 8.1 Nadie ha impreso un molde todavía
+
+Es el riesgo más grande del proyecto y no se parece a ninguno de los demás.
+
+Todo lo que dice que la escala es correcta son tests: comprueban que el
+sistema hace lo que el sistema cree que debe hacer. Que un cuadrado de 100 mm
+en el PDF mida 100 mm **con una regla, en papel** no lo ha comprobado nadie.
+Entre el PDF y el papel hay un visor, un driver y una impresora, y cualquiera
+de los tres puede escalar sin avisar.
+
+`printing.md` §75 ya lo pide. La diferencia es de orden: conviene hacerlo
+**antes** de construir la interfaz, porque si el molde sale a 96 % todo lo que
+se construya encima sobra.
+
+Hace falta un procedimiento repetible y registrado: qué se imprime, con qué
+ajustes del diálogo de impresión, qué se mide y qué desviación se acepta.
+
+## 8.2 La previsualización va a necesitar un renderer que no existe
+
+La fase F pide vista previa de la plantilla y del reparto en páginas. Hoy la
+única salida es un PDF, y previsualizar generando PDFs es lento y pesado.
+
+`PrintRenderer` es una interfaz precisamente para esto (`printing.md` §66-§68):
+un renderer que produzca SVG da previsualización barata en el navegador y, de
+paso, una forma de mirar una plantilla cuando algo sale raro. Es la pieza de
+fase F con más valor por línea escrita.
+
+## 8.3 El montaje se calcula y no se imprime
+
+`templates/assembly.ts` produce el grafo de conexiones y los pasos de montaje,
+con sus tests. Nada de eso llega al usuario: la hoja de instrucciones del PDF
+solo lleva medidas y la advertencia de escala.
+
+Es trabajo ya hecho y pagado que no se ve. Un usuario con diecisiete piezas
+recortadas y sin instrucciones tiene un problema que el sistema ya sabe
+resolver.
+
+## 8.4 No hay forma de saber qué falló
+
+No hay registro estructurado ni captura de errores. Cuando alguien diga «no me
+sale el PDF», hoy no hay nada que mirar: el error se imprime en la consola del
+servidor y se pierde.
+
+Antes de abrir esto al público hace falta, como mínimo, saber qué petición
+falló, con qué código de los de `error-response.ts` y cuántas veces. Los
+códigos ya existen y son estables, que es la mitad del trabajo.
+
+## 8.5 Nada impide el abuso puntual
+
+La fase G cubre el límite **diario** por nivel de acceso. No cubre la ráfaga:
+cien subidas en un minuto, o cien PDFs de quinientas hojas. Generar un
+documento es trabajo de CPU dentro de la petición, así que un solo cliente
+puede tumbar el servidor sin saltarse ningún límite diario.
+
+Además, la imagen se sube **a través del servidor**: se carga entera en
+memoria para reenviarla al bucket. Subir directamente al object storage con
+una URL firmada quita ese coste y ese riesgo de en medio.
+
+## 8.6 El archivo se valida por lo que dice ser
+
+`validateImageUpload` comprueba el tipo declarado, la extensión y el peso. No
+mira el contenido: un archivo puede llamarse `.png`, declarar `image/png` y
+ser otra cosa (`storage.md` §122).
+
+La comprobación real llega sola con el decodificador de la fase B, pero
+conviene que esté escrito para que nadie dé por hecho que ya se hace.
+
+## 8.7 Las migraciones se aplican a mano y nadie comprueba que estén
+
+`pnpm check:supabase` dice si las tablas existen, y eso ya evita el peor caso.
+Lo que no hay es un registro de qué migración se aplicó y cuándo: el entorno y
+el repositorio pueden separarse sin que nada lo note hasta que una consulta
+falla.
+
+## 8.8 No hay integración continua
+
+`pnpm verify` encadena formato, lint, tipos y tests, pero solo corre si
+alguien se acuerda. Un trabajo que lo ejecute en cada push cuesta media hora
+de configurar y es lo que hace que el verde signifique algo.
+
+Las pruebas de integración necesitan credenciales y una cuenta de prueba, así
+que van en un trabajo aparte, no en el de cada push.
+
+## 8.9 La interfaz no tiene forma de probarse
+
+La suite de Vitest es de dominio a propósito: entorno `node`, sin React ni
+navegador (`geometry.md` §84). Esa decisión sigue siendo buena, pero deja la
+fase F sin red.
+
+Hace falta decidir **ahora**, antes de escribir cuarenta pantallas, con qué se
+prueba el flujo completo en un navegador de verdad —subir, configurar,
+descargar el PDF— y que esa suite viva separada de la del dominio.
+
+## 8.10 Si se quiere inglés, se decide antes de escribir las pantallas
+
+Los textos de la interfaz y los mensajes de `error-response.ts` están en
+español dentro del código. Para un producto que depende de SEO, el idioma no
+es un detalle de presentación: cambia las URLs, los metadatos y el mercado al
+que se puede llegar.
+
+Meter i18n después de la fase F es reescribir la fase F.
+
+## 8.11 Quien llega sin una imagen no puede probar nada
+
+La herramienta exige subir algo antes de enseñar nada. Una figura de ejemplo
+—con su molde ya generado— deja probar el producto en un clic, da contenido
+indexable para la fase H y sirve de caso de prueba físico para §8.1.
+
+## 8.12 Copias de seguridad y qué pasa si se pierde
+
+Hay trabajo de usuarios guardado —proyectos, plantillas publicadas,
+documentos— y ninguna política escrita sobre copias, retención ni
+recuperación. Conviene decidirlo mientras la respuesta todavía puede ser «no
+hace falta nada».
