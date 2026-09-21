@@ -1,5 +1,6 @@
 import type { AuthGateway } from "@/modules/accounts/auth-gateway";
 import { createCredentials } from "@/modules/accounts/credentials";
+import { createDataAuthorization } from "@/modules/accounts/data-authorization";
 
 import { jsonResponse, toErrorResponse } from "./error-response";
 
@@ -22,9 +23,14 @@ export async function handleSignUp(
   context: AuthRequestContext,
 ): Promise<Response> {
   try {
-    const outcome = await context.auth.signUp(
-      createCredentials(await readCredentialsBody(request)),
+    const body = await readCredentialsBody(request);
+    const credentials = createCredentials(body);
+    // Before creating anything: without it no personal data may be stored.
+    const authorization = createDataAuthorization(
+      body.acceptedDataPolicy,
+      new Date(),
     );
+    const outcome = await context.auth.signUp(credentials, authorization);
 
     if (outcome === "SIGNED_IN") {
       return jsonResponse({ status: "SIGNED_IN" }, 201);
@@ -82,9 +88,11 @@ export async function handleSignOut(
   }
 }
 
-async function readCredentialsBody(
-  request: Request,
-): Promise<{ email?: unknown; password?: unknown }> {
+async function readCredentialsBody(request: Request): Promise<{
+  email?: unknown;
+  password?: unknown;
+  acceptedDataPolicy?: unknown;
+}> {
   try {
     const body = await request.json();
 

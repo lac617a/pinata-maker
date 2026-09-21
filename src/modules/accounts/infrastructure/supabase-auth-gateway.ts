@@ -5,6 +5,7 @@ import type {
   SignUpOutcome,
 } from "@/modules/accounts/auth-gateway";
 import type { Credentials } from "@/modules/accounts/credentials";
+import type { DataAuthorization } from "@/modules/accounts/data-authorization";
 import {
   AuthenticationFailedError,
   AuthServiceError,
@@ -24,13 +25,27 @@ export class SupabaseAuthGateway implements AuthGateway {
     private readonly confirmationRedirectUrl?: string,
   ) {}
 
-  async signUp(credentials: Credentials): Promise<SignUpOutcome> {
+  async signUp(
+    credentials: Credentials,
+    authorization: DataAuthorization,
+  ): Promise<SignUpOutcome> {
     const { data, error } = await this.client.auth.signUp({
       email: credentials.email,
       password: credentials.password,
-      options: this.confirmationRedirectUrl
-        ? { emailRedirectTo: this.confirmationRedirectUrl }
-        : undefined,
+      options: {
+        ...(this.confirmationRedirectUrl
+          ? { emailRedirectTo: this.confirmationRedirectUrl }
+          : {}),
+        // Copied by a trigger into data_authorizations, a table nobody can
+        // edit: user metadata alone could be changed later by the user
+        // (0009_data_authorizations.sql).
+        data: {
+          data_authorization: {
+            policy_version: authorization.policyVersion,
+            accepted_at: authorization.acceptedAt.toISOString(),
+          },
+        },
+      },
     });
 
     if (error) {

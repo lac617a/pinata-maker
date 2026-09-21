@@ -16,15 +16,18 @@ export default function Page() {
       submitLabel="Entrar"
       pending={signIn.isPending}
       error={signIn.error?.message}
-      onSubmit={(credentials) =>
-        signIn.mutate(credentials, {
-          onSuccess: () => {
-            // La sesión viaja en cookies que acaba de escribir el servidor:
-            // `refresh` hace que las páginas servidas vuelvan a mirarlas.
-            router.replace("/proyectos");
-            router.refresh();
+      onSubmit={({ email, password }) =>
+        signIn.mutate(
+          { email, password },
+          {
+            onSuccess: () => {
+              // La sesión viaja en cookies que acaba de escribir el servidor:
+              // `refresh` hace que las páginas servidas vuelvan a mirarlas.
+              router.replace("/proyectos");
+              router.refresh();
+            },
           },
-        })
+        )
       }
       footer={{
         question: "¿Todavía no tienes cuenta?",

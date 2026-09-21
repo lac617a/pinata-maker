@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -45,6 +46,19 @@ export default function Page() {
             );
           },
         })
+      }
+      consent={
+        <>
+          Autorizo el tratamiento de mis datos personales según la{" "}
+          <Link href="/privacidad" className="text-foreground underline">
+            política de tratamiento de datos
+          </Link>{" "}
+          y acepto los{" "}
+          <Link href="/terminos" className="text-foreground underline">
+            términos de uso
+          </Link>
+          .
+        </>
       }
       footer={{
         question: "¿Ya tienes cuenta?",

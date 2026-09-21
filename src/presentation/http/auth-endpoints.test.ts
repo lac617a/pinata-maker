@@ -6,6 +6,10 @@ import type {
 } from "@/modules/accounts/auth-gateway";
 import type { Credentials } from "@/modules/accounts/credentials";
 import {
+  DATA_POLICY_VERSION,
+  type DataAuthorization,
+} from "@/modules/accounts/data-authorization";
+import {
   AuthenticationFailedError,
   AuthServiceError,
 } from "@/modules/accounts/errors";
@@ -21,6 +25,7 @@ import { handleSignIn, handleSignOut, handleSignUp } from "./auth-endpoints";
  */
 class FakeAuthGateway implements AuthGateway {
   received: Credentials | null = null;
+  authorization: DataAuthorization | null = null;
   signedOut = false;
 
   constructor(
@@ -31,8 +36,12 @@ class FakeAuthGateway implements AuthGateway {
     } = {},
   ) {}
 
-  async signUp(credentials: Credentials): Promise<SignUpOutcome> {
+  async signUp(
+    credentials: Credentials,
+    authorization: DataAuthorization,
+  ): Promise<SignUpOutcome> {
     this.received = credentials;
+    this.authorization = authorization;
 
     const outcome = this.behaviour.signUp ?? "CONFIRMATION_REQUIRED";
 
@@ -71,7 +80,11 @@ function post(body: unknown): Request {
   });
 }
 
-const valid = { email: "Alguien@Ejemplo.COM", password: "contraseña-larga" };
+const valid = {
+  email: "Alguien@Ejemplo.COM",
+  password: "contraseña-larga",
+  acceptedDataPolicy: true,
+};
 
 describe("Sign up", () => {
   it("should ask the user to confirm the address", async () => {
@@ -128,6 +141,29 @@ describe("Sign up", () => {
     });
 
     expect(response.status).toBe(400);
+  });
+
+  it("should record which data policy was authorized", async () => {
+    const auth = new FakeAuthGateway();
+
+    await handleSignUp(post(valid), { auth });
+
+    expect(auth.authorization?.policyVersion).toBe(DATA_POLICY_VERSION);
+  });
+
+  it("should not create an account without the data authorization", async () => {
+    // Ley 1581 de 2012, art. 9: autorización previa, expresa e informada.
+    for (const acceptedDataPolicy of [undefined, false, "true"]) {
+      const auth = new FakeAuthGateway();
+      const response = await handleSignUp(
+        post({ ...valid, acceptedDataPolicy }),
+        { auth },
+      );
+
+      expect(response.status).toBe(400);
+      expect((await response.json()).code).toBe("DATA_AUTHORIZATION_REQUIRED");
+      expect(auth.received).toBeNull();
+    }
   });
 
   it("should reject a request with no credentials", async () => {

@@ -1,6 +1,7 @@
 import type { UserId } from "@/modules/projects/project";
 
 import type { Credentials } from "./credentials";
+import type { DataAuthorization } from "./data-authorization";
 
 /**
  * Qué ocurre tras registrarse.
@@ -27,7 +28,11 @@ export interface AuthGateway {
    * quién tiene cuenta en el sitio. Quien ya la tenga recibirá un correo que
    * se lo recuerde, que es donde esa información sí es privada.
    */
-  signUp(credentials: Credentials): Promise<SignUpOutcome>;
+  signUp(
+    credentials: Credentials,
+    /** Recorded with the account as proof (docs/legal.md §5). */
+    authorization: DataAuthorization,
+  ): Promise<SignUpOutcome>;
 
   /** Falla igual con una dirección desconocida que con una contraseña mala. */
   signIn(credentials: Credentials): Promise<UserId>;

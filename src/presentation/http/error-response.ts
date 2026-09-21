@@ -39,6 +39,11 @@ const KNOWN_ERRORS: Record<string, ErrorPresentation> = {
     status: 503,
     message: "No pudimos guardar los cambios. Inténtalo de nuevo.",
   },
+  DATA_AUTHORIZATION_REQUIRED: {
+    status: 400,
+    message:
+      "Para crear la cuenta tienes que autorizar el tratamiento de tus datos.",
+  },
   INVALID_CREDENTIALS_FORMAT: {
     status: 400,
     message: "Revisa el correo y la contraseña.",

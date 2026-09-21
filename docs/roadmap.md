@@ -744,6 +744,9 @@ posicionar.
   montaje, regla de calibración y aviso de resolución. Es también el
   contenido indexable que pide el SEO, y el sitio natural para la figura de
   ejemplo (§8.11).
+* **Adapted to Colombian law on 2026-09-21** (`legal.md` §5): data policy
+  per Decreto 1377, SIC as authority, required authorization box at sign-up
+  with proof kept in `data_authorizations` (migration 0009).
 * **Páginas legales hechas el 2026-09-21** (`legal.md`), con los datos del
   titular como marcadores y un aviso de borrador visible mientras falten.
   **Antes de publicar:** rellenar `src/components/legal/site-owner.ts` y que

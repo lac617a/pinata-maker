@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -121,6 +122,18 @@ export function CreatePoster() {
           </Button>
         </div>
       </section>
+
+      <p className="text-muted-foreground text-xs">
+        Al generar el PDF aceptas los{" "}
+        <Link href="/terminos" className="underline underline-offset-4">
+          términos de uso
+        </Link>{" "}
+        y el tratamiento mínimo de datos que describe la{" "}
+        <Link href="/privacidad" className="underline underline-offset-4">
+          política de tratamiento de datos
+        </Link>
+        .
+      </p>
 
       <PosterStudio
         // Otra imagen, otro recorte y otro tamaño: se empieza de cero.

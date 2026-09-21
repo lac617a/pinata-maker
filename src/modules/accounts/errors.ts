@@ -39,3 +39,16 @@ export class AuthServiceError extends Error {
     this.name = "AuthServiceError";
   }
 }
+
+/**
+ * An account without the data policy authorization. Colombian law requires
+ * it before any personal data is processed (docs/legal.md §5).
+ */
+export class DataAuthorizationRequiredError extends Error {
+  readonly code = "DATA_AUTHORIZATION_REQUIRED";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "DataAuthorizationRequiredError";
+  }
+}

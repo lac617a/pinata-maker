@@ -3,48 +3,68 @@ import Link from "next/link";
 
 import { LegalPage, LegalSection } from "@/components/legal/legal-page";
 import { SITE_OWNER } from "@/components/legal/site-owner";
+import { DATA_POLICY_VERSION } from "@/modules/accounts/data-authorization";
 import { publicPageMetadata } from "@/presentation/next/public-pages";
 
 export const metadata: Metadata = publicPageMetadata({
-  title: "Política de privacidad · Piñata Maker",
+  title: "Política de tratamiento de datos personales · Piñata Maker",
   description:
-    "Qué datos recoge Piñata Maker, para qué, dónde se guardan y cuánto tiempo.",
+    "Qué datos trata Piñata Maker, para qué, dónde se guardan, cuánto tiempo y cómo ejercer tus derechos según la Ley 1581 de 2012.",
   path: "/privacidad",
 });
 
 /**
- * Política de privacidad (docs/PRD.md §41).
+ * The data policy, written for Colombian law: Ley 1581 de 2012 and its
+ * regulation, Decreto 1377 de 2013 (now in Decreto 1074 de 2015). Art. 13 of
+ * the decree lists what it must contain; every section here answers one of
+ * those points.
  *
- * Describe lo que el sistema hace de verdad: si cambia qué se guarda o
- * quién interviene, esta página cambia con ello (docs/legal.md §3).
+ * It describes what the system really does. If what is stored, for how long
+ * or by whom changes, this page changes in the same commit, and so does
+ * DATA_POLICY_VERSION if the change is substantial (docs/legal.md §3, §5).
  */
 export default function Page() {
   return (
-    <LegalPage title="Política de privacidad">
-      <LegalSection title="Quién es el responsable">
+    <LegalPage title="Política de tratamiento de datos personales">
+      <LegalSection title="1. Responsable del tratamiento">
+        <ul>
+          <li>
+            <strong>Nombre:</strong> {SITE_OWNER.name}, identificado con
+            documento {SITE_OWNER.taxId}.
+          </li>
+          <li>
+            <strong>Domicilio y dirección:</strong> {SITE_OWNER.address}.
+          </li>
+          <li>
+            <strong>Correo electrónico:</strong> {SITE_OWNER.email}
+          </li>
+          <li>
+            <strong>Teléfono:</strong> {SITE_OWNER.phone}
+          </li>
+        </ul>
         <p>
-          {SITE_OWNER.name} ({SITE_OWNER.taxId}), {SITE_OWNER.address},{" "}
-          {SITE_OWNER.country}. Puedes escribirnos a {SITE_OWNER.email} para
-          cualquier cosa relacionada con tus datos.
+          Esta política cumple la Ley 1581 de 2012 y el Decreto 1377 de 2013
+          (compilado en el Decreto 1074 de 2015), que regulan la protección de
+          datos personales en Colombia.
         </p>
       </LegalSection>
 
-      <LegalSection title="Qué datos recogemos">
+      <LegalSection title="2. Qué datos tratamos y para qué">
         <p>
           <strong>Si usas la herramienta sin cuenta:</strong>
         </p>
         <ul>
           <li>
-            La imagen que eliges. Viaja a nuestro servidor solo para generar el
-            PDF, se procesa en memoria y <strong>no se guarda</strong>: ni la
-            imagen ni el PDF quedan almacenados.
+            <strong>La imagen que eliges.</strong> Viaja a nuestro servidor solo
+            para generar el PDF, se procesa en memoria y{" "}
+            <strong>no se guarda</strong>: ni la imagen ni el PDF quedan
+            almacenados.
           </li>
           <li>
-            Un identificador aleatorio en una cookie (<code>pm_visitor</code>) y
-            tu dirección IP, para contar cuántos PDF has generado hoy. No se
-            guardan tal cual: guardamos una huella cifrada con una clave
-            secreta, y la de la IP cambia cada día, así que no se puede
-            relacionar un día con otro.
+            <strong>Un identificador aleatorio y tu dirección IP,</strong> para
+            contar cuántos PDF generas al día y evitar abusos. No se guardan tal
+            cual: guardamos una huella cifrada con una clave secreta, y la de la
+            IP cambia cada día, así que no permite seguirte de un día a otro.
           </li>
         </ul>
         <p>
@@ -52,110 +72,157 @@ export default function Page() {
         </p>
         <ul>
           <li>
-            Tu correo electrónico y tu contraseña, que nunca se guarda tal cual:
-            solo una huella de la que no se puede recuperar.
+            Tu correo electrónico, para identificarte y comunicarnos contigo
+            sobre tu cuenta.
+          </li>
+          <li>
+            Tu contraseña, que nunca se guarda tal cual: solo una huella de la
+            que no se puede recuperar.
           </li>
           <li>
             Tus proyectos: su nombre, las imágenes que subes y los PDF que
-            generas, con sus fechas y medidas.
+            generas, con sus fechas y medidas, para que puedas volver a ellos.
           </li>
-          <li>Cuántos PDF has generado cada día, asociado a tu cuenta.</li>
+          <li>Cuántos PDF has generado cada día, para aplicar el límite.</li>
+          <li>
+            La prueba de tu autorización: qué versión de esta política aceptaste
+            y cuándo.
+          </li>
         </ul>
         <p>
-          No pedimos tu nombre, tu dirección ni ningún dato de pago, y no usamos
-          tus imágenes para nada que no sea generar tus PDF.
+          No pedimos datos sensibles ni datos de pago, no usamos tus imágenes
+          para nada que no sea generar tus PDF y no vendemos ni cedemos tus
+          datos a nadie.
         </p>
       </LegalSection>
 
-      <LegalSection title="Para qué y con qué base">
-        <ul>
-          <li>
-            <strong>Prestarte el servicio</strong> —generar los PDF, guardar tus
-            proyectos si tienes cuenta—: es lo que nos pides al usar la
-            herramienta y aceptar los términos.
-          </li>
-          <li>
-            <strong>Aplicar el límite diario</strong> y evitar abusos: interés
-            legítimo en que la herramienta siga siendo gratuita para todos.
-          </li>
-          <li>
-            <strong>Publicidad:</strong> hoy el sitio no muestra publicidad. Si
-            la añadimos, te pediremos permiso antes para la personalizada y
-            podrás negarte (ver la{" "}
-            <Link href="/cookies" className="underline underline-offset-4">
-              política de cookies
-            </Link>
-            ).
-          </li>
-        </ul>
-      </LegalSection>
-
-      <LegalSection title="Dónde se guardan y quién interviene">
-        <ul>
-          <li>
-            <strong>Supabase</strong> gestiona el inicio de sesión, la base de
-            datos y el almacenamiento de imágenes y PDF, en{" "}
-            {SITE_OWNER.dataRegion}. Los archivos están en almacenamiento
-            privado: solo se pueden descargar con un enlace temporal que genera
-            la aplicación para su dueño.
-          </li>
-          <li>
-            <strong>{SITE_OWNER.hosting}</strong> aloja la aplicación.
-          </li>
-        </ul>
+      <LegalSection title="3. Tu autorización">
         <p>
-          No usamos ningún servicio externo para procesar tus imágenes: el PDF
-          se genera en nuestro propio servidor. No vendemos ni cedemos tus datos
-          a nadie.
+          Al crear una cuenta marcas una casilla con la que autorizas este
+          tratamiento, de forma previa, expresa e informada. Guardamos qué
+          versión de la política aceptaste y cuándo, como prueba. Versión
+          vigente: {DATA_POLICY_VERSION}.
         </p>
         <p>
-          Si estos proveedores están fuera de {SITE_OWNER.country}, tus datos se
-          transfieren allí con las garantías que ofrecen sus contratos de
+          Sin cuenta, al generar un PDF aceptas el tratamiento mínimo descrito
+          arriba: la imagen solo mientras se genera el documento, y la huella
+          del identificador y de la IP para el límite diario.
+        </p>
+        <p>Puedes revocar tu autorización en cualquier momento (sección 6).</p>
+      </LegalSection>
+
+      <LegalSection title="4. Dónde se guardan y quién interviene">
+        <p>
+          Usamos dos proveedores que tratan los datos por encargo nuestro y solo
+          para prestar el servicio:
+        </p>
+        <ul>
+          <li>
+            <strong>Supabase</strong>: inicio de sesión, base de datos y
+            almacenamiento de imágenes y PDF, en {SITE_OWNER.dataRegion}. Los
+            archivos están en almacenamiento privado y solo se descargan con un
+            enlace temporal que la aplicación genera para su dueño.
+          </li>
+          <li>
+            <strong>{SITE_OWNER.hosting}</strong>: aloja la aplicación.
+          </li>
+        </ul>
+        <p>
+          Como están fuera de Colombia, tus datos se transmiten a Estados
+          Unidos. Al autorizar esta política autorizas también esa transmisión,
+          que se hace con las garantías de seguridad de sus contratos de
           tratamiento de datos.
         </p>
       </LegalSection>
 
-      <LegalSection title="Cuánto tiempo los conservamos">
+      <LegalSection title="5. Cuánto tiempo los conservamos">
         <ul>
           <li>Sin cuenta: la imagen y el PDF, nada; no se guardan.</li>
+          <li>El contador diario: se borra a los siete días.</li>
           <li>
-            El contador diario: se borra a los siete días, con la huella de la
-            cookie o de la IP.
-          </li>
-          <li>
-            Con cuenta: tus imágenes y PDF, hasta que los borres o nos pidas
-            borrar la cuenta. Puedes borrar cada imagen y cada PDF desde tu
-            proyecto; se borran el registro y el archivo.
+            Con cuenta: tus datos, mientras la cuenta exista o hasta que los
+            borres. Puedes borrar cada imagen y cada PDF desde tu proyecto; se
+            borran el registro y el archivo.
           </li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="Tus derechos">
+      <LegalSection title="6. Tus derechos">
+        <p>Como titular de los datos puedes, en cualquier momento:</p>
+        <ul>
+          <li>Conocer, actualizar y rectificar tus datos.</li>
+          <li>Pedir prueba de la autorización que nos diste.</li>
+          <li>Saber qué uso le hemos dado a tus datos.</li>
+          <li>
+            Revocar la autorización o pedir que borremos tus datos, cuando no
+            haya un deber legal de conservarlos.
+          </li>
+          <li>Acceder a tus datos de forma gratuita.</li>
+          <li>
+            Presentar quejas ante {SITE_OWNER.dataAuthority} por infracciones a
+            la ley, una vez hayas presentado tu reclamo ante nosotros.
+          </li>
+        </ul>
+      </LegalSection>
+
+      <LegalSection title="7. Cómo ejercerlos">
         <p>
-          Puedes pedirnos acceder a tus datos, corregirlos, borrarlos,
-          llevártelos, limitar su uso u oponerte a él. Para borrar tu cuenta con
-          todo lo que contiene, escríbenos a {SITE_OWNER.email} desde el correo
-          de la cuenta y lo haremos en un máximo de 30 días.
+          Escríbenos a <strong>{SITE_OWNER.email}</strong> o llama al{" "}
+          <strong>{SITE_OWNER.phone}</strong>. Quien atiende las solicitudes es
+          el propio responsable, {SITE_OWNER.name}. Si tienes cuenta, escribe
+          desde el correo de la cuenta: así sabemos que eres tú.
         </p>
         <p>
-          Si crees que no hemos tratado bien tus datos, puedes reclamar ante{" "}
-          {SITE_OWNER.dataAuthority}.
+          <strong>Consultas</strong> (qué datos tenemos, qué uso les damos): te
+          respondemos en un máximo de diez días hábiles desde que la recibimos.
+          Si no podemos en ese plazo, te diremos por qué y te responderemos en
+          los cinco días hábiles siguientes.
+        </p>
+        <p>
+          <strong>Reclamos</strong> (corregir, actualizar, borrar o revocar la
+          autorización): incluye tu identificación, qué pides y por qué, cómo
+          contactarte y los documentos que quieras aportar. Si falta algo, te lo
+          pediremos en los cinco días siguientes; si pasan dos meses sin que lo
+          completes, entenderemos que desististe. Te respondemos en un máximo de
+          quince días hábiles. Si no podemos, te diremos por qué y te
+          responderemos en los ocho días hábiles siguientes.
+        </p>
+        <p>
+          Para borrar tu cuenta con todo lo que contiene, pídelo por correo y lo
+          haremos dentro de esos plazos.
         </p>
       </LegalSection>
 
-      <LegalSection title="Menores">
+      <LegalSection title="8. Seguridad">
         <p>
-          El servicio no está pensado para menores de 16 años sin la supervisión
-          de su madre, padre o tutor, que es quien debe crear la cuenta si hace
-          falta.
+          Cada usuario solo puede ver sus propios proyectos, lo que se comprueba
+          en la base de datos y no solo en la aplicación; las conexiones van
+          cifradas y los archivos no son públicos. Ningún sistema es infalible:
+          si detectamos un incidente que afecte a tus datos, te lo
+          comunicaremos.
         </p>
       </LegalSection>
 
-      <LegalSection title="Cambios">
+      <LegalSection title="9. Menores de edad">
         <p>
-          Si cambiamos qué datos recogemos o para qué, actualizaremos esta
-          página y su fecha. Si el cambio es importante y tienes cuenta, te lo
-          diremos por correo.
+          El servicio no está dirigido a menores de edad. Si un menor lo usa, su
+          madre, padre o representante legal es quien debe autorizar el
+          tratamiento y crear la cuenta, respetando siempre el interés superior
+          del menor.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="10. Vigencia y cambios">
+        <p>
+          Esta política rige desde el 21 de septiembre de 2026. Los datos se
+          conservan mientras sean necesarios para las finalidades descritas o
+          mientras tu cuenta exista. Si la cambiamos de forma sustancial, te lo
+          avisaremos y te pediremos de nuevo tu autorización. Las cookies se
+          explican en la{" "}
+          <Link href="/cookies" className="underline underline-offset-4">
+            política de cookies
+          </Link>
+          .
         </p>
       </LegalSection>
     </LegalPage>

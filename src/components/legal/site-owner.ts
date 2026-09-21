@@ -13,8 +13,10 @@ export const SITE_OWNER = {
   address: "Calle 1NA # 19-07, Bucaramanga, Colombia",
   country: "Colombia",
   email: "dominyel.r@gmail.com",
+  /** Required in the data policy (Decreto 1377 de 2013, art. 13). */
+  phone: "+57 324 128 5958",
   /** Autoridad de protección de datos del país, ante la que reclamar. */
-  dataAuthority: "Autoridad de Protección de Datos (Colombia)",
+  dataAuthority: "la Superintendencia de Industria y Comercio (SIC)",
   /** Dónde se aloja la aplicación, p. ej. «Vercel Inc. (Estados Unidos)». */
   hosting: "Vercel Inc. (Estados Unidos)",
   /** Región del proyecto de Supabase, p. ej. «Estados Unidos (us-east-1)». */

@@ -21,7 +21,8 @@ export default function Page() {
           <li>
             Dirección: {SITE_OWNER.address}, {SITE_OWNER.country}
           </li>
-          <li>Contacto: {SITE_OWNER.email}</li>
+          <li>Correo: {SITE_OWNER.email}</li>
+          <li>Teléfono: {SITE_OWNER.phone}</li>
         </ul>
       </LegalSection>
 

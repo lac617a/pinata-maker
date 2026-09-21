@@ -84,7 +84,7 @@ export default function Page() {
           disponible o libre de errores. En la medida en que la ley lo permita,
           no respondemos de daños indirectos como papel o tinta gastados por un
           documento mal impreso. Nada de esto limita los derechos que te
-          reconozca la ley como consumidor.
+          reconoce el Estatuto del Consumidor (Ley 1480 de 2011).
         </p>
       </LegalSection>
 
@@ -95,7 +95,7 @@ export default function Page() {
           cualquier duda, escríbenos a {SITE_OWNER.email}. Cómo tratamos tus
           datos está en la{" "}
           <Link href="/privacidad" className="underline underline-offset-4">
-            política de privacidad
+            política de tratamiento de datos
           </Link>
           .
         </p>

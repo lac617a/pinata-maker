@@ -24,17 +24,29 @@ export function CredentialsForm({
   error,
   onSubmit,
   footer,
+  consent,
 }: {
   title: string;
   description: string;
   submitLabel: string;
   pending: boolean;
   error?: string | null;
-  onSubmit: (credentials: { email: string; password: string }) => void;
+  onSubmit: (credentials: {
+    email: string;
+    password: string;
+    acceptedDataPolicy: boolean;
+  }) => void;
   footer: { question: string; linkLabel: string; href: string };
+  /**
+   * The text of a required authorization box, when the form asks for one
+   * (sign-up: docs/legal.md §5). Never pre-ticked: an authorization has to
+   * be an act of the person.
+   */
+  consent?: React.ReactNode;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [accepted, setAccepted] = useState(false);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-6 px-6 py-16">
@@ -47,7 +59,7 @@ export function CredentialsForm({
         className="space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
-          onSubmit({ email, password });
+          onSubmit({ email, password, acceptedDataPolicy: accepted });
         }}
       >
         <div className="space-y-2">
@@ -75,6 +87,23 @@ export function CredentialsForm({
             onChange={(event) => setPassword(event.target.value)}
           />
         </div>
+
+        {consent ? (
+          <div className="flex items-start gap-3 text-sm">
+            <input
+              id="data-policy"
+              name="acceptedDataPolicy"
+              type="checkbox"
+              required
+              checked={accepted}
+              onChange={(event) => setAccepted(event.target.checked)}
+              className="accent-primary mt-0.5 size-4 shrink-0"
+            />
+            <label htmlFor="data-policy" className="text-muted-foreground">
+              {consent}
+            </label>
+          </div>
+        ) : null}
 
         {error ? (
           <p role="alert" className="text-destructive text-sm">

@@ -216,8 +216,10 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
   pública y no guarda nada; cada PDF cuenta, 3 al día sin cuenta y 20 con
   ella. El contador es la migración 0008 y necesita `USAGE_HASH_SECRET` en
   el entorno. Queda el nivel de pago.
-* **Hay ocho migraciones y dos buckets privados.** La 0008 cuenta el uso
-  diario. La 0007 deja que un
+* **Hay nueve migraciones y dos buckets privados.** La 0009 guarda la
+  prueba de la autorización de datos y rechaza cuentas sin ella
+  (`docs/legal.md` §5): se aplica después de desplegar el código. La 0008
+  cuenta el uso diario. La 0007 deja que un
   documento salga de una imagen (el póster). La 0006 corrige las
   políticas de storage. Dentro de la subconsulta de una política, toda
   columna de la tabla protegida va calificada (`objects.name`): `projects`

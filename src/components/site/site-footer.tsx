@@ -2,7 +2,7 @@ import Link from "next/link";
 
 /** Las cuatro páginas legales, en el pie de todas (docs/PRD.md §41, AC-19). */
 export const LEGAL_LINKS = [
-  { href: "/privacidad", label: "Privacidad" },
+  { href: "/privacidad", label: "Tratamiento de datos" },
   { href: "/terminos", label: "Términos" },
   { href: "/cookies", label: "Cookies" },
   { href: "/aviso-legal", label: "Aviso legal" },

@@ -31,7 +31,9 @@ export function useSignIn() {
 
 export function useSignUp() {
   return useMutation({
-    mutationFn: (credentials: Credentials) =>
+    mutationFn: (
+      credentials: Credentials & { readonly acceptedDataPolicy: boolean },
+    ) =>
       apiRequest<SignUpOutcome>("/api/auth/sign-up", {
         method: "POST",
         body: JSON.stringify(credentials),
