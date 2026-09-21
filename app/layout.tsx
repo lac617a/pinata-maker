@@ -22,7 +22,11 @@ export default function RootLayout({
   return (
     <html lang="es">
       {/* El pie va en todas las páginas: lleva las legales (AC-19). */}
-      <body className="flex min-h-screen flex-col">
+      {/*
+        On a phone, when the floating download bar is on screen, the page
+        leaves room for it after the footer (poster-studio.tsx).
+      */}
+      <body className="flex min-h-screen flex-col max-sm:has-[[data-floating-download]]:pb-28">
         <Providers>
           <div className="flex-1">{children}</div>
           <SiteFooter />

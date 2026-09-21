@@ -155,29 +155,34 @@ export function PosterStudio({
   const spent = usage.data?.remaining === 0;
   const ready = ok !== null && !spent;
 
+  const canDownload = ready && image !== null && !download.busy;
+  const startDownload = () =>
+    ok &&
+    image &&
+    download.run({
+      [effective.axis]: effective.cm * 10,
+      ...(ok.crop ? { crop: ok.crop } : {}),
+      paper: { format, orientation },
+    });
+  const downloadLabel = download.busy
+    ? download.step
+    : ok
+      ? `Descargar PDF · ${ok.layout.pages.length} hojas`
+      : "Descargar PDF";
+
   return (
     <section className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h2 className="font-serif text-xl">Tamaño y hojas</h2>
 
+        {/* On a phone the button lives in the floating bar below. */}
         <Button
           size="lg"
-          disabled={!ready || !image || download.busy}
-          onClick={() =>
-            ok &&
-            image &&
-            download.run({
-              [effective.axis]: effective.cm * 10,
-              ...(ok.crop ? { crop: ok.crop } : {}),
-              paper: { format, orientation },
-            })
-          }
+          className="hidden sm:inline-flex"
+          disabled={!canDownload}
+          onClick={startDownload}
         >
-          {download.busy
-            ? download.step
-            : ok
-              ? `Descargar PDF · ${ok.layout.pages.length} hojas`
-              : "Descargar PDF"}
+          {downloadLabel}
         </Button>
       </div>
 
@@ -316,6 +321,37 @@ export function PosterStudio({
             )}
           </div>
         </div>
+      ) : null}
+
+      {/*
+        On a phone, cropping and choosing the size push the button off the
+        screen: it floats at the bottom instead, always one tap away. The
+        page makes room for it below the footer (app/layout.tsx), so it never
+        covers the legal links.
+      */}
+      {image ? (
+        <>
+          <div
+            data-floating-download
+            className="border-border bg-background/95 fixed inset-x-0 bottom-0 z-40 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:hidden"
+          >
+            {ok ? (
+              <p className="text-muted-foreground mb-2 text-center text-xs">
+                {formatCentimeters(ok.poster.width)} ×{" "}
+                {formatCentimeters(ok.poster.height)} cm · {ok.layout.columns} ×{" "}
+                {ok.layout.rows} hojas
+              </p>
+            ) : null}
+            <Button
+              size="lg"
+              className="w-full"
+              disabled={!canDownload}
+              onClick={startDownload}
+            >
+              {downloadLabel}
+            </Button>
+          </div>
+        </>
       ) : null}
     </section>
   );
