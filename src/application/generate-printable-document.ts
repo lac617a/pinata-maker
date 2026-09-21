@@ -129,9 +129,12 @@ function artworkFor(
   };
 }
 
-function describePaper(
+/** El papel dicho como lo lee el usuario: «A4 vertical». */
+export function describePaper(
   format: PaperFormat,
   orientation: PaperOrientation,
 ): string {
-  return `${format} ${orientation === "PORTRAIT" ? "vertical" : "horizontal"}`;
+  const name = format === "LETTER" ? "Carta" : format;
+
+  return `${name} ${orientation === "PORTRAIT" ? "vertical" : "horizontal"}`;
 }

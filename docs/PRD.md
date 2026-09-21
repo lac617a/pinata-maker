@@ -1105,3 +1105,51 @@ publicación con publicidad, no la utilidad de la herramienta.
 | AC-21 | El PDF generado no contiene publicidad en ninguna página |
 | AC-22 | Las páginas públicas se sirven renderizadas, con metadatos y sitemap |
 | AC-23 | El panel de proyectos y las URLs de trabajo no aparecen en buscadores |
+
+---
+
+# 44. Salida del producto: la imagen en mosaico
+
+**Decisión de producto del 2026-09-21.** Sustituye, como salida del MVP, a la
+plantilla con piezas de §12, §13 y §18.
+
+## Qué entrega el producto
+
+El usuario sube una imagen, elige cuánto quiere que mida la figura y descarga
+un PDF con esa imagen ampliada a tamaño real y repartida en hojas. La pega
+sobre cartón, recorta él mismo el contorno y arma el volumen a mano.
+
+Es lo que hace Block Posters con cualquier imagen, pensado para quien fabrica
+piñatas.
+
+## El documento
+
+```text
+Hoja 1     resumen: tamaño, papel, hojas, instrucciones,
+           mapa de montaje y regla de calibración de 10 cm
+Hojas 2…   un trozo de la imagen por hoja, con su etiqueta (A1, B2…),
+           las marcas de alineación y el aviso de imprimir al 100 %
+```
+
+No lleva contornos, piezas laterales ni pestañas.
+
+## El tamaño
+
+Se elige en centímetros —el ancho o el alto; el otro sale de la proporción
+de la imagen— y la interfaz enseña al momento cuántas hojas de ancho y de
+alto salen. Un fabricante piensa en centímetros, no en hojas.
+
+Como con N hojas se cubre una medida exacta, la interfaz ofrece esas medidas
+para que la última columna o fila no salga casi vacía.
+
+## Lo que no cambia
+
+Imprimir a tamaño real (§11), las marcas de alineación y la identidad de las
+hojas (AC-08 a AC-11), el aislamiento entre usuarios y la persistencia de
+imágenes y documentos.
+
+## Lo que queda aparcado
+
+La derivación de piezas —silueta, tiras laterales, pestañas— sigue en el
+código con sus pruebas, pero no forma parte del producto. Si vuelve, será
+como opción añadida al mosaico, no como sustituto.

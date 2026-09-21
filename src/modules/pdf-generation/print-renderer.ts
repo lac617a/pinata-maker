@@ -18,6 +18,15 @@ export type PrintSection = {
   readonly layout: PrintLayout;
   /** La figura dibujada dentro de la pieza, si la lleva. */
   readonly artwork?: SectionArtwork;
+  /**
+   * Qué se imprime en cada hoja.
+   *
+   * `PIECE`: una pieza recortable, con su contorno, sus pliegues y la regla
+   * de calibración donde quepa. `POSTER`: solo la imagen; no hay contorno
+   * que trazar y la regla va en la hoja de resumen, porque aquí caería
+   * encima de la figura. Ver docs/pdf.md §94.
+   */
+  readonly kind?: "PIECE" | "POSTER";
 };
 
 /** Formatos que el documento sabe incrustar: los mismos que se suben. */
@@ -67,8 +76,21 @@ export type PrintDocumentCover = {
   readonly scale: Scale;
 };
 
+/**
+ * Hoja de resumen del póster: ajustes, instrucciones, mapa de montaje y la
+ * regla para comprobar la escala. Ver docs/pdf.md §94.
+ */
+export type PosterCover = {
+  readonly kind: "POSTER";
+  readonly title: string;
+  readonly width: Millimeters;
+  readonly height: Millimeters;
+  readonly paper: string;
+  readonly image: EmbeddedImage;
+};
+
 export type PrintDocument = {
-  readonly cover?: PrintDocumentCover;
+  readonly cover?: PrintDocumentCover | PosterCover;
   readonly sections: readonly PrintSection[];
 };
 

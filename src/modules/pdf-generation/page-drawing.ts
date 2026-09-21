@@ -12,9 +12,13 @@ import type { Millimeters } from "@/modules/geometry/units";
 import type { AlignmentMark, PageEdge } from "@/modules/printing/alignment";
 import type { CalibrationMark } from "@/modules/printing/calibration";
 import type { PaperSize } from "@/modules/printing/paper-format";
-import type { PrintPage } from "@/modules/printing/print-layout";
+import type { PrintLayout, PrintPage } from "@/modules/printing/print-layout";
 
-import type { EmbeddedImage, SectionArtwork } from "./print-renderer";
+import type {
+  EmbeddedImage,
+  PosterCover,
+  SectionArtwork,
+} from "./print-renderer";
 
 /**
  * Significado físico de un trazo.
@@ -23,7 +27,7 @@ import type { EmbeddedImage, SectionArtwork } from "./print-renderer";
  * pertenece al layout. Ver docs/pdf.md §25.
  */
 export type StrokeRole =
-  "CONTOUR" | "HOLE" | "CUT" | "FOLD" | "ALIGNMENT" | "CALIBRATION";
+  "CONTOUR" | "HOLE" | "CUT" | "FOLD" | "ALIGNMENT" | "CALIBRATION" | "MAP";
 
 export type TextRole =
   | "PAGE_LABEL"
@@ -31,7 +35,8 @@ export type TextRole =
   | "CALIBRATION_LABEL"
   | "PRINT_WARNING"
   | "COVER_TITLE"
-  | "COVER_TEXT";
+  | "COVER_TEXT"
+  | "MAP_LABEL";
 
 export type PageStroke = {
   readonly role: StrokeRole;
@@ -137,6 +142,7 @@ export function describePage(
    */
   sectionLabel?: string,
   artwork?: SectionArtwork,
+  kind: "PIECE" | "POSTER" = "PIECE",
 ): PageDrawing {
   const toPaper: Vector = {
     x: page.printableOrigin.x,
@@ -146,17 +152,14 @@ export function describePage(
   const place = (polygon: Polygon): Polygon =>
     translatePolygon(polygon, toPaper);
 
+  // Un póster no tiene contorno que recortar: el borde lo marca la imagen.
+  const geometry = kind === "PIECE" ? page.geometry : EMPTY_PAGE_GEOMETRY;
+
   const strokes: PageStroke[] = [
-    ...page.geometry.outerContours.map((path) =>
-      stroke("CONTOUR", place(path)),
-    ),
-    ...page.geometry.holes.map((path) => stroke("HOLE", place(path))),
-    ...page.geometry.cutLines.map((line) =>
-      stroke("CUT", place(line.geometry)),
-    ),
-    ...page.geometry.foldLines.map((line) =>
-      stroke("FOLD", place(line.geometry)),
-    ),
+    ...geometry.outerContours.map((path) => stroke("CONTOUR", place(path))),
+    ...geometry.holes.map((path) => stroke("HOLE", place(path))),
+    ...geometry.cutLines.map((line) => stroke("CUT", place(line.geometry))),
+    ...geometry.foldLines.map((line) => stroke("FOLD", place(line.geometry))),
     ...page.alignmentMarks.flatMap((mark) =>
       alignmentStrokes(translatePoint(mark.position, toPaper)),
     ),
@@ -169,7 +172,9 @@ export function describePage(
     ...footerTexts(page, sectionLabel),
   ];
 
-  if (page.calibrationMark) {
+  // En un póster la regla va en la hoja de resumen: aquí caería encima de
+  // la figura. Ver docs/pdf.md §94.
+  if (page.calibrationMark && kind === "PIECE") {
     const origin = translatePoint(page.calibrationMark.position, toPaper);
 
     strokes.push(...calibrationStrokes(page.calibrationMark, origin));
@@ -240,6 +245,13 @@ function overlaps(a: BoundingBox, b: BoundingBox): boolean {
     a.minX < b.maxX && b.minX < a.maxX && a.minY < b.maxY && b.minY < a.maxY
   );
 }
+
+const EMPTY_PAGE_GEOMETRY: PrintPage["geometry"] = {
+  outerContours: [],
+  holes: [],
+  cutLines: [],
+  foldLines: [],
+};
 
 function stroke(role: StrokeRole, path: Polygon): PageStroke {
   return { role, path };
@@ -468,4 +480,134 @@ export function describeCoverPage(
 /** `100` en lugar de `100.0`, y `97.5` cuando la medida lo necesita. */
 function formatMillimeters(value: Millimeters): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+/**
+ * Hoja de resumen del póster.
+ *
+ * Lo que un fabricante necesita antes de imprimir cuarenta hojas: qué tamaño
+ * va a salir, cuántas hojas, cómo se juntan y cómo comprobar que la impresora
+ * no ha escalado nada. El mapa es la propia imagen con la retícula encima:
+ * cada hoja lleva su etiqueta, la misma que se imprime en su pie.
+ * Ver docs/pdf.md §94.
+ */
+export function describePosterCover(
+  content: PosterCover,
+  layout: PrintLayout,
+  paper: PaperSize,
+): PageDrawing {
+  const margin = COVER_MARGIN_MM;
+  let baseline = margin;
+
+  const texts: PageText[] = [];
+  const line = (text: string, role: TextRole = "COVER_TEXT") => {
+    texts.push({
+      role,
+      text,
+      position: { x: margin, y: baseline },
+      anchor: "START",
+    });
+    baseline += COVER_LINE_MM;
+  };
+
+  line(content.title, "COVER_TITLE");
+  line(
+    `Tamaño: ${centimeters(content.width)} × ${centimeters(content.height)} cm`,
+  );
+  line(
+    `Papel: ${content.paper} · ${layout.columns} de ancho × ${layout.rows} de alto = ${layout.pages.length} hojas`,
+  );
+  line("Imprime al 100 %, sin «ajustar a página».", "PRINT_WARNING");
+  baseline += 2;
+  line("1. Comprueba con una regla que la línea de abajo mide 10 cm.");
+  line("2. Une las hojas como en el mapa: letra = fila, número = columna.");
+  line(
+    "3. Cada hoja repite una franja de la vecina: solápalas por las cruces.",
+  );
+  line("4. Pega el póster sobre cartón y recorta la figura.");
+
+  // El mapa ocupa lo que queda entre el texto y la regla.
+  const rulerZone = 22;
+  const box = {
+    x: margin,
+    y: baseline,
+    width: paper.width - margin * 2,
+    height: paper.height - margin - rulerZone - baseline,
+  };
+  const scale = Math.min(
+    box.width / content.width,
+    box.height / content.height,
+  );
+  const origin = {
+    x: box.x + (box.width - content.width * scale) / 2,
+    y: box.y,
+  };
+
+  const onMap = (x: Millimeters, y: Millimeters): Point => ({
+    x: origin.x + Math.min(Math.max(x, 0), content.width) * scale,
+    y: origin.y + Math.min(Math.max(y, 0), content.height) * scale,
+  });
+
+  const mapWidth = content.width * scale;
+  const mapHeight = content.height * scale;
+
+  const images: PageImage[] = [
+    {
+      image: content.image,
+      x: origin.x,
+      y: origin.y,
+      width: mapWidth,
+      height: mapHeight,
+      mirrored: false,
+      clip: [rectangle(origin, onMap(content.width, content.height))],
+      bounds: { x: origin.x, y: origin.y, width: mapWidth, height: mapHeight },
+    },
+  ];
+
+  const strokes: PageStroke[] = [];
+
+  for (const page of layout.pages) {
+    const region = page.globalBounds;
+    const topLeft = onMap(region.minX, region.minY);
+    const bottomRight = onMap(region.maxX, region.maxY);
+
+    strokes.push(stroke("MAP", rectangle(topLeft, bottomRight)));
+    texts.push({
+      role: "MAP_LABEL",
+      text: page.id,
+      position: {
+        x: (topLeft.x + bottomRight.x) / 2,
+        y: (topLeft.y + bottomRight.y) / 2,
+      },
+      anchor: "CENTER",
+    });
+  }
+
+  // La regla, en la única hoja donde no cae encima de la figura.
+  const ruler: CalibrationMark = {
+    length: 100,
+    position: { x: margin, y: paper.height - margin - 6 },
+  };
+
+  strokes.push(...calibrationStrokes(ruler, ruler.position));
+  texts.push(calibrationLabel(ruler, ruler.position));
+
+  return { label: "RESUMEN", paper, images, strokes, texts };
+}
+
+function rectangle(topLeft: Point, bottomRight: Point): Polygon {
+  return {
+    points: [
+      topLeft,
+      { x: bottomRight.x, y: topLeft.y },
+      bottomRight,
+      { x: topLeft.x, y: bottomRight.y },
+    ],
+    closed: true,
+  };
+}
+
+/** Centímetros con coma decimal, como se leen en castellano. */
+function centimeters(value: Millimeters): string {
+  return (value / 10).toLocaleString("es", { maximumFractionDigits: 1 });
 }

@@ -10,6 +10,7 @@ import {
   type CoverEntry,
   describeCoverPage,
   describePage,
+  describePosterCover,
   type PageDrawing,
   type PageImage,
   type PageStroke,
@@ -142,12 +143,23 @@ export class JsPdfPrintRenderer implements PrintRenderer {
 function describeDocument(document: PrintDocument): PageDrawing[] {
   const pages = document.sections.flatMap((section) =>
     section.layout.pages.map((page) =>
-      describePage(page, section.label, section.artwork),
+      describePage(page, section.label, section.artwork, section.kind),
     ),
   );
 
   if (!document.cover) {
     return pages;
+  }
+
+  const paper = document.sections[0].layout.pages[0].paper;
+
+  // Solo el resumen del póster declara `kind`: la hoja de instrucciones de
+  // una plantilla no lo necesita.
+  if ("kind" in document.cover) {
+    return [
+      describePosterCover(document.cover, document.sections[0].layout, paper),
+      ...pages,
+    ];
   }
 
   const entries: CoverEntry[] = document.sections.map((section) => ({

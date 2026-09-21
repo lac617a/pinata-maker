@@ -1828,3 +1828,48 @@ distinto del pedido, entregado sin avisar, es peor que un reintento.
 
 `PDF_GENERATOR_VERSION` pasa a `1.1`: un documento dice con qué dibujo se
 hizo.
+
+---
+
+# 94. El documento del póster
+
+Sale de `generatePosterDocument` (`PRD.md` §44). Reutiliza todo el reparto en
+hojas de las plantillas; lo que cambia es qué se dibuja.
+
+## Las hojas
+
+Cada hoja lleva su trozo de la imagen (§93), su etiqueta, el aviso de
+imprimir al 100 % y las marcas de alineación. **No** lleva:
+
+* el contorno: el póster es un rectángulo y el borde lo marca la imagen;
+* la regla de calibración: la imagen cubre toda la hoja y la regla caería
+  encima de la figura.
+
+Lo decide `PrintSection.kind`: `PIECE` para las piezas de una plantilla,
+`POSTER` para esto.
+
+## La hoja de resumen
+
+```text
+título, tamaño en cm, papel, hojas de ancho × alto
+imprime al 100 %
+instrucciones de montaje
+mapa: la imagen con la retícula de hojas y sus etiquetas
+regla de 10 cm
+```
+
+El mapa usa las mismas regiones de hoja que el reparto, escaladas: la
+etiqueta que se lee en el mapa es la que lleva el pie de la hoja. Las regiones
+se solapan como se solapan las hojas, y por eso las líneas del mapa salen
+dobles en las juntas.
+
+La regla va aquí porque es la única hoja donde no tapa la figura, y basta con
+una: todas las hojas salen del mismo documento con la misma escala.
+
+## Solape frente a Block Posters
+
+Block Posters no solapa: cada hoja lleva su trozo con un borde blanco que se
+recorta. Aquí cada hoja repite una franja de la vecina (10 mm por defecto)
+con marcas de alineación encima, que es más fácil de pegar a ojo. La
+contrapartida es que un ancho dado puede necesitar una columna más; la
+interfaz propone las medidas que llenan hojas enteras.

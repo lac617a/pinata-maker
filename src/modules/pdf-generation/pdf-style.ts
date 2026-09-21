@@ -38,6 +38,8 @@ export const STROKE_STYLES: Record<StrokeRole, PdfLineStyle> = {
   // Auxiliares: deben verse sin competir con las líneas de la plantilla.
   ALIGNMENT: { width: 0.2 },
   CALIBRATION: { width: 0.3 },
+  // La retícula del mapa de montaje: tiene que verse sobre la imagen.
+  MAP: { width: 0.4 },
 };
 
 /** Altura nominal del texto, también en milímetros. */
@@ -48,6 +50,7 @@ export const TEXT_SIZES: Record<TextRole, Millimeters> = {
   PRINT_WARNING: 2.5,
   COVER_TITLE: 5,
   COVER_TEXT: 3.5,
+  MAP_LABEL: 4,
 };
 
 /**
