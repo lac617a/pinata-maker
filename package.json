@@ -6,11 +6,15 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
     "check:supabase": "node --env-file=.env scripts/check-supabase.mjs",
-    "test:integration": "node --env-file=.env node_modules/vitest/vitest.mjs run --testTimeout=20000 integration.test"
+    "test:integration": "node --env-file=.env node_modules/vitest/vitest.mjs run --testTimeout=20000 integration.test",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "verify": "pnpm format:check && pnpm lint && pnpm exec tsc --noEmit && pnpm test"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -22,11 +26,18 @@
     "react-dom": "19.1.1"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^22",
     "@types/react": "^19",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "15.5.25",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
+    "prettier": "^3.9.8",
     "tailwindcss": "^4.3.3",
     "typescript": "^5",
+    "typescript-eslint": "^8.70.0",
     "vitest": "^5.0.0"
   }
 }

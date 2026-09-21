@@ -42,11 +42,21 @@ pnpm exec tsc --noEmit # Type check, sin emitir
 ```
 
 ```bash
-pnpm check:supabase    # Variables, conexión, tabla y RLS. No imprime valores.
+pnpm check:supabase    # Variables, conexión, tablas y RLS. No imprime valores.
+```
+
+```bash
+pnpm lint              # ESLint: orden de imports y `../` prohibido
+```
+
+```bash
+pnpm verify            # format:check + lint + tsc + test. Lo de antes de commitear.
 ```
 
 ```bash
 pnpm test:watch        # Vitest en watch
+pnpm lint:fix          # ESLint con --fix: ordena imports
+pnpm format            # Prettier sobre el repo (la documentación no se toca)
 pnpm dev               # Next.js dev server
 pnpm build             # Build de producción
 ```
@@ -57,8 +67,12 @@ Ejecutar un solo archivo de test:
 pnpm exec vitest run src/modules/printing/calibration.test.ts
 ```
 
-`pnpm lint` **no funciona**: lanza el asistente interactivo de Next y falla.
-Es deuda conocida (`docs/roadmap.md` §6), no un error del entorno.
+El estilo lo decide Prettier y las reglas ESLint; ninguna de las dos cosas
+debería discutirse en una revisión. La configuración está en
+`.prettierrc.json` y `eslint.config.mjs`, y cada regla dice por qué existe.
+
+`docs/` no pasa por Prettier: el formato de esos archivos es deliberado y
+normalizarlo taparía los cambios de contenido en el diff.
 
 Gestor de paquetes: `pnpm` (hay `pnpm-lock.yaml` y `pnpm-workspace.yaml` con
 overrides de seguridad para `postcss` y `sharp`). No usar npm ni yarn.
@@ -116,8 +130,12 @@ errores que solo viven en la costura entre módulos correctos.
 * Tipos `readonly`, funciones `create*` que validan invariantes y lanzan
   errores de dominio (`InvalidGeometryError`, `InvalidCalibrationError`…).
   Ver `src/modules/geometry/errors.ts` y `src/modules/printing/errors.ts`.
-* Imports relativos entre módulos (`../geometry/point`). No hay alias de path
-  configurado en `tsconfig.json`.
+* **Imports absolutos con `@/` entre carpetas** (`@/modules/geometry/point`),
+  relativos solo entre hermanos (`./errors`). Subir por el árbol —`../`— está
+  prohibido por ESLint: no dice de dónde viene nada y se rompe al mover un
+  archivo. El alias está en `tsconfig.json` y en `vitest.config.mts`.
+* El orden de los imports lo arregla ESLint: paquetes, después `@/`, después
+  los hermanos. No se ordena a mano.
 * **Comentarios en español**, explicando el *porqué* y citando la sección de
   la documentación que lo justifica (`Ver docs/printing.md §38`).
 * **Tests en inglés**, describiendo comportamiento (`AGENTS.md` §28). Un

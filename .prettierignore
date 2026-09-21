@@ -1,0 +1,13 @@
+.next
+node_modules
+pnpm-lock.yaml
+tsconfig.tsbuildinfo
+
+# La documentación se escribe a mano y su formato es deliberado: los saltos de
+# línea, las tablas y las viñetas dicen algo. Prettier las normalizaría y el
+# diff taparía los cambios de contenido.
+*.md
+docs/
+
+# Prettier no formatea SQL.
+supabase/migrations/

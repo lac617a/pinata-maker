@@ -1,6 +1,9 @@
 allowBuilds:
   core-js: true
   sharp: true
+  # Resolutor nativo que usa el plugin de imports de ESLint. Trae binarios
+  # precompilados; el script de build es solo el camino de respaldo.
+  unrs-resolver: true
 
 # Next.js fija versiones exactas de postcss y sharp que arrastran advisories
 # conocidos. Se fuerzan las versiones parcheadas dentro de su subárbol.

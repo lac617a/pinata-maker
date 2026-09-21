@@ -66,6 +66,10 @@ pnpm exec tsc --noEmit
 * `pnpm` con overrides de seguridad para `postcss` y `sharp` en
   `pnpm-workspace.yaml`.
 * `.gitignore` cubriendo artefactos de Next, pnpm, Supabase CLI y entorno.
+* ESLint 9 en config plana y Prettier. El lint comprueba el orden de los
+  imports y prohíbe los que suben por el árbol de carpetas: entre carpetas se
+  importa con el alias absoluto `@/`. `pnpm verify` encadena formato, lint,
+  tipos y tests.
 * Supabase con `@supabase/supabase-js` y `@supabase/ssr`. El esquema vive en
   `supabase/migrations/` y se aplica a mano: la clave anónima no puede
   ejecutar DDL, que es justo lo que se quiere.
@@ -631,8 +635,6 @@ posicionar.
 
 # 6. Deuda conocida
 
-* `pnpm lint` no está configurado: lanza el asistente interactivo de Next y
-  falla. Hay que migrar a la CLI de ESLint.
 * `CUSTOM_SCALE` no está implementado. Requiere escalar la geometría antes del
   reparto en páginas (`printing.md` §17, §19). El renderer de PDF ya rechaza
   con un error explícito cualquier escala distinta de la real.
