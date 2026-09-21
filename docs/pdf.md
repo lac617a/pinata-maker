@@ -2002,3 +2002,35 @@ Con una foto real generada con la orientación 6: el mapa y las cuatro hojas
 salen derechos, entera y recortada, y el navegador la enseña igual en el
 recuadro de recorte y en la vista previa.
 
+
+---
+
+# 98. El peso del documento
+
+La imagen va una sola vez en el documento (§93), pero el formato decide
+cuánto ocupa:
+
+```text
+JPEG   entra tal cual: ya viene comprimido
+PNG    jsPDF lo vuelve a escribir; sin compresión, en pixels en crudo
+WEBP   jsPDF lo convierte a JPEG de calidad 100
+```
+
+Sin compresión, un PNG de 720 × 894 que pesa 21 kB daba un PDF de 1,9 MB, y
+una ilustración de 3000 × 4000 que pesa 0,3 MB, uno de 36 MB. El renderer
+pide `FAST`:
+
+```text
+PNG plano 3000 × 4000       36 MB  →  0,08 MB     (SLOW: 0,07 MB)
+PNG con transparencia       36 MB  →  0,08 MB
+PNG de foto con ruido       36 MB  →  26,8 MB     (SLOW: 26,8 MB)
+```
+
+`FAST` da casi lo mismo que `SLOW` en menos tiempo. Una foto con ruido
+guardada como PNG sigue pesando: es lo que ocupa en PNG, y sin pérdida no hay
+más que sacar. La misma foto en JPEG entra ya comprimida.
+
+La transparencia se conserva: el fondo sale del color del papel, no negro.
+
+La prueba `should compress a PNG instead of embedding its raw pixels` falla
+si vuelve el crudo.

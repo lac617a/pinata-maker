@@ -280,6 +280,16 @@ class ImageAliases {
 }
 
 /**
+ * Compresión de las imágenes que jsPDF tiene que volver a escribir.
+ *
+ * Sin ella, un PNG se incrusta como pixels en crudo: una ilustración de
+ * 3000 × 4000 que pesa 0,3 MB daba un PDF de 36 MB. Con `FAST` son 0,08 MB,
+ * casi lo mismo que con `SLOW` y en menos tiempo. Un JPEG entra tal cual,
+ * ya comprimido, y esto no lo toca. Ver docs/pdf.md §98.
+ */
+const IMAGE_COMPRESSION = "FAST";
+
+/**
  * La parte de la figura que cae en esta hoja.
  *
  * Dos recortes que se intersecan: el área imprimible, para no invadir los
@@ -340,6 +350,7 @@ function drawImage(doc: jsPDF, image: PageImage, alias: string): void {
       target.width,
       target.height,
       alias,
+      IMAGE_COMPRESSION,
     );
   } else {
     // Foto de cámara con orientación EXIF: se dibujan los bytes tal cual
@@ -361,6 +372,7 @@ function drawImage(doc: jsPDF, image: PageImage, alias: string): void {
       drawWidth,
       drawHeight,
       alias,
+      IMAGE_COMPRESSION,
     );
   }
 

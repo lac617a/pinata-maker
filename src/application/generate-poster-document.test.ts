@@ -12,8 +12,8 @@ import { DEFAULT_PRINT_CONFIGURATION } from "@/modules/printing/print-layout";
 
 import { generatePosterDocument } from "./generate-poster-document";
 
-/** PNG opaco de 4 × 4: lo mínimo que jsPDF acepta incrustar. */
-function opaquePng(): Uint8Array {
+/** PNG opaco de un solo color; por defecto 4 × 4, lo mínimo que jsPDF acepta. */
+function opaquePng(side = 4): Uint8Array {
   const table = Array.from({ length: 256 }, (_unused, n) => {
     let c = n;
     for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
@@ -33,12 +33,13 @@ function opaquePng(): Uint8Array {
     return Buffer.concat([length, body, check]);
   };
   const header = Buffer.alloc(13);
-  header.writeUInt32BE(4, 0);
-  header.writeUInt32BE(4, 4);
+  header.writeUInt32BE(side, 0);
+  header.writeUInt32BE(side, 4);
   header[8] = 8;
   header[9] = 2;
-  const rows = Buffer.alloc(4 * 13, 200);
-  for (let row = 0; row < 4; row++) rows[row * 13] = 0;
+  const stride = 1 + side * 3;
+  const rows = Buffer.alloc(side * stride, 200);
+  for (let row = 0; row < side; row++) rows[row * stride] = 0;
 
   return new Uint8Array(
     Buffer.concat([
@@ -177,6 +178,21 @@ describe("Generate poster document", () => {
     expect(document.pageCount).toBe(sheets + 1);
     // Una sola copia de la imagen para el mapa y todas las hojas.
     expect(text.match(/\/Subtype \/Image/g)).toHaveLength(1);
+  });
+
+  it("should compress a PNG instead of embedding its raw pixels", async () => {
+    // 800 × 800 en crudo son 1,92 MB. Un PNG de un color comprimido ocupa
+    // unos pocos kilobytes: el documento no debe acercarse al crudo.
+    const side = 800;
+    const document = await generatePosterDocument({
+      poster: createPoster({ width: side, height: side }, { width: 400 }),
+      image: { bytes: opaquePng(side), format: "PNG" },
+      imageSize: { width: side, height: side },
+      title: "4",
+      renderer: new JsPdfPrintRenderer(),
+    });
+
+    expect(document.bytes.byteLength).toBeLessThan((side * side * 3) / 10);
   });
 
   it("should put the scale ruler on the summary, not over the figure", async () => {
