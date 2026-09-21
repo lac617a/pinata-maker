@@ -45,3 +45,55 @@ export class InvalidAssemblyError extends Error {
     this.name = "InvalidAssemblyError";
   }
 }
+
+/**
+ * La definición guardada no describe una plantilla del dominio.
+ *
+ * Una plantilla persistida vuelve del exterior del proceso y ahí no hay
+ * tipos: lo que llega se valida con los constructores del dominio antes de
+ * creerse. Ver docs/storage.md §29.
+ */
+export class InvalidTemplateDefinitionError extends Error {
+  readonly code = "INVALID_TEMPLATE_DEFINITION";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidTemplateDefinitionError";
+  }
+}
+
+/** La versión no existe, o su proyecto no es de quien pregunta. */
+export class TemplateVersionNotFoundError extends Error {
+  readonly code = "TEMPLATE_VERSION_NOT_FOUND";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "TemplateVersionNotFoundError";
+  }
+}
+
+/**
+ * Ese número de versión ya existe en el proyecto.
+ *
+ * Una versión publicada es inmutable, así que la respuesta a una colisión no
+ * es sobrescribir: es decir que alguien publicó antes.
+ * Ver docs/storage.md §17, §21 y §22.
+ */
+export class TemplateVersionConflictError extends Error {
+  readonly code = "TEMPLATE_VERSION_CONFLICT";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "TemplateVersionConflictError";
+  }
+}
+
+/** Falló guardar o recuperar una versión. Ver docs/storage.md §77. */
+export class TemplateStorageError extends Error {
+  readonly code = "TEMPLATE_STORAGE_FAILED";
+
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "TemplateStorageError";
+  }
+}

@@ -90,6 +90,29 @@ if (url && anonKey) {
       bucket.data?.public ? "está publico: las imagenes serian accesibles" : "",
     );
   }
+
+  // Migración 0003: versiones de plantilla.
+  const versions = await client
+    .from("template_versions")
+    .select("id")
+    .limit(1);
+  const versionsMissing = TABLE_MISSING_CODES.includes(
+    versions.error?.code ?? "",
+  );
+
+  report(
+    "la tabla template_versions existe",
+    !versionsMissing,
+    versionsMissing ? "aplica supabase/migrations/0003_template_versions.sql" : "",
+  );
+
+  if (!versionsMissing) {
+    report(
+      "RLS oculta las versiones a un anónimo",
+      Boolean(versions.error) || (versions.data?.length ?? 0) === 0,
+      versions.error ? `denegado (${versions.error.code})` : "lista vacía",
+    );
+  }
 }
 
 for (const { check, passed, detail } of results) {

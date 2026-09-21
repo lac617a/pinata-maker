@@ -34,6 +34,7 @@ hay es interfaz**: `app/` solo contiene la API.
 [✓] PrintLayout → PDF
 [✓] Proyecto persistido, aislado por usuario, con registro y sesión
 [✓] Imagen original guardada en un bucket privado, servida con URL firmada
+[✓] Plantilla publicada como versión inmutable, recuperable tal y como se guardó
 [ ] Imagen real → máscara alfa (eliminación de fondo)
 [ ] Interfaz de usuario
 ```
@@ -48,7 +49,7 @@ conocido y medirlo con una regla real (`printing.md` §75).
 Verificación:
 
 ```bash
-pnpm test        # 328 tests, más 13 de integración que necesitan cuenta
+pnpm test        # 382 tests, más 20 de integración que necesitan cuenta
 pnpm exec tsc --noEmit
 ```
 
@@ -325,7 +326,41 @@ Invariantes cubiertas por tests:
 
 Decisiones en `storage.md` §147-§152.
 
-## 2.12 Prueba de la cadena completa
+## 2.12 Versiones de plantilla
+
+La plantilla publicada de un proyecto. Hasta aquí se generaba y se perdía al
+terminar la petición.
+
+| Archivo | Responsabilidad |
+| --- | --- |
+| `templates/template-definition.ts` | Plantilla ↔ documento guardable, con `schemaVersion` |
+| `templates/template-version.ts` | La versión publicada y su numeración |
+| `templates/template-version-repository.ts` | Interfaz: `create`, nunca `save` |
+| `templates/template-version-repository.contract.ts` | Qué significa cumplirlo |
+| `templates/infrastructure/` | Adaptador de Supabase |
+| `application/manage-template-versions.ts` | Publicar, listar y abrir |
+| `presentation/http/template-endpoints.ts` | Las tres rutas |
+| `supabase/migrations/0003_template_versions.sql` | Tabla, restricciones y RLS |
+
+Invariantes cubiertas por tests:
+
+* Una plantilla guardada y recuperada es **la misma plantilla**, con sus
+  pliegues distinguidos de sus cortes.
+* Publicar nunca sustituye: la versión anterior sigue diciendo lo mismo.
+* Los números son correlativos **dentro del proyecto**, no del sistema.
+* Publicar sobre un estado que ya no es el actual responde 409.
+* Un documento con otro `schemaVersion` se rechaza en lugar de leerse «lo
+  mejor posible».
+* Un contorno abierto o una coordenada infinita fallan al leer el documento,
+  no al imprimirlo.
+* Un documento sin techo de piezas o de puntos no se acepta.
+* Un listado no arrastra la geometría de cada versión.
+* Contra la base de datos real: una versión publicada no se puede modificar ni
+  borrar suelta, y dos publicaciones con el mismo número no caben.
+
+Decisiones documentadas en `storage.md` §153-§159.
+
+## 2.13 Prueba de la cadena completa
 
 `src/modules/pipeline.test.ts` recorre máscara → contorno → geometría →
 plantilla → reparto en páginas.
@@ -370,6 +405,12 @@ No volver a abrirlas sin un motivo nuevo.
 | Toda la piñata en un solo PDF, con hoja de instrucciones | El usuario descarga un archivo, no uno por pieza |
 | La numeración de hoja es local a la pieza | Al montar se trabaja pieza a pieza, no por número global |
 | Estados `DRAFT`, `PROCESSING`, `READY`, `ERROR` | Los del PRD §22; `ARCHIVED` no lo pide nadie |
+| La plantilla de un proyecto es la serie de sus versiones | Una tabla `templates` con solo un id no responde a ninguna pregunta |
+| El repositorio de versiones no tiene `save` | Una versión publicada no se corrige: se publica la siguiente |
+| La tabla de versiones no tiene política de UPDATE ni de DELETE | La inmutabilidad no puede depender de que el código se acuerde |
+| La geometría va en `jsonb` y los metadatos en columnas | Un listado no debe leer documentos de cientos de kilobytes |
+| Los puntos se guardan como pares `[x, y]` | Miles de puntos por plantilla; los nombres de campo repetidos pesan |
+| Una definición guardada se valida al leerla | Lo que vuelve de fuera del proceso no es de fiar por tener la forma correcta |
 | Toda operación del repositorio recibe el usuario | El aislamiento no puede depender de acordarse de filtrar |
 | Un proyecto ajeno responde como inexistente | Distinguirlos revelaría qué identificadores existen |
 | No hay clave de servicio | Todo el acceso pasa por el token del usuario y RLS |
@@ -420,23 +461,24 @@ Documentación: `image-processing.md` §98-§106.
 **Terminada.** Ver §2.6. El modelo de extrusión perimetral está implementado
 y probado, con su validación de ensamblaje.
 
+El versionado inmutable de las plantillas publicadas (`AGENTS.md` §17)
+también está hecho, ya con persistencia detrás (§2.12).
+
 Queda fuera, por decisión explícita:
 
 * Siluetas con huecos, que necesitan una pared interior propia
   (`template.md` §121).
 * Colocación manual de pestañas: en el MVP son automáticas.
-* Versionado e inmutabilidad de plantillas publicadas (`AGENTS.md` §17), que
-  no tiene sentido hasta que exista persistencia (fase E).
 
 ## Fase D — Capa de aplicación
 
 **Parcial.** Ver §2.7. `GenerateTemplate` y `GeneratePdf` están hechos: una
 máscara alfa produce un PDF completo sin pasar por ninguna capa más.
 
-`CreateProject` y `UploadImage` también (§2.7, §2.9 y §2.11).
+`CreateProject`, `UploadImage` y la publicación de versiones de plantilla
+también (§2.7, §2.9, §2.11 y §2.12).
 
-Falta `DownloadExport`, que no depende de object storage sino de que exista
-una plantilla persistida que descargar: hoy se genera y se pierde (fase E).
+Falta `DownloadExport`: el PDF se genera y no se guarda en ninguna parte.
 
 `ProcessImage` depende además de la eliminación de fondo (fase B). Cuando
 exista, será un caso de uso delgado: el adaptador entrega una `AlphaMask` y
@@ -454,10 +496,11 @@ que RLS—.
 
 El registro y el inicio de sesión también están hechos (§2.10).
 
+Las versiones de plantilla también (§2.12), con su inmutabilidad impuesta por
+la base de datos y no solo por el código.
+
 Falta:
 
-* Plantillas y sus versiones, con inmutabilidad (`storage.md` §15-§22,
-  `AGENTS.md` §17). Hoy una plantilla se genera y se pierde.
 * El asset procesado, que separa el original de lo que produce la
   eliminación de fondo (`AGENTS.md` §19). El original ya está (§2.11).
 * Exports: guardar el PDF generado para poder entregarlo (AC-13).

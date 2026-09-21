@@ -2362,7 +2362,8 @@ supabase db push
 ```
 
 o pegar los archivos de `supabase/migrations/` en el editor SQL del panel,
-en orden: `0001_projects.sql` y después `0002_assets.sql`.
+en orden: `0001_projects.sql`, `0002_assets.sql` y
+`0003_template_versions.sql`.
 
 Para comprobar que el entorno está listo:
 
@@ -2379,7 +2380,6 @@ archivos existe y **no es público**. No imprime ningún valor de configuración
 # 146. Lo que falta de la persistencia
 
 ```text
-plantillas y sus versiones (§15-§22)
 exports (§50 en adelante)
 la imagen procesada, que depende de la eliminación de fondo (§48)
 ```
@@ -2493,3 +2493,143 @@ aunque imprima la respuesta, porque considera la conexión interrumpida.
 
 El tamaño se comprueba además sobre `File.size` antes de leer los bytes
 (`AGENTS.md` §46).
+
+---
+
+# 153. Implementación de referencia: versiones de plantilla
+
+Tercera parte de la persistencia. Hasta aquí una plantilla se generaba y se
+perdía al terminar la petición.
+
+```text
+src/modules/templates/
+├── template-definition.ts                    Plantilla ↔ documento guardable
+├── template-version.ts                       Entidad de la versión publicada
+├── template-version-repository.ts            Interfaz: crear, nunca guardar
+├── template-version-repository.contract.ts   Qué significa cumplirlo
+├── in-memory-template-version-repository.ts
+└── infrastructure/
+    └── supabase-template-version-repository.ts   Único archivo con la tabla
+
+src/application/manage-template-versions.ts      Publicar, listar y abrir
+src/presentation/http/template-endpoints.ts      Las tres rutas
+
+supabase/migrations/0003_template_versions.sql   Tabla, restricciones y RLS
+```
+
+---
+
+# 154. No existe una tabla `templates`
+
+§19 pide que `TemplateVersionId` sea distinto de `TemplateId`. Aquí no hay
+`TemplateId`: **la plantilla de un proyecto es la serie de sus versiones**.
+
+Una tabla intermedia que solo guardara un identificador y el proyecto al que
+pertenece no respondería a ninguna pregunta que la de versiones no responda
+ya, y `AGENTS.md` §7 prohíbe justamente eso.
+
+El día que una plantilla se comparta entre proyectos —una biblioteca, `PRD.md`
+§44— esa tabla tendrá algo que decir y se añadirá entonces, con la migración
+que la llene desde lo ya guardado.
+
+---
+
+# 155. La inmutabilidad no depende de que el código se acuerde
+
+`AGENTS.md` §17 y §17 de este documento piden que una versión publicada no se
+modifique. Eso está impuesto en tres sitios, y solo uno es código:
+
+```text
+dominio        no hay ninguna función que devuelva una versión modificada
+repositorio    la interfaz tiene `create`, no `save` ni `update`
+base de datos  no existe política de UPDATE, y `update` está revocado
+```
+
+El adaptador usa `insert` y no `upsert`: un `upsert` convertiría la colisión
+de números en una sustitución silenciosa, que es exactamente lo que se quiere
+impedir.
+
+Tampoco hay política de DELETE. Una versión se va con su proyecto —la clave
+foránea en cascada no pasa por RLS— pero no puede borrarse suelta: un export
+generado apunta a ella (§55).
+
+La prueba que lo demuestra no puede ser en memoria. Está en
+`supabase-template-version-repository.integration.test.ts`: intenta cambiar
+una versión publicada por la puerta de atrás y comprueba que después sigue
+diciendo lo mismo.
+
+---
+
+# 156. Publicar sobre un estado viejo se rechaza
+
+`publishTemplateVersion` acepta `expectedVersionNumber`, que es el
+`expectedVersion` de §21: la última versión que conocía quien publica, o cero
+si ninguna.
+
+```text
+El cliente publica creyendo que está en la v3
+El proyecto ya va por la v4
+        ↓
+409, y el cliente recarga
+```
+
+Si además dos publicaciones llegan a la vez, las dos leen «la última es la v3»
+y las dos piden la v4. La restricción única `(project_id, version_number)`
+hace que una de ellas falle en lugar de pisar a la otra.
+
+No se reintenta en silencio con el número siguiente. Quien publicó lo hizo
+sobre un estado que ya no es el actual, y encadenar su trabajo al de otro sin
+avisar es la pérdida silenciosa que §22 prohíbe.
+
+---
+
+# 157. El documento guardado no es la entidad
+
+La geometría se guarda en una columna `jsonb` con su `schemaVersion` (§33).
+Los puntos van como pares `[x, y]` y no como objetos `{ x, y }`: una plantilla
+real tiene miles de puntos, y repetir los nombres de los campos en cada uno
+multiplica el tamaño del documento sin aportar nada.
+
+Al leerlo, `deserializeTemplate` lo **reconstruye con los constructores del
+dominio** y nunca con un `as Template`. Lo que vuelve de la base de datos o de
+una petición no merece confianza por tener la forma correcta: un contorno
+abierto o una coordenada infinita fallan al leerse y no al imprimirse.
+
+El formato tiene techos —piezas y puntos— porque un documento sin límite es
+una forma barata de llenar la base de datos (§45, §112).
+
+Lo que se consulta vive **fuera** del JSON, en columnas propias: número de
+versión, nombre, medidas, recuento de piezas, versión de derivación y de
+esquema. Listar las versiones de un proyecto no debe obligar a leer y recorrer
+documentos de cientos de kilobytes (§32).
+
+Por eso el repositorio distingue dos formas: `TemplateVersionSummary`, que es
+lo que viaja en un listado, y `TemplateVersion`, que además trae la geometría.
+
+---
+
+# 158. De dónde sale la plantilla que se publica
+
+Hoy la publica el cliente, con la plantilla ya derivada en el cuerpo de la
+petición. Es el borrador de §18: el trabajo en curso vive fuera y publicar lo
+fija.
+
+Es una solución provisional y conviene decirlo: la verdad física del molde
+pertenece al servidor (`printing.md` §78). Lo que la sostiene mientras tanto
+es que **nada se guarda tal cual**; todo pasa por los constructores del
+dominio y por los límites del formato, así que lo único que puede almacenarse
+es geometría que el dominio acepta.
+
+Cuando exista la eliminación de fondo (fase B), el servidor derivará la
+plantilla y llamará al mismo caso de uso. Esta ruta seguirá siendo la que use
+el editor para publicar su borrador, si el producto decide que el editor
+publica.
+
+---
+
+# 159. Publicar no cambia el estado del proyecto
+
+`publishTemplateVersion` no lleva el proyecto a `READY`. Las transiciones son
+del ciclo de vida del proyecto (`PRD.md` §22) y las decide quien orquesta el
+procesado, no quien guarda: desde `DRAFT` ni siquiera existe la transición a
+`READY`, y meterla aquí obligaría a inventar una.

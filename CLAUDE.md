@@ -34,7 +34,7 @@ aquí.
 ## 2. Comandos
 
 ```bash
-pnpm test              # Vitest, 319 tests, entorno node
+pnpm test              # Vitest, 382 tests, entorno node
 ```
 
 ```bash
@@ -81,7 +81,8 @@ src/modules/
 ├── accounts/               Registro y sesión, tras el puerto AuthGateway.
 ├── assets/                 Imagen original del proyecto: fila y archivo.
 ├── projects/               Proyecto del usuario, con su repositorio.
-├── templates/              Silueta + profundidad → piezas recortables.
+├── templates/              Silueta + profundidad → piezas recortables, y la
+│                           versión inmutable con la que se publican.
 ├── printing/               Papel, márgenes, tiling, PrintLayout.
 └── pdf-generation/         PrintLayout → PDF. Boundary de salida.
     └── infrastructure/     Único sitio que importa jspdf.
@@ -155,13 +156,15 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
   abstraído y el resto del pipeline empieza en la máscara.
 * **Fase D parcial:** `generateTemplate` y `generatePrintableDocument` ya
   cubren la cadena entera. Falta lo que depende de persistencia.
-* **Fase E parcial:** el proyecto del usuario está persistido con RLS. **La
-  migración `supabase/migrations/0001_projects.sql` está escrita pero no
-  aplicada**; compruébalo con `pnpm check:supabase`.
-* **La API existe y está autenticada:** proyectos, sesión e imágenes. Sin
+* **Fase E parcial:** proyecto, imagen original y versiones de plantilla
+  están persistidos con RLS. Una versión publicada es inmutable, y lo impone
+  la base de datos: no tiene política de UPDATE.
+* **La API existe y está autenticada:** proyectos, sesión, imágenes y
+  versiones de plantilla. Sin
   sesión responde 401; un recurso ajeno responde 404 y no 403.
-* **Hay dos migraciones.** Comprueba siempre con `pnpm check:supabase` antes
-  de dar por hecho que la base de datos está al día.
+* **Hay tres migraciones.** Se aplican a mano y en orden. Comprueba siempre
+  con `pnpm check:supabase` antes de dar por hecho que la base de datos está
+  al día.
 * **Siguiente:** la interfaz (fase F). Seis criterios de aceptación esperan
   solo por ella. La eliminación de fondo queda aparcada hasta el monorepo.
 * **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,

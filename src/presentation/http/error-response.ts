@@ -65,6 +65,25 @@ const KNOWN_ERRORS: Record<string, ErrorPresentation> = {
     status: 503,
     message: "No pudimos guardar la imagen. Inténtalo de nuevo.",
   },
+  INVALID_TEMPLATE_DEFINITION: {
+    status: 400,
+    message: "Esa plantilla no se puede guardar tal y como llega.",
+  },
+  TEMPLATE_VERSION_NOT_FOUND: {
+    status: 404,
+    message: "No encontramos esa versión de la plantilla.",
+  },
+  TEMPLATE_VERSION_CONFLICT: {
+    // 409 y no 200: el cliente publicó sobre un estado que ya no era el
+    // actual, y tiene que saberlo para no perder su trabajo.
+    status: 409,
+    message:
+      "Alguien publicó una versión más nueva mientras trabajabas. Vuelve a cargar la plantilla.",
+  },
+  TEMPLATE_STORAGE_FAILED: {
+    status: 503,
+    message: "No pudimos guardar la plantilla. Inténtalo de nuevo.",
+  },
   UNSUPPORTED_IMAGE_FORMAT: {
     status: 415,
     message: "Ese formato de imagen no está soportado. Usa PNG, JPEG o WEBP.",
