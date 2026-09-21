@@ -2314,3 +2314,34 @@ de `FRONT` dentro de su ancho, así que la imagen se refleja igual.
 
 No vuelve a meter pixels en el dominio: sale de este módulo en milímetros,
 como todo lo demás.
+
+---
+
+# 110. La cabecera manda
+
+`image-header.ts` lee formato, ancho, alto y orientación EXIF de los primeros
+bytes del archivo, sin decodificar la imagen:
+
+```text
+PNG    bloque IHDR
+JPEG   primer marcador SOF; orientación en el EXIF (APP1) si lo hay
+WEBP   VP8, VP8L o VP8X, cada uno con el tamaño en otro sitio
+```
+
+La subida la usa para dos cosas que antes no podía hacer:
+
+* **Comprobar que el archivo es lo que dice.** El nombre y el tipo los pone el
+  cliente; la cabecera no (`storage.md` §44 y §122). Un `.png` que por dentro
+  es un JPEG, o un PDF, se rechaza.
+* **Aplicar los límites de dimensiones** en el servidor, que esperaban a un
+  decodificador (`storage.md` §150).
+
+## Fotos giradas por la cámara
+
+Una foto JPEG puede traer la orientación en el EXIF en lugar de en los
+pixels. El navegador la aplica al enseñarla; un PDF que incrusta los bytes,
+no. Aceptarla daría una vista previa derecha y un documento girado.
+
+Hasta que se aplique la rotación (§9), la subida la rechaza con un mensaje que
+dice qué hacer. Es preferible a que el usuario lo descubra con las hojas ya
+impresas.

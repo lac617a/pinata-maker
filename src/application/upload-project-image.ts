@@ -1,7 +1,15 @@
 import { type Asset, type AssetId, createAsset } from "@/modules/assets/asset";
 import type { AssetRepository } from "@/modules/assets/asset-repository";
 import { AssetNotFoundError } from "@/modules/assets/errors";
-import { validateImageUpload } from "@/modules/image-processing/image-validation";
+import {
+  UnsupportedImageFormatError,
+  UnsupportedImageOrientationError,
+} from "@/modules/image-processing/errors";
+import { readImageHeader } from "@/modules/image-processing/image-header";
+import {
+  validateImageMetadata,
+  validateImageUpload,
+} from "@/modules/image-processing/image-validation";
 import type { ProjectId, UserId } from "@/modules/projects/project";
 import {
   type ObjectStorage,
@@ -47,6 +55,8 @@ export async function uploadProjectImage(
     byteSize: input.bytes.byteLength,
   });
 
+  assertContentMatches(mimeType, input.bytes);
+
   const asset = createAsset({
     id: services.newAssetId(),
     projectId: input.projectId,
@@ -74,6 +84,36 @@ export async function uploadProjectImage(
   }
 
   return asset;
+}
+
+/**
+ * Lo que declara el cliente tiene que coincidir con lo que hay en el archivo.
+ *
+ * El nombre y el tipo los pone quien sube; la cabecera, no
+ * (docs/storage.md §44 y §122). Con ella se aplican además los límites de
+ * dimensiones, que antes esperaban a un decodificador (docs/storage.md §150).
+ */
+function assertContentMatches(mimeType: string, bytes: Uint8Array): void {
+  const header = readImageHeader(bytes);
+
+  if (header.format !== mimeType) {
+    throw new UnsupportedImageFormatError(
+      `The file declares ${mimeType} but its content is ${header.format}.`,
+    );
+  }
+
+  validateImageMetadata({
+    mimeType: header.format,
+    byteSize: bytes.byteLength,
+    width: header.width,
+    height: header.height,
+  });
+
+  if (header.orientation !== 1) {
+    throw new UnsupportedImageOrientationError(
+      `The photo carries EXIF orientation ${header.orientation}, which is not applied yet.`,
+    );
+  }
 }
 
 export type ViewableAsset = {

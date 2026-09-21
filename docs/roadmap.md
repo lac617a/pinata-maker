@@ -836,7 +836,11 @@ Además, la imagen se sube **a través del servidor**: se carga entera en
 memoria para reenviarla al bucket. Subir directamente al object storage con
 una URL firmada quita ese coste y ese riesgo de en medio.
 
-## 8.6 El archivo se valida por lo que dice ser
+## 8.6 El archivo se valida por lo que dice ser — resuelto
+
+La subida lee la cabecera y rechaza un contenido distinto del declarado
+(`image-processing.md` §110). Queda como estaba escrito abajo por contexto.
+
 
 `validateImageUpload` comprueba el tipo declarado, la extensión y el peso. No
 mira el contenido: un archivo puede llamarse `.png`, declarar `image/png` y

@@ -2472,6 +2472,9 @@ decodificador llega con la eliminación de fondo.
 Es una carencia consciente, no un olvido: hoy una imagen de 10 × 10 px se
 acepta y fallará más tarde, al extraer el contorno, con un error del dominio.
 
+**Resuelto.** La subida lee la cabecera del archivo y aplica los límites sin
+decodificar la imagen (`image-processing.md` §110).
+
 ---
 
 # 151. El bucket es privado

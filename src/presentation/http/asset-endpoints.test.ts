@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createProject } from "@/application/manage-projects";
 import type { AssetServices } from "@/application/upload-project-image";
 import { InMemoryAssetRepository } from "@/modules/assets/in-memory-asset-repository";
+import { pngHeader } from "@/modules/image-processing/image-header.fixtures";
 import { IMAGE_LIMITS } from "@/modules/image-processing/image-validation";
 import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
 import { InMemoryObjectStorage } from "@/modules/storage/in-memory-object-storage";
@@ -37,7 +38,7 @@ function services(): AssetServices & { storage: InMemoryObjectStorage } {
 
 function upload(file: { name: string; type: string; size?: number }): Request {
   const form = new FormData();
-  const bytes = new Uint8Array(new ArrayBuffer(file.size ?? 8));
+  const bytes = pngHeader(400, 400, file.size ?? 64);
 
   form.set(IMAGE_FIELD, new File([bytes], file.name, { type: file.type }));
 
