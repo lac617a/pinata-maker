@@ -5,7 +5,7 @@ import type {
   PaperFormat,
   PaperOrientation,
 } from "@/modules/printing/paper-format";
-import { ApiError, apiRequest } from "@/presentation/client/api-client";
+import { apiRequest, errorFrom } from "@/presentation/client/api-client";
 
 /** Cuánto le queda hoy. Ver docs/usage.md §9. */
 export type Usage = {
@@ -65,15 +65,7 @@ export function useUnsavedPoster() {
       });
 
       if (!response.ok) {
-        const body = await response.json().catch(() => null);
-
-        throw new ApiError(
-          response.status,
-          typeof body?.code === "string" ? body.code : "UNEXPECTED",
-          typeof body?.message === "string"
-            ? body.message
-            : "Algo falló por nuestra parte. Inténtalo de nuevo en un momento.",
-        );
+        throw await errorFrom(response);
       }
 
       const fileName = downloadName(response) ?? "poster.pdf";

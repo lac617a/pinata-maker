@@ -14,7 +14,11 @@ export function formatBytes(bytes: number): string {
     return `${Math.round(bytes / 1024)} kB`;
   }
 
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  // Coma decimal, como el resto de las medidas que ve el usuario.
+  return `${(bytes / (1024 * 1024)).toLocaleString("es", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })} MB`;
 }
 
 /** Centímetros con coma decimal: la medida con la que piensa el usuario. */

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { apiRequest } from "@/presentation/client/api-client";
+import { prepareImageForUpload } from "@/presentation/client/prepare-image";
 
 /**
  * Imagen de un proyecto, lista para enseñarse.
@@ -49,15 +50,19 @@ export function useUploadImage(projectId: string) {
 
   return useMutation({
     mutationFn: async (file: File) => {
+      // A phone photo can weigh more than a request may carry: it is shrunk
+      // first, only if needed (docs/image-processing.md §111).
+      const prepared = await prepareImageForUpload(file);
       const form = new FormData();
-      form.set(IMAGE_FIELD, file);
+      form.set(IMAGE_FIELD, prepared.file);
 
       // La respuesta de la subida no trae URL: el archivo acaba de subirse y
       // el listado es quien firma los enlaces.
-      return apiRequest<{ asset: Omit<ProjectImage, "url"> }>(
-        `/api/projects/${projectId}/images`,
-        { method: "POST", body: form },
-      );
+      const uploaded = await apiRequest<{
+        asset: Omit<ProjectImage, "url">;
+      }>(`/api/projects/${projectId}/images`, { method: "POST", body: form });
+
+      return { ...uploaded, prepared };
     },
     onSuccess: () =>
       queryClient.invalidateQueries({

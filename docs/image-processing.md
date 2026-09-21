@@ -2350,3 +2350,67 @@ ve el usuario.
 
 Sigue pendiente para la segmentación de la fase B: una máscara sacada de los
 bytes guardados saldría tumbada.
+
+---
+
+# 111. Shrinking in the browser before sending
+
+On Vercel a function accepts and returns at most 4.5 MB (`deploy.md` §4).
+Confirmed in production on 2026-09-21: a 5 MB upload answered
+`413 FUNCTION_PAYLOAD_TOO_LARGE` before reaching the app. Phone photos often
+weigh more. The browser now makes every image fit before sending it:
+uploading to a project and picking an image in `/crear` go through the same
+`prepareImageForUpload`.
+
+## When an image goes untouched
+
+If it weighs at most 3.5 MB and its longest side is at most 4096 px, the
+original bytes are sent as they are: same quality, and the server
+straightens camera photos itself (`pdf.md` §97).
+
+3.5 MB and not 4.5: the multipart body adds a little, and without an account
+the PDF comes back in the response, about as heavy as the image it embeds.
+
+## When it has to be shrunk
+
+The image is decoded with `createImageBitmap`, which applies the camera
+rotation, redrawn and re-encoded until it fits
+(`modules/image-processing/upload-preparation.ts`):
+
+```text
+longest side    down to 4096 px    150 ppi still covers 69 cm
+quality         0.9, then 0.8
+then smaller    x0.8 per step, never under 1200 px
+```
+
+4096 px keeps a 1 m piñata above 100 pixels per inch: sharp even up close
+(`pdf.md` §96). Shrinking to that loses nothing visible on paper.
+
+## Which format
+
+* A JPEG stays JPEG.
+* A PNG or WEBP is first tried as PNG at the largest size: lossless, the best
+  for line drawings, which most piñata images are.
+* If that does not fit, it goes as JPEG **on white**. A cut-out photo with a
+  transparent background compresses badly as PNG, and on paper transparency
+  is the white of the sheet anyway: the PDF draws it that way (`pdf.md` §98).
+
+## Checked in the browser
+
+```text
+noisy photo JPEG   4000 x 3000   24.6 MB  ->  3.0 MB JPEG, same size, 0.7 s
+cut-out PNG        3600 x 2700   15.4 MB  ->  2.4 MB JPEG, transparency white
+line drawing PNG   6000 x 5000    1.5 MB  ->  1.1 MB PNG, 4096 x 3413
+```
+
+The person is told what happened: from how much to how much, and that it
+will not show when printed.
+
+## Limits
+
+* Up to 30 MB is accepted to start with; more is refused with a clear
+  message before decoding.
+* If the platform still answers 413, the browser shows a specific message
+  instead of a generic failure (`errorFrom` in `api-client.ts`).
+* The server limits (`IMAGE_LIMITS`, 10 MB) stay: another host may not have
+  Vercel's ceiling, and the server never trusts the browser.

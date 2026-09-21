@@ -61,7 +61,15 @@ export function ProjectImages({
           }
 
           upload.mutate(file, {
-            onSuccess: (result) => onSelect(result.asset.id),
+            onSuccess: (result) => {
+              onSelect(result.asset.id);
+
+              if (result.prepared.shrunk) {
+                toast.success(
+                  `La reducimos de ${formatBytes(result.prepared.original.byteSize)} a ${formatBytes(result.prepared.sent.byteSize)} para poder subirla, sin que se note al imprimir.`,
+                );
+              }
+            },
             onError: (error) => toast.error(error.message),
           });
         }}

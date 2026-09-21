@@ -116,4 +116,7 @@ Soluciones, de menos a más trabajo:
    función (`roadmap.md` §8.5), y entregar el PDF sin cuenta también desde
    el bucket.
 
-Hasta resolverlo, es la primera cosa que puede fallar en producción.
+**Resolved on 2026-09-21 with option 2** (`image-processing.md` §111): the
+browser shrinks every image to at most 3.5 MB before sending it. Option 3
+stays in `roadmap.md` for when printing huge sizes at full resolution is
+worth the extra infrastructure.

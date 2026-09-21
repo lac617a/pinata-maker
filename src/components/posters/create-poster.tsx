@@ -6,11 +6,12 @@ import { toast } from "sonner";
 import { useUnsavedPosterDownload } from "@/components/posters/poster-downloads";
 import { PosterStudio } from "@/components/posters/poster-studio";
 import { Button } from "@/components/ui/button";
-import {
-  IMAGE_LIMITS,
-  SUPPORTED_IMAGE_FORMATS,
-} from "@/modules/image-processing/image-validation";
+import { SUPPORTED_IMAGE_FORMATS } from "@/modules/image-processing/image-validation";
 import { formatBytes } from "@/presentation/client/format";
+import {
+  type PreparedImage,
+  prepareImageForUpload,
+} from "@/presentation/client/prepare-image";
 
 /**
  * El póster sin cuenta y sin proyecto (docs/usage.md §2).
@@ -20,7 +21,9 @@ import { formatBytes } from "@/presentation/client/format";
  * recibe con la petición del PDF, la usa y no la guarda.
  */
 export function CreatePoster() {
-  const [file, setFile] = useState<File | null>(null);
+  const [prepared, setPrepared] = useState<PreparedImage | null>(null);
+  const [preparing, setPreparing] = useState(false);
+  const file = prepared?.file ?? null;
   const [url, setUrl] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const input = useRef<HTMLInputElement>(null);
@@ -40,7 +43,7 @@ export function CreatePoster() {
     return () => URL.revokeObjectURL(created);
   }, [file]);
 
-  function choose(candidate: File | undefined) {
+  async function choose(candidate: File | undefined) {
     if (!candidate) {
       return;
     }
@@ -55,14 +58,19 @@ export function CreatePoster() {
       return;
     }
 
-    if (candidate.size > IMAGE_LIMITS.maxFileBytes) {
-      toast.error(
-        `La imagen pesa ${formatBytes(candidate.size)}; el máximo es ${formatBytes(IMAGE_LIMITS.maxFileBytes)}.`,
-      );
-      return;
-    }
+    // Shrunk here, once, before cropping: the crop and the size are then
+    // chosen on the image that will actually be sent (docs/image-processing.md §111).
+    setPreparing(true);
 
-    setFile(candidate);
+    try {
+      setPrepared(await prepareImageForUpload(candidate));
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "No pudimos abrir la imagen.",
+      );
+    } finally {
+      setPreparing(false);
+    }
   }
 
   return (
@@ -98,12 +106,15 @@ export function CreatePoster() {
             {file ? file.name : "Arrastra aquí tu imagen"}
           </p>
           <p className="text-muted-foreground text-sm">
-            {file
-              ? `${formatBytes(file.size)} · se queda en tu navegador hasta que descargues el PDF, y no la guardamos.`
-              : "PNG, JPEG o WEBP de al menos 200 × 200 px. Cuanta más resolución, más nítida sale en grande."}
+            {preparing
+              ? "Preparando la imagen…"
+              : prepared
+                ? describe(prepared)
+                : "PNG, JPEG o WEBP de al menos 200 × 200 px. Cuanta más resolución, más nítida sale en grande."}
           </p>
           <Button
             variant={file ? "outline" : "default"}
+            disabled={preparing}
             onClick={() => input.current?.click()}
           >
             {file ? "Cambiar imagen" : "Elegir imagen"}
@@ -121,4 +132,16 @@ export function CreatePoster() {
       />
     </div>
   );
+}
+
+/** What the person needs to know about the file that will be sent. */
+function describe(prepared: PreparedImage): string {
+  const kept =
+    "se queda en tu navegador hasta que descargues el PDF, y no la guardamos.";
+
+  if (!prepared.shrunk) {
+    return `${formatBytes(prepared.sent.byteSize)} · ${kept}`;
+  }
+
+  return `La reducimos de ${formatBytes(prepared.original.byteSize)} (${prepared.original.width} × ${prepared.original.height} px) a ${formatBytes(prepared.sent.byteSize)} (${prepared.sent.width} × ${prepared.sent.height} px) para poder enviarla, sin que se note al imprimir. ${kept[0].toUpperCase()}${kept.slice(1)}`;
 }

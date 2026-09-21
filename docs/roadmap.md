@@ -826,10 +826,12 @@ posicionar.
 * Los archivos del object storage no se borran al borrar un proyecto: las
   filas se van en cascada y el bucket no se entera. Hace falta un proceso de
   limpieza o borrar los archivos antes (`storage.md` §59 y §164).
-* En Vercel, una función no acepta ni devuelve más de 4,5 MB, y las
-  imágenes pueden pesar 10 MB: una foto grande falla al subirla, y el PDF
-  sin cuenta puede no caber en la respuesta (`deploy.md` §4). Es lo primero
-  que resolver antes de publicar allí.
+* ~~On Vercel a function cannot take or return more than 4.5 MB.~~
+  Resolved: the browser shrinks images to 3.5 MB before sending
+  (`image-processing.md` §111). If huge prints at full resolution are ever
+  needed, the next step is uploading straight to the bucket with a signed
+  URL (§8.5), which for anonymous use means storing for a few minutes and
+  changing the privacy policy.
 * El PDF se genera dentro de la petición. Para una piñata de un metro son
   unos segundos; si llega a molestar, el export ya tiene identidad propia
   para poder consultarse en segundo plano (`storage.md` §115).

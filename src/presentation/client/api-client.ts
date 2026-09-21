@@ -54,15 +54,34 @@ export async function apiRequest<T>(
     return undefined as T;
   }
 
-  const body = await response.json().catch(() => null);
-
   if (!response.ok) {
-    throw new ApiError(
-      response.status,
-      typeof body?.code === "string" ? body.code : "UNEXPECTED",
-      typeof body?.message === "string" ? body.message : UNEXPECTED_MESSAGE,
-    );
+    throw await errorFrom(response);
   }
 
-  return body as T;
+  return (await response.json().catch(() => null)) as T;
 }
+
+/**
+ * The error a failed response describes.
+ *
+ * Almost always the API's own `{ code, message }`. A 413 may come instead
+ * from the hosting platform, before the request reaches the app, with a body
+ * that is not JSON: it gets its own message rather than a generic failure
+ * (docs/deploy.md §4).
+ */
+export async function errorFrom(response: Response): Promise<ApiError> {
+  const body = await response.json().catch(() => null);
+
+  if (typeof body?.code === "string" && typeof body?.message === "string") {
+    return new ApiError(response.status, body.code, body.message);
+  }
+
+  if (response.status === 413) {
+    return new ApiError(413, "PAYLOAD_TOO_LARGE", PAYLOAD_TOO_LARGE_MESSAGE);
+  }
+
+  return new ApiError(response.status, "UNEXPECTED", UNEXPECTED_MESSAGE);
+}
+
+const PAYLOAD_TOO_LARGE_MESSAGE =
+  "La imagen es demasiado grande para enviarla. Prueba con una más pequeña o recórtala antes.";
