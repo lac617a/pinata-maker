@@ -19,44 +19,38 @@ y cuándo. La regla completa está en `AGENTS.md` §54.
 
 # 1. Estado actual
 
-El **bucle físico está cerrado**. Dada una `TemplateGeometry` en milímetros,
-el sistema produce un PDF imprimible a tamaño real, repartido en hojas, con
-marcas de alineación, regla de calibración e identidad de página.
+**El producto es la imagen en mosaico** desde el 2026-09-21 (`PRD.md` §44):
+el usuario sube una imagen, la recorta si quiere, elige cuánto mide en
+centímetros y descarga un PDF con la imagen ampliada a tamaño real y
+repartida en hojas, con mapa de montaje, marcas de alineación y regla de
+calibración. Es lo que hace Block Posters, pensado para quien fabrica
+piñatas.
 
-Del lado de la imagen, todo lo determinista está hecho: validación del
-archivo, umbral del canal alfa, regiones conexas y trazado del contorno. Falta
-únicamente quitar el fondo, que es un adaptador de infraestructura.
-
-Hay capa de aplicación, persistencia con RLS, flujo de sesión e **interfaz**:
-un PNG con el fondo ya recortado se convierte en un PDF descargable sin salir
-del navegador.
+El ciclo real —subir, recortar, elegir tamaño, descargar— funciona con la
+base de datos al día (migraciones 0001 a 0007), confirmado por el usuario el
+2026-09-21.
 
 ```text
-[✓] Máscara alfa → contorno en pixels → geometría en mm
-[✓] Silueta + profundidad → piezas con pliegues y pestañas
-[✓] Geometría en mm → reparto en páginas → PrintLayout
-[✓] PrintLayout → PDF
-[✓] Proyecto persistido, aislado por usuario, con registro y sesión
-[✓] Imagen original guardada en un bucket privado, servida con URL firmada
-[✓] Plantilla publicada como versión inmutable, recuperable tal y como se guardó
-[✓] PDF generado, guardado en object storage y entregado con enlace firmado
-[ ] Imagen real → máscara alfa (eliminación de fondo)
-[✓] Interfaz: sesión, proyectos, imagen, molde, versiones y descarga
-[ ] Imagen opaca → máscara alfa (una con transparencia ya funciona)
+[✓] Imagen → cabecera leída del propio archivo (formato, tamaño, EXIF)
+[✓] Recorte opcional → póster en mm con la proporción del recorte
+[✓] Póster → reparto en hojas con solape, etiquetas y marcas
+[✓] PDF: hoja de resumen con mapa y regla, y un trozo de imagen por hoja
+[✓] Fotos de móvil con orientación EXIF, derechas en la vista y en el PDF
+[✓] Aviso de resolución antes de imprimir
+[✓] Proyecto, imagen y PDF persistidos con RLS; descarga con enlace firmado
+[ ] Imprimir un póster y medirlo con una regla (§8.1)
+[ ] Acceso sin cuenta con límite diario (fase G)
+[ ] Landing, páginas legales y SEO (fase H)
 ```
 
-De punta a punta, con un solo caso de uso: una máscara elíptica de 600 × 800
-px pedida a 800 × 1000 mm con 200 mm de profundidad produce 17 piezas, 2,10 m²
-de papel y un único PDF de 48 hojas A4 con su hoja de instrucciones.
-
-A partir de aquí la validación que importa es física: imprimir un molde
-conocido y medirlo con una regla real (`printing.md` §75).
+La plantilla con piezas —silueta, tiras laterales, pestañas, versiones— sigue
+en el código con sus pruebas, sin interfaz. Lo que la sección 2 cuenta de
+ella sigue siendo cierto; ya no es el camino del usuario.
 
 Verificación:
 
 ```bash
-pnpm test        # 457 tests, más 26 de integración que necesitan cuenta
-pnpm exec tsc --noEmit
+pnpm verify      # 523 tests, más 26 de integración que necesitan cuenta
 ```
 
 ---
@@ -486,6 +480,26 @@ Existe porque hay errores que solo viven en la costura: cada módulo puede ser
 correcto por separado y la cadena estar mal. El caso que la motivó está en
 §6.
 
+## 2.17 El póster
+
+La salida del producto (`PRD.md` §44). Reutiliza el reparto en hojas de las
+plantillas; lo nuevo es qué se dibuja y cómo se elige el tamaño.
+
+| Pieza | Qué hace |
+| --- | --- |
+| `image-processing/image-header.ts` | Formato, tamaño y orientación EXIF leídos del archivo, sin decodificarlo |
+| `posters/poster.ts` | Tamaño en mm desde un lado, reparto en hojas, medidas de hojas justas |
+| `posters/crop.ts` | Recorte en pixels, validado contra la imagen; dónde va la imagen entera |
+| `posters/resolution.ts` | Pixels por pulgada y nitidez según la distancia (`pdf.md` §96) |
+| `pdf-generation/image-orientation.ts` | Las ocho orientaciones EXIF como matriz de dibujo (`pdf.md` §97) |
+| `application/export-poster.ts` | Lee la imagen guardada, genera el PDF y lo guarda |
+| `POST /api/projects/[id]/posters` | Imagen, recorte opcional, un lado en mm y papel |
+| `components/posters/` | Recorte, tamaño en cm con hojas al lado, vista previa y descarga |
+
+El servidor decide con lo guardado: la proporción, el recorte y el giro se
+comprueban contra la cabecera del archivo, no contra lo que diga el
+navegador (`storage.md` §166).
+
 ---
 
 # 3. Decisiones cerradas
@@ -549,6 +563,11 @@ No volver a abrirlas sin un motivo nuevo.
 | Fila y archivo son interfaces separadas | Fallan por separado y hay que poder deshacer una |
 | El bucket es privado, con URL firmada de 10 minutos | Bastante para mostrar, poco para repartir |
 | La sesión se comprueba antes de leer el cuerpo | Un anónimo no debe hacer que el servidor cargue 10 MB |
+| La salida es la imagen en mosaico, no el molde con piezas | Es lo que el fabricante necesita: pega la imagen en cartón y recorta él (`PRD.md` §44) |
+| Las hojas se solapan 1 cm en lugar de llevar borde para recortar | Se pegan a ojo por las cruces; a cambio, la interfaz propone medidas de hojas justas |
+| El tamaño se elige en cm; las hojas se enseñan al lado | Un fabricante piensa en centímetros, no en hojas |
+| Recortar y girar no tocan el archivo guardado | El PDF lleva la imagen entera y la recorta y gira al dibujarla; sin recodificar |
+| La resolución se avisa, no se impide | Una piñata grande algo borrosa puede ser lo que se quiere |
 
 Detalle que confunde al leer geometría de páginas: el recorte **une los
 fragmentos a través del punto de cierre** del polígono, así que el contorno de
@@ -559,10 +578,28 @@ Es correcto: el trazo es continuo.
 
 # 4. Lo que falta
 
-Orden recomendado. **Las fases A y C están terminadas, la B lo está salvo la
-eliminación de fondo y la D a falta de lo que exige persistencia** (ver §2.3,
-§2.5, §2.6 y §2.7); las letras se mantienen para no invalidar las referencias
-de este documento.
+Orden recomendado para el producto de hoy, el póster:
+
+1. Imprimir un póster y medirlo (§8.1).
+2. Pulido del póster (abajo).
+3. Fase G: acceso sin cuenta y límites.
+4. Fase H: landing, páginas legales y SEO.
+
+**Las fases B, C y D quedan aparcadas**: servían al molde con piezas. El
+póster no necesita quitar el fondo —el usuario recorta la figura a mano sobre
+el cartón— ni derivar piezas. Se describen tal cual por si el molde vuelve
+como opción (`PRD.md` §44). Las letras se mantienen para no invalidar las
+referencias de este documento.
+
+## Póster — pulido
+
+* Opción sin solape, con borde blanco para recortar como Block Posters.
+  Ahorra una columna en muchas medidas (`pdf.md` §94).
+* Arrastrar y soltar al subir la imagen.
+* Guardar el recorte en el documento generado, para poder regenerarlo igual
+  (`pdf.md` §95). Hoy no hace falta: el PDF se guarda entero.
+* Figura de ejemplo para probar sin subir nada (§8.11). La necesita también
+  la landing de la fase H.
 
 ## Fase B — Eliminación de fondo (para imágenes opacas)
 
@@ -644,13 +681,16 @@ y el usuario en cada operación.
 **Parcial.** El ciclo completo está cubierto (§2.14): sesión, proyectos,
 imagen, molde con su coste, versiones y descarga del PDF.
 
+Desde el 2026-09-21 la pantalla del proyecto es la del póster (§2.17): la
+interfaz de plantillas se retiró. Lo pendiente del póster está en «Póster —
+pulido».
+
 Falta:
 
-* Arrastrar y soltar al subir, y margen y solape en el formulario: hoy son
-  los valores del producto y no se pueden tocar desde la interfaz.
-* Los estados del proyecto no se mueven desde la interfaz: publicar una
-  versión no lo lleva a `READY` (`storage.md` §159).
-* La derivación bloquea el hilo del navegador mientras calcula.
+* Margen y solape en el formulario: hoy son los valores del producto y no se
+  pueden tocar desde la interfaz.
+* Los estados del proyecto no se mueven desde la interfaz: generar un PDF no
+  lo lleva a `READY` (`storage.md` §159).
 
 ## Fase G — Acceso, límites y monetización
 
@@ -678,6 +718,13 @@ Condiciona poder publicar con Google AdSense, no la utilidad de la
 herramienta. Por eso va al final: sin molde correcto no hay nada que
 posicionar.
 
+* **Landing page amigable**, pedida el 2026-09-21: explica en pasos cómo
+  funciona (subir, recortar, elegir tamaño, imprimir y pegar), enseña
+  ejemplos de piñatas hechas con el póster y dice por qué usar esta web y no
+  una herramienta genérica de pósters: medidas en cm, hojas justas, mapa de
+  montaje, regla de calibración y aviso de resolución. Es también el
+  contenido indexable que pide el SEO, y el sitio natural para la figura de
+  ejemplo (§8.11).
 * Las cuatro páginas legales, enlazadas desde el pie: privacidad, términos,
   cookies y aviso legal. Sin ellas AdSense no aprueba la cuenta.
 * Consentimiento de cookies con rechazo efectivo de la publicidad
@@ -765,9 +812,9 @@ posicionar.
 | AC-01 | Crear un proyecto | **Hecho y probado** |
 | AC-02 | Subir una imagen válida | **Hecho y probado** |
 | AC-03 | Visualizar la imagen cargada | **Hecho y probado** |
-| AC-04 | Obtener una figura aislada | Parcial: sirve si la imagen ya tiene transparencia |
-| AC-05 | Configurar medidas y papel | **Hecho y probado** |
-| AC-06 | Generar una plantilla | **Hecho y probado** |
+| AC-04 | Obtener una figura aislada | Aparcado con el molde: el póster no la necesita |
+| AC-05 | Configurar medidas y papel | **Hecho y probado**, en cm y con recorte |
+| AC-06 | Generar una plantilla | **Hecho y probado**; hoy la salida es el póster |
 | AC-07 | Conservar las dimensiones físicas | **Hecho y probado** |
 | AC-08 | Dividir automáticamente en páginas | **Hecho y probado** |
 | AC-09 | Identificadores de página | **Hecho y probado** |
@@ -789,6 +836,10 @@ esto funcione con usuarios de verdad. Cada uno dice qué pasa si se ignora.
 ## 8.1 Nadie ha impreso un molde todavía
 
 Es el riesgo más grande del proyecto y no se parece a ninguno de los demás.
+
+Con el póster (§2.17) la prueba es más sencilla que con el molde: imprimir la
+hoja de resumen y medir la regla de 10 cm, y después dos hojas vecinas y
+comprobar que las cruces coinciden al solaparlas.
 
 Todo lo que dice que la escala es correcta son tests: comprueban que el
 sistema hace lo que el sistema cree que debe hacer. Que un cuadrado de 100 mm

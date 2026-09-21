@@ -34,7 +34,7 @@ aquí.
 ## 2. Comandos
 
 ```bash
-pnpm test              # Vitest, 457 tests, entorno node
+pnpm test              # Vitest, 523 tests, entorno node
 ```
 
 ```bash
@@ -89,7 +89,7 @@ src/presentation/http/      Petición → caso de uso → respuesta. Sin Next.
 src/presentation/next/      Único punto que junta Next, Supabase y el dominio.
 src/presentation/client/    Navegador: cliente HTTP, TanStack Query, providers.
 src/components/ui/          Componentes de shadcn/ui. Código propio, no dependencia.
-src/components/<área>/      Las pantallas: session, projects, templates, exports.
+src/components/<área>/      Las pantallas: session, projects, posters, exports.
 src/infrastructure/         Adaptadores compartidos (cliente de Supabase).
 supabase/migrations/        Esquema y políticas RLS. Se aplican a mano.
 src/modules/
@@ -97,6 +97,8 @@ src/modules/
 ├── image-processing/       Imagen → máscara → contorno → mm.
 ├── accounts/               Registro y sesión, tras el puerto AuthGateway.
 ├── assets/                 Imagen original del proyecto: fila y archivo.
+├── posters/                La salida del producto: imagen ampliada en hojas,
+│                           recorte y aviso de resolución.
 ├── projects/               Proyecto del usuario, con su repositorio.
 ├── templates/              Silueta + profundidad → piezas recortables, y la
 │                           versión inmutable con la que se publican.
@@ -178,17 +180,17 @@ afectado cuando aclare el alcance — `feat(pdf-generation): ...`.
 
 Resumen; la versión autoritativa está en `docs/roadmap.md`.
 
-* **Hecho y probado:** validación de imagen, máscara alfa → contorno →
-  geometría en mm, derivación de piezas por extrusión perimetral, reparto en
-  páginas, marcas de alineación, calibración y generación de PDF (AC-06 a
-  AC-12). La cadena está cerrada: una máscara produce un juego de piezas
-  imprimibles a tamaño real.
-* **Lo único que falta de la Fase B:** el adaptador que quita el fondo y
-  produce la máscara alfa. Decisión abierta: ¿servicio externo o servidor
-  propio? (`docs/roadmap.md` §5.2). No bloquea nada más: el contrato ya está
-  abstraído y el resto del pipeline empieza en la máscara.
-* **Fase D parcial:** `generateTemplate` y `generatePrintableDocument` ya
-  cubren la cadena entera. Falta lo que depende de persistencia.
+* **El producto es la imagen en mosaico** (`docs/PRD.md` §44): subir una
+  imagen, recortarla si se quiere, elegir el tamaño en cm y descargar el PDF
+  con la imagen ampliada en hojas. El módulo es `src/modules/posters/`; la
+  plantilla con piezas sigue en el código, sin interfaz.
+* **Hecho y probado del molde con piezas:** máscara alfa → contorno →
+  geometría en mm, derivación de piezas, reparto en páginas, marcas,
+  calibración y PDF (AC-06 a AC-12). El póster reutiliza el reparto, las
+  marcas, la calibración y el PDF.
+* **Aparcado con el molde:** quitar el fondo (fase B) y derivar piezas. El
+  póster no los necesita: el usuario recorta la figura a mano sobre el
+  cartón (`docs/roadmap.md` §4).
 * **Fase E casi cerrada:** proyecto, imagen original, versiones de plantilla
   y exports están persistidos con RLS. Una versión publicada es inmutable, y
   lo impone la base de datos: no tiene política de UPDATE. Queda la limpieza
@@ -203,15 +205,9 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
   también tiene `name` y la capturaba (`docs/storage.md` §165). Se aplican a mano y en
   orden. Comprueba siempre con `pnpm check:supabase` antes de dar por hecho
   que la base de datos está al día.
-* **La interfaz cubre el ciclo entero** (fase F parcial): entrar, crear
-  proyecto, subir imagen, calcular el molde con su coste, publicar versión,
-  generar el PDF y descargarlo.
-* **La plantilla se deriva en el navegador** mientras no exista la
-  eliminación de fondo: un PNG con transparencia no la necesita. El PDF, que
-  es lo que se imprime, se genera siempre en el servidor desde la versión
-  guardada (`docs/roadmap.md` §2.15).
-* **Siguiente:** imprimir un molde y medirlo con una regla (`docs/roadmap.md`
-  §8.1). Nada de lo construido lo ha comprobado todavía.
+* **Siguiente:** imprimir un póster y medirlo con una regla
+  (`docs/roadmap.md` §8.1), el pulido del póster y la fase G
+  (`docs/roadmap.md` §4).
 * **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,
   de pago) y la publicación con SEO y páginas legales. Los requisitos están en
   `docs/PRD.md` §38-§43, no en el roadmap: el roadmap solo registra cuándo se
