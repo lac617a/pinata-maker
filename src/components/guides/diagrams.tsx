@@ -394,3 +394,78 @@ export function PinataPartsDiagram() {
     </svg>
   );
 }
+
+/** Without overlap: trim the white margin along the corner marks and butt. */
+export function TrimJoinDiagram() {
+  const sheet = (x: number, label: string, trimRight: boolean) => (
+    <g>
+      <rect
+        x={x}
+        y={30}
+        width={220}
+        height={190}
+        fill="var(--background)"
+        stroke="var(--border)"
+      />
+      {/* The printed area, inside a white margin. */}
+      <rect
+        x={x + 14}
+        y={44}
+        width={192}
+        height={162}
+        fill="var(--illustration-1)"
+      />
+      {/* Corner marks in the margin, continuing the edges. */}
+      {[
+        [x + 14, 44],
+        [x + 206, 44],
+        [x + 14, 206],
+        [x + 206, 206],
+      ].map(([cx, cy]) => (
+        <g key={`${cx}-${cy}`} stroke="var(--foreground)" strokeWidth={1.4}>
+          <line
+            x1={cx}
+            y1={cy < 100 ? 32 : 218}
+            x2={cx}
+            y2={cy < 100 ? 41 : 209}
+          />
+          <line
+            x1={cx < x + 100 ? x + 2 : x + 218}
+            y1={cy}
+            x2={cx < x + 100 ? x + 11 : x + 209}
+            y2={cy}
+          />
+        </g>
+      ))}
+      {trimRight ? (
+        <line
+          x1={x + 206}
+          y1={24}
+          x2={x + 206}
+          y2={226}
+          stroke="var(--destructive)"
+          strokeWidth={1.6}
+          strokeDasharray="6 4"
+        />
+      ) : null}
+      <text x={x + 24} y={196} fontSize={14} {...MUTED}>
+        {label}
+      </text>
+    </g>
+  );
+
+  return (
+    <svg
+      viewBox="0 0 560 270"
+      className="h-auto w-full"
+      role="img"
+      aria-label="Dos hojas con margen blanco y marcas en las esquinas: se recorta el margen de una por la línea que marcan y se une borde con borde con la otra"
+    >
+      {sheet(40, "A1", true)}
+      {sheet(300, "A2", false)}
+      <text x={40} y={252} fontSize={14} {...TEXT}>
+        Corta por la línea que marcan las esquinas y junta los bordes.
+      </text>
+    </svg>
+  );
+}

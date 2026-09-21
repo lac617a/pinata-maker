@@ -2076,3 +2076,7 @@ the edges.
 
 The joining is sent with the request (`joining`) and is not stored in the
 export record, like the crop (§95): the stored PDF is what matters.
+
+The person is not told the difference in the tool: a link next to the
+selector opens the printing guide at "Solapar o sin solape: cuál elegir",
+with a drawing for each way (`/guias/como-imprimir-y-unir-las-hojas`).

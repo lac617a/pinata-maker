@@ -6,6 +6,7 @@ import {
   RulerCheckDiagram,
   SheetMapDiagram,
   SheetOverlapDiagram,
+  TrimJoinDiagram,
 } from "@/components/guides/diagrams";
 import {
   GuideArticle,
@@ -124,7 +125,39 @@ export default function Page() {
         </p>
       </GuideStep>
 
-      <GuideStep number={4} title="Únelas por las cruces">
+      <GuideStep
+        number={4}
+        id="solapar-o-sin-solape"
+        title="Solapar o sin solape: cuál elegir"
+      >
+        <p>
+          Al crear el PDF eliges cómo se unen las hojas, en «Unión de las
+          hojas». Las dos dan la misma figura; cambia cómo se pegan.
+        </p>
+        <ul>
+          <li>
+            <strong>Solapar 1 cm</strong> (la opción por defecto): cada hoja
+            repite una franja de un centímetro de la de al lado. Se pegan
+            superponiendo esa franja hasta que las cruces coinciden.{" "}
+            <strong>No hay que cortar nada</strong> y perdona pequeños errores:
+            es la más fácil si es tu primera vez.
+          </li>
+          <li>
+            <strong>Sin solape</strong>, como Block Posters: no se repite
+            ninguna franja. Recortas el margen blanco de las hojas siguiendo
+            unas marcas en las esquinas y las juntas borde con borde.{" "}
+            <strong>Salen menos hojas para el mismo tamaño</strong> (tres hojas
+            A4 de ancho dan 60 cm en vez de 58), pero hay que cortar recto y con
+            cuidado.
+          </li>
+        </ul>
+        <p>
+          Si dudas, solapa. Si ya has hecho pósters en hojas y tienes regla
+          metálica y cúter, sin solape ahorra papel.
+        </p>
+      </GuideStep>
+
+      <GuideStep number={5} title="Únelas por las cruces (solapando)">
         <p>
           Cada hoja repite una franja de <strong>1 cm</strong> de la hoja de al
           lado, con cruces encima. Superpón esa franja hasta que las cruces de
@@ -152,12 +185,34 @@ export default function Page() {
           <strong>las filas entre sí</strong>, de arriba abajo. Es mucho más
           fácil alinear tiras largas que hojas sueltas.
         </p>
+      </GuideStep>
+
+      <GuideStep number={6} title="Únelas borde con borde (sin solape)">
         <p>
-          <strong>¿Elegiste «Sin solape»?</strong> Entonces las hojas no repiten
-          ninguna franja. En cada esquina hay dos marcas pequeñas en el margen
-          blanco: recorta el margen siguiendo esas marcas, con regla y cúter, y
-          junta las hojas borde con borde. Las medias cruces de los bordes se
-          completan al unirlas. Pega con cinta por detrás.
+          En cada esquina de la zona impresa hay dos marcas cortas en el margen
+          blanco: prolongan los bordes de la imagen. Una regla apoyada en las
+          dos marcas de un lado te da la línea de corte exacta.
+        </p>
+        <GuideFigure caption="Corta el margen por la línea que marcan las esquinas; las medias cruces del borde se completan al juntar las hojas.">
+          <TrimJoinDiagram />
+        </GuideFigure>
+        <ol>
+          <li>
+            En cada hoja, recorta el margen del lado derecho y del de abajo, con
+            regla metálica y cúter. Deja los márgenes de la izquierda y de
+            arriba: sirven de pestaña.
+          </li>
+          <li>
+            Pon cada hoja recortada encima del margen que dejaste en su vecina,
+            con los bordes de la imagen tocándose. Las medias cruces de los dos
+            bordes forman una cruz entera cuando están bien.
+          </li>
+          <li>
+            Pega con barra de pegamento sobre la pestaña o con cinta por detrás.
+          </li>
+        </ol>
+        <p>
+          Igual que al solapar: primero cada fila, después las filas entre sí.
         </p>
         <GuideNote>
           <strong>Si algo no encaja por uno o dos milímetros,</strong> es

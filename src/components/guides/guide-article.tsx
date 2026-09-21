@@ -135,14 +135,17 @@ export function GuideArticle({
 export function GuideStep({
   number,
   title,
+  id,
   children,
 }: {
   number?: number;
   title: string;
+  /** Anchor to link straight to this step, e.g. from the tool. */
+  id?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-4">
+    <section id={id} className="scroll-mt-6 space-y-4">
       <h2 className="font-serif text-2xl">
         {number !== undefined ? (
           <span className="text-muted-foreground mr-2 font-mono text-lg">
