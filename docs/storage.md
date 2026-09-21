@@ -2728,10 +2728,11 @@ archivo es una descarga rota.
 
 # 164. Lo que todavía no está resuelto
 
-* **Archivos huérfanos** (§59). Borrar un proyecto borra sus filas en
-  cascada, pero el object storage no se entera: los archivos se quedan. Hace
-  falta un proceso periódico que compare bucket y base de datos, o borrar los
-  archivos explícitamente antes de borrar el proyecto.
+* ~~**Archivos huérfanos** (§59).~~ **Resolved on 2026-09-21:** deleting a
+  project removes its images and PDFs through the Storage API first, then
+  the rows; deleting an account does the same for every project
+  (`legal.md` §6). A file left behind by an earlier deletion is still
+  possible; a periodic bucket-versus-database sweep would catch those.
 * **Retención** (§56, §113). No hay política: los exports se acumulan hasta
   que el usuario los borra a mano.
 * **Generación síncrona**. El PDF se produce dentro de la petición. Para una
@@ -2739,6 +2740,8 @@ archivo es una descarga rota.
   en segundo plano de §115 es la salida, y el export ya tiene la identidad
   propia que haría falta para consultar su estado.
 * **La imagen procesada** (§48), que depende de la eliminación de fondo.
+* **Crop and joining are not stored** with a poster export (`pdf.md` §95,
+  §99): the PDF is stored whole, so nothing needs them today.
 
 ---
 

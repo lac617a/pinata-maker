@@ -785,6 +785,10 @@ Las dos páginas las imprimen en la misma posición física global.
 Al superponer las hojas por el solape, las marcas de una caen exactamente
 sobre las de la otra.
 
+With no overlap (`pdf.md` §99) the centre of the strip is the edge itself:
+each cross sits half on the image and half in the margin, and the two
+halves meet when the trimmed sheets are butted.
+
 Se usan dos marcas por borde y no una porque un único punto no permite
 corregir el giro de la hoja. Se colocan al 25 % y al 75 % del borde para no
 confundirse con las marcas de los bordes contiguos.

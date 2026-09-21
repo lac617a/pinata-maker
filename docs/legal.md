@@ -1,73 +1,72 @@
-# Páginas legales
+# Legal pages
 
-Cómo se cumplen los requisitos de `PRD.md` §41: qué páginas hay, de dónde
-salen sus datos y qué obliga a cambiarlas.
+How the requirements of `PRD.md` §41 are met: which pages exist, where their
+data comes from, and what forces them to change.
 
-No es asesoría jurídica. Los textos están escritos sobre la base del RGPD,
-la norma más exigente de las que pueden aplicar: cumplirla cubre la mayor
-parte de las leyes latinoamericanas de protección de datos. Antes de publicar
-conviene que alguien que conozca la ley del país del titular los revise.
+This is not legal advice. The texts follow Colombian law (§5) and were
+first written on the GDPR, the strictest framework that could apply. Before
+treating them as final, someone who knows Colombian law should review them.
 
 ---
 
-# 1. Las páginas
+# 1. The pages
 
 ```text
-/privacidad    qué datos, para qué, dónde, cuánto tiempo, derechos
-/terminos      uso, límites, cuenta, propiedad de las imágenes
-/cookies       qué cookies y para qué
-/aviso-legal   quién es el titular y cómo contactar
+/privacidad    data policy: what, why, where, how long, rights, requests
+/terminos      use, limits, account, ownership of the images
+/cookies       which cookies and what for
+/aviso-legal   who runs the site and how to reach them
 ```
 
-Están enlazadas desde el pie de **todas** las páginas, incluido el área
-privada (AC-19): el pie va en el layout raíz.
+They are linked from the footer of **every** page, private area included
+(AC-19): the footer is in the root layout. The footer calls the first one
+"Tratamiento de datos".
 
 ---
 
-# 2. Los datos del titular
+# 2. The owner's details
 
-Viven en un solo archivo, `src/components/legal/site-owner.ts`: titular,
-identificación, dirección, país, correo, autoridad de protección de datos,
-proveedor de alojamiento y región de Supabase.
+They live in one file, `src/components/legal/site-owner.ts`: owner, ID,
+address, country, e-mail, phone, data protection authority, hosting provider
+and Supabase region. Every page quotes them from there.
 
-Decisión del 2026-09-21: se escriben como marcadores (`[TITULAR]`,
-`[PAÍS]`…) hasta que el titular los dé. **Mientras quede alguno, cada página
-legal enseña un aviso de borrador** que nombra los que faltan. No deben
-publicarse así: AdSense las revisa, y un aviso legal con marcadores no
-identifica a nadie.
+While any value is still a bracketed placeholder (`[TITULAR]`…), every legal
+page shows a visible draft notice naming what is missing: they must not be
+published that way. Since 2026-09-21 all of them are filled in.
 
 ---
 
-# 3. Los textos describen el sistema real
+# 3. The texts describe the real system
 
-No son una plantilla genérica: dicen lo que hace la aplicación hoy.
+They are not a generic template: they say what the app does today.
 
-* Sin cuenta, la imagen y el PDF **no se guardan** (`usage.md` §2).
-* La cookie `pm_visitor` y la IP se guardan como huella HMAC; la de la IP
-  cambia cada día; el contador se borra a los siete días (`usage.md` §5-§6).
-* Supabase es el único proveedor de datos: autenticación, base de datos y
-  archivos. No hay servicio externo de eliminación de fondo.
-* Borrar una imagen o un PDF borra el registro y el archivo. Borrar la
-  cuenta entera se pide por correo: la aplicación todavía no lo hace sola, y
-  borrar un proyecto deja sus archivos en el bucket (`storage.md` §164).
-  La política no promete lo que el sistema no hace.
+* Without an account, the image and the PDF **are not stored**
+  (`usage.md` §2).
+* The `pm_visitor` cookie and the IP are kept as an HMAC fingerprint; the
+  IP's changes every day; the counter goes after seven days
+  (`usage.md` §5-§6).
+* Supabase is the only data provider: authentication, database and files.
+  No external service processes images.
+* Deleting an image, a PDF, a project or the whole account removes rows and
+  files, from the app (§6).
 
-**Si cambia qué se guarda, cuánto tiempo o quién interviene, estas páginas
-cambian en el mismo commit.** Es parte de la definición de terminado de ese
-cambio.
+**If what is stored, for how long or by whom changes, these pages change in
+the same commit** — and `DATA_POLICY_VERSION` too, if the change is
+substantial (§5). It is part of that change's definition of done.
 
 ---
 
-# 4. Cookies y consentimiento
+# 4. Cookies and consent
 
-Hoy solo hay cookies necesarias —la sesión de Supabase y `pm_visitor`— y no
-requieren consentimiento. Por eso **no hay banner todavía**: un aviso sin
-nada que rechazar no protege a nadie y entrena a ignorarlo.
+Today there are only necessary cookies — the Supabase session and
+`pm_visitor` — and they need no consent. That is why **there is no banner
+yet**: a notice with nothing to reject protects nobody and trains people to
+ignore it. `pm-terms-accepted` is `localStorage`, not a cookie (§8).
 
-El banner llega con AdSense, y juntos: antes de cargar cualquier script
-publicitario se pregunta, rechazar la publicidad personalizada tiene que ser
-tan fácil como aceptarla, y la decisión se puede cambiar (`PRD.md` §40,
-AC-20). La política de cookies se actualiza en el mismo cambio.
+The banner comes with AdSense, together: ask before loading any ad script,
+make rejecting personalised ads as easy as accepting them, and let the
+decision be changed (`PRD.md` §40, AC-20). The cookie policy changes in the
+same commit.
 
 ---
 

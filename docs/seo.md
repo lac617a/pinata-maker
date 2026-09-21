@@ -1,62 +1,64 @@
 # SEO
 
-Cómo se cumplen los requisitos de `PRD.md` §42 y los criterios AC-22 y
-AC-23.
+How the requirements of `PRD.md` §42 and criteria AC-22 and AC-23 are met.
 
 ---
 
-# 1. Qué se posiciona
+# 1. What ranks
 
-La portada (`/`) es el contenido: qué hace la herramienta, cómo funciona en
-cuatro pasos, ejemplos con medidas calculadas por el propio módulo de pósters,
-por qué usarla y preguntas frecuentes. Se sirve renderizada en el servidor.
+The landing (`/`) is the content: what the tool does, how it works in four
+steps, examples with sizes computed by the poster module itself, why use it,
+and a FAQ. It is server-rendered.
 
-Las preguntas frecuentes llevan datos estructurados `FAQPage` con el mismo
-texto que se ve: nada que el visitante no pueda leer.
+The FAQ carries `FAQPage` structured data with the same text that is shown:
+nothing a visitor cannot read.
 
-`/crear` es la herramienta. Es de cliente, pero su título y descripción se
-sirven desde el servidor.
+`/crear` is the tool. It is a client page, but its title and description are
+served from the server.
 
----
-
-# 2. La dirección del sitio
-
-`NEXT_PUBLIC_SITE_URL`, leída en un solo sitio (`infrastructure/site-url.ts`).
-La usan `metadataBase` —que completa canónicas y Open Graph—, el sitemap,
-`robots.txt` y el enlace de confirmación del correo.
-
-Sin ella, en desarrollo se usa `http://localhost:3000`; **en producción la
-aplicación falla al arrancar**. Un sitemap con enlaces a `localhost` sería
-peor que un error: los buscadores lo aceptarían en silencio.
+The guides (§6) are the content beyond the landing.
 
 ---
 
-# 3. Qué se indexa y qué no
+# 2. The site's address
 
-`PUBLIC_PAGES` (`presentation/next/public-pages.ts`) es la única lista de
-páginas públicas: de ella sale `sitemap.xml`. Una página pública nueva se
-añade ahí y usa `publicPageMetadata` para su título, descripción, canónica y
+`NEXT_PUBLIC_SITE_URL`, read in one place (`infrastructure/site-url.ts`).
+It feeds `metadataBase` — which completes canonical URLs and Open Graph —,
+the sitemap, `robots.txt` and the e-mail confirmation link.
+
+Without it, development uses `http://localhost:3000`; **in production the
+app refuses to start**. A sitemap with links to `localhost` would be worse
+than an error: search engines would accept it silently.
+
+---
+
+# 3. What is indexed and what is not
+
+`PUBLIC_PAGES` (`presentation/next/public-pages.ts`) is the one list of
+public pages: `sitemap.xml` comes from it. A new public page is added there
+and uses `publicPageMetadata` for its title, description, canonical URL and
 Open Graph.
 
 ```text
-indexables   /  /crear  /guias  /guias/*  /privacidad  /terminos  /cookies
+indexed      /  /crear  /guias  /guias/*  /privacidad  /terminos  /cookies
              /aviso-legal
-noindex      /proyectos (y todo lo que cuelga)  /acceder  /crear-cuenta
-bloqueado    /api/   en robots.txt
+noindex      /proyectos (and everything under it)  /acceder  /crear-cuenta
+blocked      /api/   in robots.txt
 ```
 
-`/proyectos` **no** se bloquea en `robots.txt`, a propósito: si se bloquea, el
-buscador no puede leer su `noindex` y aún podría listar la URL, sin contenido,
-si alguien la enlaza. Lo protegen su `noindex` y que sin sesión redirige a
-`/acceder`, que también lleva `noindex`.
+`/proyectos` is **not** blocked in `robots.txt`, on purpose: blocked, a
+search engine cannot read its `noindex` and could still list the URL,
+without content, if someone links to it. It is protected by its `noindex`
+and by redirecting to `/acceder` without a session, which is `noindex` too.
 
 ---
 
-# 4. Lo que falta
+# 4. What is left
 
+* Register the domain in Google Search Console and send the sitemap.
 * More guides beyond the first two (§6): decorating with crepe paper, a
   number piñata step by step, how much a piñata can hold.
-* Medir los Core Web Vitals de la portada y de `/crear` una vez desplegado.
+* Measure the Core Web Vitals of the landing and of `/crear` in production.
 
 ---
 

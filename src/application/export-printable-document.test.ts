@@ -355,7 +355,7 @@ describe("Export printable document", () => {
    * El resto de la suite usa uno de mentira porque lo que se prueba es la
    * orquestación. Esto comprueba lo otro: que la cadena entera —versión
    * guardada, PDF real, archivo en almacenamiento, enlace de descarga— no se
-   * rompe en la costura. Ver docs/roadmap.md §2.13.
+   * rompe en la costura. Ver docs/roadmap.md §2.6.
    */
   it("should store a real PDF end to end", async () => {
     const context = { ...services(), renderer: new JsPdfPrintRenderer() };

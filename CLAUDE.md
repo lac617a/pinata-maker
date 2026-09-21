@@ -1,12 +1,12 @@
 # CLAUDE.md
 
-Guía operativa para Claude Code en este repositorio.
+Operating guide for Claude Code in this repository.
 
-> **Las reglas de ingeniería, arquitectura y documentación viven en
-> [`AGENTS.md`](AGENTS.md). Ese documento es obligatorio: léelo antes de
-> modificar código.** Este archivo no lo reemplaza ni lo resume; solo añade lo
-> que un agente necesita saber para trabajar en este repo concreto (comandos,
-> estructura real, convenciones observadas) y apunta al resto.
+> **Engineering, architecture and documentation rules live in
+> [`AGENTS.md`](AGENTS.md). Read it before changing code.** This file does
+> not replace or summarise it; it adds what an agent needs to work in this
+> repo in particular (commands, real structure, observed conventions) and
+> points to the rest.
 
 ---
 
@@ -17,236 +17,191 @@ Decided by the user on 2026-09-21:
 * **Talk to the user in Spanish.** Every message, summary, question and
   explanation addressed to them.
 * **Everything else may be in English:** code, comments, docs, commit
-  messages. New text can be written in English; existing Spanish text does
-  not need translating and should not be rewritten just to change language.
+  messages. The living docs (this file, `docs/roadmap.md`, `legal`, `usage`,
+  `seo`, `deploy`) are in English. The specifications (`PRD`, `domain`,
+  `architecture`, `geometry`, `printing`, `template`, `pdf`,
+  `image-processing`, `storage`, `assembly`, `editor`, `AGENTS`) stay in
+  Spanish; new sections in them may be in English. Do not rewrite existing
+  Spanish text just to change language.
+* **Product copy** — what the site shows its visitors — is in Spanish.
 
 ---
 
-## 1. Antes de tocar código
+## 1. Before touching code
 
-1. `AGENTS.md` — reglas vinculantes (§3 Golden Rule, §6 precedencia
-   documental, §38 workflow de cambio, §50 checklist final, §52 definition of
-   done).
-2. `docs/roadmap.md` — dónde está el proyecto hoy, decisiones cerradas,
-   fases pendientes y deuda conocida. Registra **estado**, no requisitos, y
-   debe actualizarse al terminar cada fase.
-3. La documentación del subsistema que vayas a tocar (`docs/`).
+1. `AGENTS.md` — binding rules (§3 Golden Rule, §6 document precedence, §38
+   change workflow, §50 final checklist, §52 definition of done).
+2. `docs/roadmap.md` — where the project is today, closed decisions,
+   pending work and known debt. It records **state**, not requirements, and
+   is updated when a piece of work is finished.
+3. The docs of the subsystem you are about to touch (`docs/`).
 
-Orden de precedencia cuando algo se contradice (`AGENTS.md` §6):
+Precedence when documents disagree (`AGENTS.md` §6):
 
 ```text
-PRD → domain → architecture → doc del subsistema → implementación existente
+PRD → domain → architecture → subsystem doc → existing implementation
 ```
 
-El mapa de qué define cada documento está en `AGENTS.md` §5. No lo dupliques
-aquí.
+What each document defines is mapped in `AGENTS.md` §5.
 
 ---
 
-## 2. Comandos
+## 2. Commands
 
 ```bash
-pnpm test              # Vitest, 561 tests, entorno node
+pnpm verify            # format:check + lint + tsc + test. Run before committing.
 ```
 
 ```bash
-pnpm exec tsc --noEmit # Type check, sin emitir
+pnpm test              # Vitest, 609 tests (30 more need a Supabase account)
 ```
 
 ```bash
-pnpm check:supabase    # Variables, conexión, tablas y RLS. No imprime valores.
+pnpm check:supabase    # Variables, connection, tables, RLS and the functions of every migration. Prints no values.
 ```
 
 ```bash
-pnpm lint              # ESLint: orden de imports y `../` prohibido
-```
-
-```bash
-pnpm verify            # format:check + lint + tsc + test. Lo de antes de commitear.
-```
-
-```bash
-pnpm test:watch        # Vitest en watch
-pnpm lint:fix          # ESLint con --fix: ordena imports
-pnpm format            # Prettier sobre el repo (la documentación no se toca)
+pnpm exec tsc --noEmit # Type check
+pnpm lint              # ESLint: import order, `../` forbidden
+pnpm lint:fix          # ESLint --fix: sorts imports
+pnpm format            # Prettier over the repo (docs/ is excluded)
+pnpm test:watch        # Vitest in watch mode
 pnpm dev               # Next.js dev server
-pnpm build             # Build de producción
+pnpm build             # Production build
 ```
 
-Ejecutar un solo archivo de test:
+A single test file:
 
 ```bash
 pnpm exec vitest run src/modules/printing/calibration.test.ts
 ```
 
-El estilo lo decide Prettier y las reglas ESLint; ninguna de las dos cosas
-debería discutirse en una revisión. La configuración está en
-`.prettierrc.json` y `eslint.config.mjs`, y cada regla dice por qué existe.
+Style is Prettier's and ESLint's business; neither should come up in a
+review. `docs/` is not formatted by Prettier on purpose: normalising it would
+bury content changes in the diff.
 
-`docs/` no pasa por Prettier: el formato de esos archivos es deliberado y
-normalizarlo taparía los cambios de contenido en el diff.
+Package manager: `pnpm` 11, pinned in `package.json` (`packageManager`), with
+security overrides for `postcss` and `sharp` in `pnpm-workspace.yaml`. Never
+npm or yarn. Node 22 or later.
 
-Gestor de paquetes: `pnpm` (hay `pnpm-lock.yaml` y `pnpm-workspace.yaml` con
-overrides de seguridad para `postcss` y `sharp`). No usar npm ni yarn.
+`.gitattributes` forces LF everywhere: with `core.autocrlf`, a fresh clone on
+Windows used to fail `format:check` on every file.
 
 ---
 
-## 3. Estructura real
+## 3. Real structure
 
 ```text
-app/                        Rutas (App Router). Permanece en la raíz.
-app/api/                    API. Las rutas solo montan el contexto y delegan.
-src/application/            Casos de uso. Coordinan módulos, sin reglas propias.
-src/presentation/http/      Petición → caso de uso → respuesta. Sin Next.
-src/presentation/next/      Único punto que junta Next, Supabase y el dominio.
-src/presentation/client/    Navegador: cliente HTTP, TanStack Query, providers.
-src/components/ui/          Componentes de shadcn/ui. Código propio, no dependencia.
-src/components/<área>/      Las pantallas: session, projects, posters, exports.
-src/infrastructure/         Adaptadores compartidos (cliente de Supabase).
-supabase/migrations/        Esquema y políticas RLS. Se aplican a mano.
+app/                        Routes (App Router). Stays at the root.
+app/api/                    API. Routes only build the context and delegate.
+src/application/            Use cases. Coordinate modules, no rules of their own.
+src/presentation/http/      Request → use case → response. No Next.
+src/presentation/next/      The one place that joins Next, Supabase and the domain.
+src/presentation/client/    Browser: HTTP client, TanStack Query, image preparation.
+src/components/ui/          shadcn/ui components. Project code, not a dependency.
+src/components/<area>/      Screens: posters, projects, session, usage, exports,
+                            landing, guides, legal, site.
+src/infrastructure/         Shared adapters: Supabase client, site URL, usage secret.
+supabase/migrations/        Schema, RLS and functions. Applied by hand (0001-0011).
 src/modules/
-├── geometry/               Vocabulario físico en mm. No depende de nada.
-├── image-processing/       Imagen → máscara → contorno → mm.
-├── accounts/               Registro y sesión, tras el puerto AuthGateway.
-├── assets/                 Imagen original del proyecto: fila y archivo.
-├── posters/                La salida del producto: imagen ampliada en hojas,
-│                           recorte y aviso de resolución.
-├── projects/               Proyecto del usuario, con su repositorio.
-├── usage/                  Niveles de acceso y límite diario, con su contador.
-├── templates/              Silueta + profundidad → piezas recortables, y la
-│                           versión inmutable con la que se publican.
-├── printing/               Papel, márgenes, tiling, PrintLayout.
-├── storage/                Puerto de object storage: subir, borrar, firmar.
-├── exports/                PDF generado de una versión, con su archivo.
-└── pdf-generation/         PrintLayout → PDF. Boundary de salida.
-    └── infrastructure/     Único sitio que importa jspdf.
-docs/                       Fuente de verdad del comportamiento.
+├── geometry/               Physical vocabulary in mm. Depends on nothing.
+├── image-processing/       File header, upload preparation, mask → contour → mm.
+├── accounts/               Sign-up, session, data authorization, account removal.
+├── assets/                 The project's original image: row and file.
+├── posters/                The product's output: size, crop, resolution, joining.
+├── projects/               The user's project and its repository.
+├── usage/                  Access levels and the daily limit, with its counter.
+├── templates/              Silhouette + depth → pieces (parked, no UI).
+├── printing/               Paper, margins, tiling, PrintLayout.
+├── storage/                Object storage port: put, remove, sign.
+├── exports/                A generated PDF and its file.
+└── pdf-generation/         PrintLayout → PDF. Output boundary.
+    └── infrastructure/     The only place that imports jspdf.
+docs/                       Source of truth for behaviour.
 ```
 
-`src/domain/` y `src/infrastructure/pdf/` existen vacíos y no se usan: son
-restos previos. La infraestructura de PDF vive en
-`src/modules/pdf-generation/infrastructure/`. La estructura crece según la
-necesidad (`docs/architecture.md` §4 y §73): no crear capas por adelantado.
+`src/domain/` and `src/infrastructure/pdf/` exist empty and are unused:
+leftovers. The structure grows with need (`docs/architecture.md` §4, §73).
 
-Flujo del pipeline:
+The product's pipeline, the poster (`docs/PRD.md` §44):
 
 ```text
-Imagen → máscara alfa → contorno px → geometría mm → piezas → PrintLayout → PDF
-         (canvas, B/2)   image-processing            templates   printing   pdf-generation
-                         └────────── generateTemplate ─────────┘  └─ generatePrintableDocument ─┘
+image file ─► header (size, EXIF) ─► crop ─► poster in mm ─► PrintLayout ─► PDF
+   browser shrinks it   image-processing      posters          printing    pdf-generation
+   if it is too heavy   └────────────── makePosterDocument / generatePosterDocument ──────┘
 ```
 
-`src/modules/pipeline.test.ts` recorre la cadena entera. Existe porque hay
-errores que solo viven en la costura entre módulos correctos.
+The parked mould pipeline (`templates/`) still has its end-to-end test,
+`src/modules/pipeline.test.ts`.
 
 ---
 
-## 4. Convenciones observadas en el código
+## 4. Conventions in the code
 
-* **Todo el dominio en milímetros.** Los pixels no salen de
-  `image-processing/`; los puntos PDF no entran al dominio.
-* Tipos `readonly`, funciones `create*` que validan invariantes y lanzan
-  errores de dominio (`InvalidGeometryError`, `InvalidCalibrationError`…).
-  Ver `src/modules/geometry/errors.ts` y `src/modules/printing/errors.ts`.
-* **Imports absolutos con `@/` entre carpetas** (`@/modules/geometry/point`),
-  relativos solo entre hermanos (`./errors`). Subir por el árbol —`../`— está
-  prohibido por ESLint: no dice de dónde viene nada y se rompe al mover un
-  archivo. El alias está en `tsconfig.json` y en `vitest.config.mts`.
-* El orden de los imports lo arregla ESLint: paquetes, después `@/`, después
-  los hermanos. No se ordena a mano.
-* **Comments explain the *why*** and cite the doc section that justifies it
-  (`Ver docs/printing.md §38`). Existing ones are in Spanish; new ones may be
-  in English (§0).
-* **Tests en inglés**, describiendo comportamiento (`AGENTS.md` §28). Un
-  archivo `*.test.ts` junto al módulo que prueba.
-* Vitest corre en entorno `node` y solo `src/**/*.test.ts`: el dominio se
-  prueba sin React, Next ni navegador. No añadir tests de UI a esa suite.
-* **La interfaz usa los tokens del tema**, nunca un color a mano:
-  `bg-background`, `text-muted-foreground`, `border-border`. Están definidos
-  en `app/globals.css` sobre la escala `stone`.
-* Los componentes de `src/components/ui/` los genera `shadcn` pero son
-  **código del proyecto**: se editan y se versionan. Después de
-  `pnpm dlx shadcn@latest add <componente>`, pasar `pnpm lint:fix` y
-  `pnpm format`: la CLI no escribe con estas reglas.
-* Los datos del navegador van por TanStack Query
-  (`src/presentation/client/`). Un 4xx no se reintenta y una mutación nunca
-  se repite sola: publicar dos veces crearía dos versiones.
-
----
-
-## 5. Cada cambio termina en un commit
-
-Regla del proyecto, no preferencia: `AGENTS.md` §54 y §38 paso 11.
-
-Un feature, un commit. Implementación, tests y documentación del mismo cambio
-van juntos. Antes de commitear, la suite en verde y `tsc` limpio.
-
-```bash
-pnpm test && pnpm exec tsc --noEmit
-```
-
-Prefijos: `feat`, `fix`, `refactor`, `docs`, `chore`, `test`, con el módulo
-afectado cuando aclare el alcance — `feat(pdf-generation): ...`.
+* **The whole domain works in millimetres.** Pixels stay in
+  `image-processing/` and `posters/` (crop); PDF points never enter the
+  domain.
+* `readonly` types, `create*` functions that validate invariants and throw
+  domain errors with a stable `code`; `presentation/http/error-response.ts`
+  maps each code to a status and a Spanish message.
+* **Absolute imports with `@/` across folders**, relative only between
+  siblings (`./errors`). `../` is forbidden by ESLint. ESLint sorts imports:
+  packages, then `@/`, then siblings.
+* **Comments explain the *why*** and cite the doc section behind it. Old
+  ones are in Spanish; new ones may be in English (§0).
+* **Tests in English**, describing behaviour (`AGENTS.md` §28), in a
+  `*.test.ts` next to the module. Vitest runs in `node` and only
+  `src/**/*.test.ts`: no UI tests in that suite. Contracts
+  (`*.contract.ts`) run against the in-memory and the Supabase
+  implementation alike.
+* **The UI uses theme tokens**, never a literal colour (`bg-background`,
+  `text-muted-foreground`, `--illustration-*` for drawings), defined in
+  `app/globals.css`. `app/opengraph-image.tsx` is the one exception:
+  ImageResponse cannot read CSS variables, so it mirrors them.
+* shadcn components are project code: after `pnpm dlx shadcn@latest add`,
+  run `pnpm lint:fix` and `pnpm format`.
+* Browser data goes through TanStack Query (`src/presentation/client/`). A
+  4xx is not retried and a mutation never repeats on its own.
+* **The server decides with what is stored**, never with what the browser
+  says: image size and orientation come from the file header, crops are
+  validated against it, limits are counted in the database.
+* No Supabase service key exists or should be added. What needs more than
+  the user's token is a `security definer` function that checks its caller
+  (`usage_*`, `delete_my_account`, `record_my_data_authorization`).
 
 ---
 
-## 6. Estado y siguiente paso
+## 5. Every change ends in a commit
 
-Resumen; la versión autoritativa está en `docs/roadmap.md`.
+A project rule (`AGENTS.md` §54, §38 step 11). One feature, one commit:
+implementation, tests and docs together, after `pnpm verify` passes.
 
-* **El producto es la imagen en mosaico** (`docs/PRD.md` §44): subir una
-  imagen, recortarla si se quiere, elegir el tamaño en cm y descargar el PDF
-  con la imagen ampliada en hojas. El módulo es `src/modules/posters/`; la
-  plantilla con piezas sigue en el código, sin interfaz.
-* **Hecho y probado del molde con piezas:** máscara alfa → contorno →
-  geometría en mm, derivación de piezas, reparto en páginas, marcas,
-  calibración y PDF (AC-06 a AC-12). El póster reutiliza el reparto, las
-  marcas, la calibración y el PDF.
-* **Aparcado con el molde:** quitar el fondo (fase B) y derivar piezas. El
-  póster no los necesita: el usuario recorta la figura a mano sobre el
-  cartón (`docs/roadmap.md` §4).
-* **Fase E casi cerrada:** proyecto, imagen original, versiones de plantilla
-  y exports están persistidos con RLS. Una versión publicada es inmutable, y
-  lo impone la base de datos: no tiene política de UPDATE. Queda la limpieza
-  de archivos huérfanos y la retención (`docs/storage.md` §164).
-* **La API existe y está autenticada:** proyectos, sesión, imágenes,
-  versiones de plantilla y descarga de PDF. Sin
-  sesión responde 401; un recurso ajeno responde 404 y no 403.
-* **Uso sin cuenta con límite diario** (`docs/usage.md`): `/crear` es
-  pública y no guarda nada; cada PDF cuenta, 3 al día sin cuenta y 20 con
-  ella. El contador es la migración 0008 y necesita `USAGE_HASH_SECRET` en
-  el entorno. Queda el nivel de pago.
-* **Hay once migraciones y dos buckets privados.** La 0011 deja a una
-  cuenta registrar su autorización de datos (`docs/legal.md` §7). La 0010 deja borrar la
-  propia cuenta, después de borrar sus proyectos con sus archivos
-  (`docs/legal.md` §6). La 0009 guarda la
-  prueba de la autorización de datos y rechaza cuentas sin ella
-  (`docs/legal.md` §5): se aplica después de desplegar el código. La 0008
-  cuenta el uso diario. La 0007 deja que un
-  documento salga de una imagen (el póster). La 0006 corrige las
-  políticas de storage. Dentro de la subconsulta de una política, toda
-  columna de la tabla protegida va calificada (`objects.name`): `projects`
-  también tiene `name` y la capturaba (`docs/storage.md` §165). Se aplican a mano y en
-  orden. Comprueba siempre con `pnpm check:supabase` antes de dar por hecho
-  que la base de datos está al día.
-* **Fase H casi hecha:** landing con ejemplos y FAQ, las cuatro páginas
-  legales en el pie de todas (`docs/legal.md`), sitemap, robots y `noindex`
-  en lo privado (`docs/seo.md`). Antes de publicar: rellenar
-  `src/components/legal/site-owner.ts` —cada página legal avisa mientras
-  falte algo— y `NEXT_PUBLIC_SITE_URL`, obligatoria en producción. El banner
-  de cookies llega con AdSense.
-* **CI y despliegue preparados** (`docs/deploy.md`): el workflow corre
-  `pnpm verify` y el build; `.gitattributes` fuerza LF. Deployed at
-  https://maker.profiya.com (Vercel). The browser shrinks images to 3.5 MB
-  before sending, under Vercel's 4.5 MB ceiling
-  (`docs/image-processing.md` §111).
-* **Siguiente:** imprimir un póster y medirlo con una regla
-  (`docs/roadmap.md` §8.1), the share image and the first guides, and
-  adapting the legal texts to Colombian law (Ley 1581 de 2012).
-* **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,
-  de pago) y la publicación con SEO y páginas legales. Los requisitos están en
-  `docs/PRD.md` §38-§43, no en el roadmap: el roadmap solo registra cuándo se
-  construyen.
+Prefixes: `feat`, `fix`, `refactor`, `docs`, `chore`, `test`, with the area
+when it helps — `feat(posters): ...`. Commits and pushes are the user's
+call unless they ask: the default branch is `main`, deployed by Vercel.
 
-Al completar una fase, actualizar `docs/roadmap.md` (§1, §2, §4 y la tabla de
-criterios de aceptación §7).
+---
+
+## 6. State, in short
+
+The authoritative version is `docs/roadmap.md`.
+
+* **Live at https://maker.profiya.com** (Vercel + Supabase). CI runs
+  `pnpm verify` and the build on every push (`docs/deploy.md`).
+* **The product is the image enlarged across sheets** (`docs/PRD.md` §44):
+  pick an image, crop it, choose the size in cm, overlap or trim, download
+  the PDF. Without an account at `/crear` (3 PDFs a day, nothing stored,
+  terms accepted explicitly); with one in `/proyectos` (20 a day, saved).
+* **The browser shrinks images** to 3.5 MB before sending: Vercel refuses
+  more than 4.5 MB (`docs/image-processing.md` §111).
+* **Legal pages follow Colombian law** (Ley 1581 de 2012): data policy,
+  authorization with proof at sign-up, account deletion from the app
+  (`docs/legal.md`).
+* **Eleven migrations, applied by hand.** Always run `pnpm check:supabase`
+  before assuming the database is up to date. Order notes for 0009-0011 are
+  in `docs/legal.md` §5-§7.
+* **Parked with the mould:** background removal and piece derivation. The
+  poster does not need them.
+* **Next** (`docs/roadmap.md` §4): print a poster and measure the 10 cm
+  ruler; Search Console; a legal review; AdSense with its cookie banner when
+  there is an account.

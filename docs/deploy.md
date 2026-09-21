@@ -1,123 +1,126 @@
-# Despliegue
+# Deployment
 
-Cómo se lleva la aplicación a producción y qué se comprueba en cada cambio.
-Pensado para Vercel, el proveedor natural de Next.js; lo que no es propio de
-Vercel sirve igual en cualquier otro.
+How the app gets to production and what is checked on every change. Built
+for Vercel, the natural host for Next.js; what is not Vercel-specific works
+anywhere.
 
----
-
-# 1. Antes de desplegar
-
-```text
-[ ] Migraciones 0001 a 0011 aplicadas en el proyecto de Supabase de
-    producción (0009 después del push: legal.md §5 y §7)
-    de producción.                     →  pnpm check:supabase contra él
-[ ] Datos del titular en src/components/legal/site-owner.ts
-                                       →  sin aviso de borrador (legal.md §2)
-[ ] Textos legales revisados por alguien que conozca la ley del país
-[ ] Un póster impreso y la regla de 10 cm medida (roadmap.md §8.1)
-```
+Live at **https://maker.profiya.com** since 2026-09-21. Vercel deploys the
+`main` branch.
 
 ---
 
-# 2. Integración continua
-
-`.github/workflows/verify.yml` corre en cada push y cada pull request:
+# 1. Before a deploy
 
 ```text
-pnpm install --frozen-lockfile   el lockfile manda; si no cuadra, falla
-pnpm verify                      formato, lint, tipos y pruebas
-pnpm build                       el build de producción
+[ ] pnpm verify passes
+[ ] Migrations applied in the production Supabase, in the right order
+      → pnpm check:supabase against it (every table and function)
+[ ] New environment variables set in Vercel (§3)
+[ ] Legal texts updated in the same commit if what is stored changed
+      (legal.md §3)
 ```
 
-Con variables falsas pero bien formadas: el build las necesita para
-arrancar y ninguna prueba de la suite habla con Supabase. Las de integración
-se saltan solas sin credenciales. Los valores de verdad viven en el
-proveedor de despliegue, nunca en el repositorio.
+## Migration order
 
-Se comprobó el 2026-09-21 en una copia limpia del repositorio, sin `.env`:
-pasa entero. Y sin `NEXT_PUBLIC_SITE_URL`, el build falla nombrando la
-variable (`seo.md` §2).
+Most migrations can be applied before the code that uses them: old code
+never calls what does not exist yet. The exception is one that makes the
+database stricter than the running code:
 
-## Finales de línea
+```text
+0001-0008, 0010, 0011   before the push
+0009                    after the push: it refuses sign-ups that do not
+                        carry the data authorization (legal.md §5)
+```
 
-`.gitattributes` fuerza LF en todas las máquinas. Sin él, un clon en Windows
-con `core.autocrlf=true` —lo habitual— sacaba los archivos en CRLF y
-`pnpm verify` fallaba en todos, sin que nadie hubiera tocado nada.
-
-## Versiones
-
-`packageManager` en `package.json` fija pnpm (la acción de CI lo lee de
-ahí) y `engines` pide Node 22 o más. Vercel respeta los dos.
+Before going public, still pending: a legal review of the texts and a
+printed poster with its ruler measured (`roadmap.md` §4, §8.1).
 
 ---
 
-# 3. Variables de entorno
+# 2. Continuous integration
 
-En el proveedor, para producción:
+`.github/workflows/verify.yml` runs on every push and pull request:
 
 ```text
-NEXT_PUBLIC_SITE_URL            https://el-dominio   obligatoria (seo.md §2)
-NEXT_PUBLIC_SUPABASE_URL        del proyecto de producción
-NEXT_PUBLIC_SUPABASE_ANON_KEY   del proyecto de producción
-USAGE_HASH_SECRET               32+ caracteres al azar, distinto del de
-                                desarrollo (usage.md §5)
-USAGE_LIMIT_ANONYMOUS           opcional, 3 por defecto
-USAGE_LIMIT_REGISTERED          opcional, 20 por defecto
-USAGE_LIMIT_PAID                opcional, 200 por defecto
+pnpm install --frozen-lockfile   the lockfile rules; if it does not match, it fails
+pnpm verify                      format, lint, types and tests
+pnpm build                       the production build
 ```
 
-Para generar el secreto:
+With fake but well-formed variables: the build needs them to start and no
+test in the suite talks to Supabase. Integration tests skip themselves
+without credentials. The real values live in the host, never in the
+repository.
+
+Checked on 2026-09-21 in a clean copy of the repository without `.env`: it
+passes. Without `NEXT_PUBLIC_SITE_URL` the build fails naming the variable
+(`seo.md` §2).
+
+## Line endings
+
+`.gitattributes` forces LF on every machine. Without it, a clone on Windows
+with `core.autocrlf=true` — the usual setting — checked files out as CRLF
+and `pnpm verify` failed on all of them without anyone touching anything.
+
+## Versions
+
+`packageManager` in `package.json` pins pnpm (the CI action reads it from
+there) and `engines` asks for Node 22 or later. Vercel honours both.
+
+---
+
+# 3. Environment variables
+
+In the host, for production:
+
+```text
+NEXT_PUBLIC_SITE_URL            https://the-domain   required (seo.md §2)
+NEXT_PUBLIC_SUPABASE_URL        of the production project
+NEXT_PUBLIC_SUPABASE_ANON_KEY   of the production project
+USAGE_HASH_SECRET               32+ random characters, different from
+                                development's (usage.md §5)
+USAGE_LIMIT_ANONYMOUS           optional, 3 by default
+USAGE_LIMIT_REGISTERED          optional, 20 by default
+USAGE_LIMIT_PAID                optional, 200 by default
+```
+
+To generate the secret:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 ```
 
-No hay clave de servicio de Supabase y no debe añadirse ninguna
-(`roadmap.md` §3).
+There is no Supabase service key and none must be added (`roadmap.md` §3).
 
-## En Supabase
+## In Supabase
 
-* **Authentication → URL Configuration:** `Site URL` con el dominio de
-  producción, y en `Redirect URLs` la dirección de confirmación:
-  `https://el-dominio/api/auth/confirm`. Sin ella, el enlace del correo de
-  registro devuelve al usuario a otro sitio.
+* **Authentication → URL Configuration:** `Site URL` with the production
+  domain, and in `Redirect URLs` the confirmation address
+  `https://the-domain/api/auth/confirm`. Without it, the sign-up e-mail link
+  sends the person somewhere else.
 
 ---
 
-# 4. Límites de Vercel que afectan a esta aplicación
+# 4. Vercel limits that affect this app
 
-## Tiempo
+## Time
 
-Generar un PDF grande lleva unos segundos. Las tres rutas que lo generan
-declaran `maxDuration = 60`, el máximo del plan gratuito. Otro proveedor lo
-ignora.
+Generating a big PDF takes a few seconds. The three routes that generate
+one declare `maxDuration = 60`, the free plan's maximum. Other hosts ignore
+it.
 
-## Tamaño de petición y de respuesta: 4,5 MB
+## Request and response size: 4.5 MB
 
-**Es el límite que más importa.** Una función de Vercel no acepta un cuerpo
-de más de 4,5 MB ni devuelve uno mayor, y la aplicación permite imágenes de
-hasta 10 MB (`image-processing.md`, `IMAGE_LIMITS`):
+A Vercel function accepts no body over 4.5 MB and returns none larger.
+Confirmed in production on 2026-09-21: a 5 MB upload got
+`413 FUNCTION_PAYLOAD_TOO_LARGE` before reaching the app.
 
-* subir una foto de más de 4,5 MB falla con 413 antes de llegar a la
-  aplicación;
-* `/api/posters` devuelve el PDF en la respuesta: con una foto grande el PDF
-  también puede pasar de 4,5 MB.
+**Resolved by shrinking in the browser** (`image-processing.md` §111): every
+image is sent at most 3.5 MB, which also keeps the PDF returned without an
+account under the limit. If the platform still answers 413, the browser
+shows its own message.
 
-Los proyectos guardados no sufren lo segundo: el PDF va al bucket y se
-descarga con un enlace firmado directamente de Supabase.
-
-Soluciones, de menos a más trabajo:
-
-1. Bajar `maxFileBytes` a 4 MB mientras se despliegue en Vercel.
-2. Reducir la imagen en el navegador antes de enviarla cuando pese mucho:
-   el aviso de resolución (`pdf.md` §96) dice cuántos pixels hacen falta de
-   verdad para el tamaño elegido.
-3. Subir directamente al bucket con una URL firmada, sin pasar por la
-   función (`roadmap.md` §8.5), y entregar el PDF sin cuenta también desde
-   el bucket.
-
-**Resolved on 2026-09-21 with option 2** (`image-processing.md` §111): the
-browser shrinks every image to at most 3.5 MB before sending it. Option 3
-stays in `roadmap.md` for when printing huge sizes at full resolution is
-worth the extra infrastructure.
+The next step, if huge prints at full resolution are ever needed, is
+uploading straight to the bucket with a signed URL (`roadmap.md` §6); for
+anonymous use it means storing for a few minutes and changing the privacy
+policy.
