@@ -3,12 +3,13 @@ import Link from "next/link";
 
 import { LegalPage, LegalSection } from "@/components/legal/legal-page";
 import { SITE_OWNER } from "@/components/legal/site-owner";
+import { publicPageMetadata } from "@/presentation/next/public-pages";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "Términos de uso · Piñata Maker",
   description: "Las condiciones para usar Piñata Maker.",
-  alternates: { canonical: "/terminos" },
-};
+  path: "/terminos",
+});
 
 /** Términos y condiciones de uso (docs/PRD.md §41). */
 export default function Page() {

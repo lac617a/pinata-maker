@@ -40,7 +40,7 @@ base de datos al día (migraciones 0001 a 0007), confirmado por el usuario el
 [✓] Proyecto, imagen y PDF persistidos con RLS; descarga con enlace firmado
 [ ] Imprimir un póster y medirlo con una regla (§8.1)
 [✓] Acceso sin cuenta con límite diario (fase G, `usage.md`)
-[ ] Landing, páginas legales y SEO (fase H)
+[~] Fase H: landing, legales y SEO hechos; faltan datos del titular y AdSense
 ```
 
 La plantilla con piezas —silueta, tiras laterales, pestañas, versiones— sigue
@@ -753,7 +753,9 @@ posicionar.
 * Consentimiento de cookies con rechazo efectivo de la publicidad
   personalizada.
 * Contenido público indexable con valor real, servido desde el servidor.
-* Metadatos por página, `sitemap.xml` y `robots.txt` generados.
+* ~~Metadatos por página, `sitemap.xml` y `robots.txt` generados.~~
+  **Hecho el 2026-09-21** (`seo.md`), con `noindex` en lo privado.
+  `NEXT_PUBLIC_SITE_URL` es obligatoria en producción.
 * Panel de proyectos y URLs de trabajo fuera del índice.
 * Integración de AdSense, nunca dentro del PDF.
 
@@ -855,6 +857,9 @@ posicionar.
 | AC-18 | Al alcanzarlo se explica y se ofrece registrarse | **Hecho y probado** |
 | AC-19 | Las cuatro páginas legales, enlazadas desde el pie | **Hecho**, con los datos del titular pendientes (`legal.md` §2) |
 | AC-20 | Rechazar la publicidad personalizada | Pendiente: llega con AdSense (`legal.md` §4) |
+| AC-21 | El PDF no lleva publicidad | **Hecho**: no hay publicidad, y nunca irá en el PDF |
+| AC-22 | Páginas públicas renderizadas, con metadatos y sitemap | **Hecho** (`seo.md`) |
+| AC-23 | Lo privado no aparece en buscadores | **Hecho**: `noindex` y redirección (`seo.md` §3) |
 
 ---
 

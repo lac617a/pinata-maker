@@ -3,13 +3,14 @@ import Link from "next/link";
 
 import { LegalPage, LegalSection } from "@/components/legal/legal-page";
 import { SITE_OWNER } from "@/components/legal/site-owner";
+import { publicPageMetadata } from "@/presentation/next/public-pages";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "Política de privacidad · Piñata Maker",
   description:
     "Qué datos recoge Piñata Maker, para qué, dónde se guardan y cuánto tiempo.",
-  alternates: { canonical: "/privacidad" },
-};
+  path: "/privacidad",
+});
 
 /**
  * Política de privacidad (docs/PRD.md §41).

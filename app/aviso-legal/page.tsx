@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 
 import { LegalPage, LegalSection } from "@/components/legal/legal-page";
 import { SITE_OWNER } from "@/components/legal/site-owner";
+import { publicPageMetadata } from "@/presentation/next/public-pages";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "Aviso legal · Piñata Maker",
   description: "Quién está detrás de Piñata Maker y cómo contactar.",
-  alternates: { canonical: "/aviso-legal" },
-};
+  path: "/aviso-legal",
+});
 
 /** Aviso legal: la identidad del titular (docs/PRD.md §41). */
 export default function Page() {

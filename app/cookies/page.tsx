@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 
 import { LegalPage, LegalSection } from "@/components/legal/legal-page";
+import { publicPageMetadata } from "@/presentation/next/public-pages";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "Política de cookies · Piñata Maker",
   description: "Qué cookies usa Piñata Maker y para qué.",
-  alternates: { canonical: "/cookies" },
-};
+  path: "/cookies",
+});
 
 /**
  * Política de cookies (docs/PRD.md §41).

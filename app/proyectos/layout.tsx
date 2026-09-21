@@ -2,7 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SignOutButton } from "@/components/session/sign-out-button";
+import { PRIVATE_PAGE_METADATA } from "@/presentation/next/public-pages";
 import { readSessionUserId } from "@/presentation/next/supabase";
+
+/** El panel de proyectos no se indexa (AC-23). */
+export const metadata = PRIVATE_PAGE_METADATA;
 
 /**
  * Todo lo que cuelga de `/proyectos` exige sesión.

@@ -319,6 +319,21 @@ Use it whenever a change alters what data is stored, for how long or by whom.
 
 ---
 
+### seo.md
+
+Defines:
+
+```text
+indexable pages
+metadata and canonical URLs
+sitemap and robots
+what stays out of search engines
+```
+
+Use it whenever adding a public page or changing what is indexed.
+
+---
+
 ### roadmap.md
 
 Defines:

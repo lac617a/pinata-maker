@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 
 import { CreatePoster } from "@/components/posters/create-poster";
 import { SiteHeader } from "@/components/site/site-header";
+import { publicPageMetadata } from "@/presentation/next/public-pages";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "Crear póster · Piñata Maker",
   description:
     "Amplía tu imagen a tamaño real y repártela en hojas para tu piñata, sin registrarte.",
-  alternates: { canonical: "/crear" },
-};
+  path: "/crear",
+});
 
 /**
  * La herramienta sin cuenta (docs/PRD.md §38, AC-16).

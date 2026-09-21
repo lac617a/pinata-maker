@@ -211,9 +211,14 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
   también tiene `name` y la capturaba (`docs/storage.md` §165). Se aplican a mano y en
   orden. Comprueba siempre con `pnpm check:supabase` antes de dar por hecho
   que la base de datos está al día.
+* **Fase H casi hecha:** landing con ejemplos y FAQ, las cuatro páginas
+  legales en el pie de todas (`docs/legal.md`), sitemap, robots y `noindex`
+  en lo privado (`docs/seo.md`). Antes de publicar: rellenar
+  `src/components/legal/site-owner.ts` —cada página legal avisa mientras
+  falte algo— y `NEXT_PUBLIC_SITE_URL`, obligatoria en producción. El banner
+  de cookies llega con AdSense.
 * **Siguiente:** imprimir un póster y medirlo con una regla
-  (`docs/roadmap.md` §8.1), el pulido del póster y la fase H: landing,
-  páginas legales y SEO (`docs/roadmap.md` §4).
+  (`docs/roadmap.md` §8.1), desplegar y el pulido del póster.
 * **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,
   de pago) y la publicación con SEO y páginas legales. Los requisitos están en
   `docs/PRD.md` §38-§43, no en el roadmap: el roadmap solo registra cuándo se

@@ -5,13 +5,14 @@ import { ExamplePoster } from "@/components/landing/example-poster";
 import { SiteHeader } from "@/components/site/site-header";
 import { Button } from "@/components/ui/button";
 import { readUsageLimits } from "@/modules/usage/usage";
+import { publicPageMetadata } from "@/presentation/next/public-pages";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = publicPageMetadata({
   title: "Piñata Maker · Tu imagen a tamaño piñata, en hojas para imprimir",
   description:
     "Sube una imagen, elige cuánto mide en centímetros y descarga un PDF con la imagen ampliada a tamaño real, repartida en hojas A4, A3 o Carta con mapa de montaje. Gratis y sin registrarte.",
-  alternates: { canonical: "/" },
-};
+  path: "/",
+});
 
 const STEPS = [
   {
