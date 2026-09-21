@@ -1923,3 +1923,40 @@ para descargarlo —el PDF se guarda entero (`storage.md` §162)—, pero sin é
 no se puede regenerar el mismo documento. Si algún día hace falta, son
 cuatro columnas nuevas en `exports`.
 
+
+---
+
+# 96. Avisar de la resolución antes de imprimir
+
+Ampliar no inventa detalle. Una imagen de 720 pixels a 60 cm de ancho queda
+en unos 30 pixels por pulgada: cada pixel mide casi un milímetro en el papel.
+El usuario tiene que saberlo antes de imprimir nueve hojas, no después.
+
+## Los umbrales
+
+Salen de a qué distancia se mira una piñata, de uno a dos metros. El ojo
+distingue alrededor de un minuto de arco:
+
+```text
+a 1 m    ≈ 0,29 mm    ≈ 90 pixels por pulgada
+a 2 m    ≈ 0,58 mm    ≈ 45 pixels por pulgada
+```
+
+```text
+SHARP        ≥ 90     nítida también de cerca
+SOFT         45–90    nítida a un par de metros, suave de cerca
+PIXELATED    < 45     los pixels se ven también de lejos
+```
+
+Se cuenta sobre el recorte (§95), no sobre la imagen entera: recortar y
+ampliar la misma medida reparte menos pixels.
+
+## Se avisa, no se impide
+
+Una piñata grande algo borrosa puede ser justo lo que se quiere. La interfaz
+dice cómo se va a ver y propone el ancho más grande que alcanza el siguiente
+nivel, redondeado **hacia abajo a hojas enteras**: proponer la medida exacta
+dejaría casi siempre una columna medio vacía, y el aviso de columna (§94)
+propondría otra medida distinta.
+
+El cálculo vive en `modules/posters/resolution.ts`; el servidor no lo usa.

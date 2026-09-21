@@ -32,6 +32,12 @@ import {
   posterSideForSheets,
 } from "@/modules/posters/poster";
 import {
+  largestSideForResolution,
+  posterPixelsPerInch,
+  posterSharpness,
+  SHARPNESS_THRESHOLDS,
+} from "@/modules/posters/resolution";
+import {
   PAPER_FORMATS,
   type PaperFormat,
   type PaperOrientation,
@@ -103,7 +109,10 @@ export function PosterStudio({
     | {
         readonly poster: Poster;
         readonly layout: PrintLayout;
+        /** Lo que se envía: nulo si es la imagen entera. */
         readonly crop: ImageCrop | null;
+        /** La parte que se imprime, siempre. */
+        readonly area: ImageCrop;
         readonly placement: ReturnType<typeof posterImagePlacement>;
       }
     | { readonly error: string }
@@ -127,6 +136,7 @@ export function PosterStudio({
         poster,
         layout: posterLayout(poster, print),
         crop: isWholeImage(percentCrop) ? null : crop,
+        area: crop,
         placement: posterImagePlacement(poster, size.data, crop),
       };
     } catch (error) {
@@ -265,6 +275,15 @@ export function PosterStudio({
         />
       ) : null}
 
+      {ok ? (
+        <Sharpness
+          poster={ok.poster}
+          area={ok.area}
+          print={print}
+          onFit={(cm) => setChoice({ axis: "width", cm })}
+        />
+      ) : null}
+
       {image && size.data ? (
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-2">
@@ -343,6 +362,93 @@ function Summary({
       ) : null}
     </div>
   );
+}
+
+/**
+ * Cuánto detalle le queda a la imagen al ampliarla (docs/pdf.md §96).
+ *
+ * Se avisa y se propone la medida que conserva la nitidez, pero no se
+ * impide: una piñata grande algo borrosa puede ser justo lo que se quiere.
+ */
+function Sharpness({
+  poster,
+  area,
+  print,
+  onFit,
+}: {
+  poster: Poster;
+  area: ImageCrop;
+  print: PrintConfiguration;
+  onFit: (cm: number) => void;
+}) {
+  const pixelsPerInch = posterPixelsPerInch(poster, area);
+  const sharpness = posterSharpness(pixelsPerInch);
+  const rounded = Math.round(pixelsPerInch);
+
+  if (sharpness === "SHARP") {
+    return (
+      <p className="text-muted-foreground text-sm">
+        Nitidez buena: {rounded} pixels por pulgada.
+      </p>
+    );
+  }
+
+  const target =
+    sharpness === "PIXELATED"
+      ? SHARPNESS_THRESHOLDS.soft
+      : SHARPNESS_THRESHOLDS.sharp;
+  const fitting = wholeSheetsWithin(
+    largestSideForResolution(area, target, "width"),
+    print,
+  );
+
+  return (
+    <p
+      role={sharpness === "PIXELATED" ? "alert" : undefined}
+      className={
+        sharpness === "PIXELATED"
+          ? "border-destructive/40 bg-card text-destructive flex flex-wrap items-center gap-3 rounded-lg border p-3 text-sm"
+          : "border-border bg-card flex flex-wrap items-center gap-3 rounded-lg border p-3 text-sm"
+      }
+    >
+      {sharpness === "PIXELATED"
+        ? `La imagen tiene poca resolución para este tamaño (${rounded} pixels por pulgada): se verán los cuadros incluso de lejos.`
+        : `Se verá bien a un par de metros y algo borrosa de cerca (${rounded} pixels por pulgada).`}
+      {fitting >= POSTER_LIMITS.minSide ? (
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => onFit(fitting / 10)}
+        >
+          {sharpness === "PIXELATED"
+            ? `Usar ${formatCentimeters(fitting)} cm de ancho`
+            : `Nítida hasta ${formatCentimeters(fitting)} cm de ancho`}
+        </Button>
+      ) : null}
+    </p>
+  );
+}
+
+/**
+ * El ancho de hojas justas más grande que no pasa de `limit`.
+ *
+ * Proponer el límite tal cual dejaría casi siempre una columna medio vacía y
+ * el aviso de al lado propondría otra medida. Si ni una hoja cabe, el límite.
+ */
+function wholeSheetsWithin(limit: number, print: PrintConfiguration): number {
+  let best: number | null = null;
+
+  for (let sheets = 1; ; sheets++) {
+    const side = posterSideForSheets(sheets, "width", print);
+
+    if (side > limit) {
+      break;
+    }
+
+    best = side;
+  }
+
+  return best ?? limit;
 }
 
 /** Los anchos que llenan hojas justas, como botones. */
