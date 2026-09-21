@@ -27,6 +27,11 @@ export type PrintSection = {
    * encima de la figura. Ver docs/pdf.md §94.
    */
   readonly kind?: "PIECE" | "POSTER";
+  /**
+   * Corner marks in the margin to trim along, for sheets that are butted
+   * edge to edge instead of overlapped (docs/pdf.md §99).
+   */
+  readonly trimMarks?: boolean;
 };
 
 /** Formatos que el documento sabe incrustar: los mismos que se suben. */
@@ -94,6 +99,8 @@ export type PosterCover = {
   readonly height: Millimeters;
   readonly paper: string;
   readonly image: EmbeddedImage;
+  /** How the sheets go together; changes the assembly instructions. */
+  readonly joining?: "OVERLAP" | "TRIM";
   /**
    * Dónde va la imagen entera, en mm del póster. Con un recorte se sale del
    * póster y el mapa la recorta igual que las hojas (docs/pdf.md §95). Sin

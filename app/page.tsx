@@ -75,7 +75,7 @@ const QUESTIONS = [
   {
     question: "¿Cómo se unen las hojas?",
     answer:
-      "Cada hoja repite una franja de un centímetro de la de al lado, con cruces encima. Superpón la franja hasta que las cruces coincidan y pega. El mapa de la primera hoja te dice qué hoja va con cuál.",
+      "Cada hoja repite una franja de un centímetro de la de al lado, con cruces encima. Superpón la franja hasta que las cruces coincidan y pega. El mapa de la primera hoja te dice qué hoja va con cuál. Si prefieres no solapar, elige «Sin solape»: recortas el margen por las marcas de las esquinas y unes las hojas borde con borde.",
   },
   {
     question: "¿Qué resolución necesita mi imagen?",

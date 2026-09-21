@@ -40,6 +40,8 @@ export const STROKE_STYLES: Record<StrokeRole, PdfLineStyle> = {
   CALIBRATION: { width: 0.3 },
   // La retícula del mapa de montaje: tiene que verse sobre la imagen.
   MAP: { width: 0.4 },
+  // Marcas de corte en el margen: finas, fuera de la imagen.
+  TRIM: { width: 0.2 },
 };
 
 /** Altura nominal del texto, también en milímetros. */

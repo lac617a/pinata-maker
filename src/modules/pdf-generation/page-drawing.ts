@@ -27,7 +27,14 @@ import type {
  * pertenece al layout. Ver docs/pdf.md §25.
  */
 export type StrokeRole =
-  "CONTOUR" | "HOLE" | "CUT" | "FOLD" | "ALIGNMENT" | "CALIBRATION" | "MAP";
+  | "CONTOUR"
+  | "HOLE"
+  | "CUT"
+  | "FOLD"
+  | "ALIGNMENT"
+  | "CALIBRATION"
+  | "MAP"
+  | "TRIM";
 
 export type TextRole =
   | "PAGE_LABEL"
@@ -143,6 +150,8 @@ export function describePage(
   sectionLabel?: string,
   artwork?: SectionArtwork,
   kind: "PIECE" | "POSTER" = "PIECE",
+  /** Corner marks to trim the margin along, when sheets do not overlap. */
+  trimMarks = false,
 ): PageDrawing {
   const toPaper: Vector = {
     x: page.printableOrigin.x,
@@ -164,6 +173,10 @@ export function describePage(
       alignmentStrokes(translatePoint(mark.position, toPaper)),
     ),
   ];
+
+  if (trimMarks) {
+    strokes.push(...trimMarkStrokes(page));
+  }
 
   const texts: PageText[] = [
     ...page.alignmentMarks.map((mark) =>
@@ -255,6 +268,59 @@ const EMPTY_PAGE_GEOMETRY: PrintPage["geometry"] = {
 
 function stroke(role: StrokeRole, path: Polygon): PageStroke {
   return { role, path };
+}
+
+/** Gap between a trim mark and the corner it points at. */
+const TRIM_MARK_GAP_MM: Millimeters = 0.5;
+/** Longest a trim mark gets; a narrower margin shortens it. */
+const TRIM_MARK_LENGTH_MM: Millimeters = 4;
+
+/**
+ * Trim marks: at each corner of the printed area, two short lines in the
+ * white margin that continue its edges. Laying a ruler across the two marks
+ * of an edge gives the exact cut. They stay in the margin, never over the
+ * image, so they go away with the trim (docs/pdf.md §99).
+ */
+function trimMarkStrokes(page: PrintPage): PageStroke[] {
+  const left = page.printableOrigin.x;
+  const top = page.printableOrigin.y;
+  const right = left + page.printableArea.width;
+  const bottom = top + page.printableArea.height;
+
+  const room = (margin: Millimeters) =>
+    Math.max(0, Math.min(TRIM_MARK_LENGTH_MM, margin - TRIM_MARK_GAP_MM));
+  const margins = {
+    left: room(left),
+    top: room(top),
+    right: room(page.paper.width - right),
+    bottom: room(page.paper.height - bottom),
+  };
+
+  const segment = (from: Point, to: Point): PageStroke =>
+    stroke("TRIM", { points: [from, to], closed: false });
+
+  const gap = TRIM_MARK_GAP_MM;
+  const marks: PageStroke[] = [];
+
+  for (const y of [top, bottom]) {
+    marks.push(
+      segment({ x: left - gap - margins.left, y }, { x: left - gap, y }),
+      segment({ x: right + gap, y }, { x: right + gap + margins.right, y }),
+    );
+  }
+
+  for (const x of [left, right]) {
+    marks.push(
+      segment({ x, y: top - gap - margins.top }, { x, y: top - gap }),
+      segment({ x, y: bottom + gap }, { x, y: bottom + gap + margins.bottom }),
+    );
+  }
+
+  return marks.filter((mark) => {
+    const [from, to] = mark.path.points;
+
+    return from.x !== to.x || from.y !== to.y;
+  });
 }
 
 /** Una cruz: dos trazos rectos que se cortan en la posición de la marca. */
@@ -522,7 +588,9 @@ export function describePosterCover(
   line("1. Comprueba con una regla que la línea de abajo mide 10 cm.");
   line("2. Une las hojas como en el mapa: letra = fila, número = columna.");
   line(
-    "3. Cada hoja repite una franja de la vecina: solápalas por las cruces.",
+    content.joining === "TRIM"
+      ? "3. Recorta el margen blanco por las marcas de las esquinas y une las hojas borde con borde: las cruces coinciden."
+      : "3. Cada hoja repite una franja de la vecina: solápalas por las cruces.",
   );
   line("4. Pega el póster sobre cartón y recorta la figura.");
 

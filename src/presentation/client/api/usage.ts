@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { ImageCrop } from "@/modules/posters/crop";
+import type { PosterJoining } from "@/modules/posters/joining";
 import type {
   PaperFormat,
   PaperOrientation,
@@ -40,6 +41,8 @@ export type UnsavedPosterInput = {
     readonly format: PaperFormat;
     readonly orientation: PaperOrientation;
   };
+  /** Overlap or trim; without it the server overlaps (docs/pdf.md §99). */
+  readonly joining?: PosterJoining;
 };
 
 /**

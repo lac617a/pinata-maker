@@ -593,8 +593,8 @@ referencias de este documento.
 
 ## Póster — pulido
 
-* Opción sin solape, con borde blanco para recortar como Block Posters.
-  Ahorra una columna en muchas medidas (`pdf.md` §94).
+* ~~Opción sin solape, con borde blanco para recortar como Block Posters.~~
+  Done on 2026-09-21 (`pdf.md` §99): "Sin solape", trim marks at the corners.
 * Arrastrar y soltar al subir la imagen.
 * Guardar el recorte en el documento generado, para poder regenerarlo igual
   (`pdf.md` §95). Hoy no hace falta: el PDF se guarda entero.

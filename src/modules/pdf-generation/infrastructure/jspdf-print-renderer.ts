@@ -147,7 +147,13 @@ export class JsPdfPrintRenderer implements PrintRenderer {
 function describeDocument(document: PrintDocument): PageDrawing[] {
   const pages = document.sections.flatMap((section) =>
     section.layout.pages.map((page) =>
-      describePage(page, section.label, section.artwork, section.kind),
+      describePage(
+        page,
+        section.label,
+        section.artwork,
+        section.kind,
+        section.trimMarks,
+      ),
     ),
   );
 

@@ -6,6 +6,7 @@ import { createTemplateGeometry } from "@/modules/geometry/template-geometry";
 import { DEFAULT_MARGIN_MM } from "@/modules/printing/margins";
 import {
   createPrintLayout,
+  DEFAULT_PRINT_CONFIGURATION,
   type PrintPage,
 } from "@/modules/printing/print-layout";
 
@@ -293,5 +294,76 @@ describe("Artwork on each sheet", () => {
 
   it("should draw no image when the piece has none", () => {
     expect(describePage(layout.pages[0], "SIDE-1").images).toEqual([]);
+  });
+});
+
+describe("Trim marks", () => {
+  const print = {
+    ...DEFAULT_PRINT_CONFIGURATION,
+    overlap: 0,
+  };
+  const layout = createPrintLayout(
+    createTemplateGeometry({
+      outerContours: [
+        createPolygon(
+          [
+            { x: 0, y: 0 },
+            { x: 600, y: 0 },
+            { x: 600, y: 800 },
+            { x: 0, y: 800 },
+          ],
+          true,
+        ),
+      ],
+    }),
+    print,
+  );
+  const page = layout.pages[0];
+
+  it("should draw two marks at each corner of the printed area", () => {
+    const marks = describePage(
+      page,
+      "",
+      undefined,
+      "POSTER",
+      true,
+    ).strokes.filter((stroke) => stroke.role === "TRIM");
+
+    expect(marks).toHaveLength(8);
+  });
+
+  it("should keep every mark in the white margin, off the image", () => {
+    const area = {
+      minX: page.printableOrigin.x,
+      minY: page.printableOrigin.y,
+      maxX: page.printableOrigin.x + page.printableArea.width,
+      maxY: page.printableOrigin.y + page.printableArea.height,
+    };
+    const inside = (p: { x: number; y: number }) =>
+      p.x > area.minX && p.x < area.maxX && p.y > area.minY && p.y < area.maxY;
+
+    for (const mark of describePage(
+      page,
+      "",
+      undefined,
+      "POSTER",
+      true,
+    ).strokes.filter((stroke) => stroke.role === "TRIM")) {
+      for (const point of mark.path.points) {
+        expect(inside(point)).toBe(false);
+        expect(point.x).toBeGreaterThanOrEqual(0);
+        expect(point.y).toBeGreaterThanOrEqual(0);
+        expect(point.x).toBeLessThanOrEqual(page.paper.width);
+        expect(point.y).toBeLessThanOrEqual(page.paper.height);
+      }
+    }
+  });
+
+  it("should not draw them unless asked", () => {
+    expect(
+      describePage(page, "", undefined, "POSTER").strokes.some(
+        (stroke) => stroke.role === "TRIM",
+      ),
+    ).toBe(false);
   });
 });

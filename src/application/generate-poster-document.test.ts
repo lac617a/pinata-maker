@@ -7,6 +7,7 @@ import type {
   PrintDocument,
   PrintRenderer,
 } from "@/modules/pdf-generation/print-renderer";
+import { posterPrintConfiguration } from "@/modules/posters/joining";
 import { createPoster, posterLayout } from "@/modules/posters/poster";
 import { DEFAULT_PRINT_CONFIGURATION } from "@/modules/printing/print-layout";
 
@@ -208,5 +209,39 @@ describe("Generate poster document", () => {
 
     // La etiqueta de la regla aparece una vez: en el resumen.
     expect(text.match(/\(100 mm\) Tj/g)).toHaveLength(1);
+  });
+
+  it("should add trim marks and trimming instructions when sheets do not overlap", async () => {
+    const { documents, renderer } = capturing();
+
+    await generatePosterDocument({
+      poster,
+      image,
+      imageSize,
+      title: "4",
+      renderer,
+      print: posterPrintConfiguration(
+        { format: "A4", orientation: "PORTRAIT" },
+        "TRIM",
+      ),
+    });
+
+    expect(documents[0].sections[0].trimMarks).toBe(true);
+    expect(documents[0].cover).toMatchObject({ joining: "TRIM" });
+  });
+
+  it("should not add trim marks when sheets overlap", async () => {
+    const { documents, renderer } = capturing();
+
+    await generatePosterDocument({
+      poster,
+      image,
+      imageSize,
+      title: "4",
+      renderer,
+    });
+
+    expect(documents[0].sections[0].trimMarks).toBe(false);
+    expect(documents[0].cover).toMatchObject({ joining: "OVERLAP" });
   });
 });

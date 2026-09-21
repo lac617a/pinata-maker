@@ -25,6 +25,10 @@ import {
 } from "@/modules/posters/crop";
 import { InvalidImageCropError } from "@/modules/posters/errors";
 import {
+  type PosterJoining,
+  posterPrintConfiguration,
+} from "@/modules/posters/joining";
+import {
   createPoster,
   lastSheetUsage,
   type Poster,
@@ -43,10 +47,9 @@ import {
   type PaperFormat,
   type PaperOrientation,
 } from "@/modules/printing/paper-format";
-import {
-  DEFAULT_PRINT_CONFIGURATION,
-  type PrintConfiguration,
-  type PrintLayout,
+import type {
+  PrintConfiguration,
+  PrintLayout,
 } from "@/modules/printing/print-layout";
 import { useUsage } from "@/presentation/client/api/usage";
 import { formatCentimeters } from "@/presentation/client/format";
@@ -75,17 +78,17 @@ export function PosterStudio({
 }) {
   const [format, setFormat] = useState<PaperFormat>("A4");
   const [orientation, setOrientation] = useState<PaperOrientation>("PORTRAIT");
+  const [joining, setJoining] = useState<PosterJoining>("OVERLAP");
   const [choice, setChoice] = useState<SizeChoice | null>(null);
   // El recorte es de esta imagen: quien monta el componente lo reinicia al
   // cambiar de imagen (`key`).
   const [percentCrop, setPercentCrop] = useState<PercentCrop>(WHOLE_IMAGE);
 
+  // The same configuration the server builds for this request, so the
+  // sheets shown are the sheets printed (docs/pdf.md §99).
   const print: PrintConfiguration = useMemo(
-    () => ({
-      ...DEFAULT_PRINT_CONFIGURATION,
-      paper: { ...DEFAULT_PRINT_CONFIGURATION.paper, format, orientation },
-    }),
-    [format, orientation],
+    () => posterPrintConfiguration({ format, orientation }, joining),
+    [format, orientation, joining],
   );
 
   // Solo hace falta la proporción: el navegador la sabe sin decodificar
@@ -163,6 +166,7 @@ export function PosterStudio({
       [effective.axis]: effective.cm * 10,
       ...(ok.crop ? { crop: ok.crop } : {}),
       paper: { format, orientation },
+      joining,
     });
   const downloadLabel = download.busy
     ? download.step
@@ -196,7 +200,7 @@ export function PosterStudio({
 
       {image && size.data ? (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             <Centimeters
               id="poster-width"
               label="Ancho (cm)"
@@ -254,7 +258,28 @@ export function PosterStudio({
                 <option value="LANDSCAPE">Horizontal</option>
               </select>
             </div>
+
+            <div className="col-span-2 space-y-2 sm:col-span-1">
+              <Label htmlFor="sheet-joining">Unión de las hojas</Label>
+              <select
+                id="sheet-joining"
+                className="border-input bg-card h-9 w-full rounded-md border px-3 text-sm"
+                value={joining}
+                onChange={(event) =>
+                  setJoining(event.target.value as PosterJoining)
+                }
+              >
+                <option value="OVERLAP">Solapar 1 cm</option>
+                <option value="TRIM">Sin solape</option>
+              </select>
+            </div>
           </div>
+
+          <p className="text-muted-foreground text-xs">
+            {joining === "OVERLAP"
+              ? "Cada hoja repite un centímetro de la vecina: se pegan a ojo por las cruces, sin cortar nada."
+              : "Sin franja repetida: recortas el margen blanco por las marcas y unes las hojas borde con borde. Menos hojas para el mismo tamaño, pero hay que cortar con cuidado."}
+          </p>
 
           <SheetsWide
             print={print}

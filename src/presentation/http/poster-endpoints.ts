@@ -4,12 +4,21 @@ import {
   type UsageServices,
 } from "@/application/daily-usage";
 import { exportPoster } from "@/application/export-poster";
+import { InvalidExportError } from "@/modules/exports/errors";
 import type { ImageCrop } from "@/modules/posters/crop";
 import {
   InvalidImageCropError,
   InvalidPosterSizeError,
 } from "@/modules/posters/errors";
+import {
+  isPosterJoining,
+  posterPrintConfiguration,
+} from "@/modules/posters/joining";
 import type { PosterSizeRequest } from "@/modules/posters/poster";
+import {
+  DEFAULT_PRINT_CONFIGURATION,
+  type PrintConfiguration,
+} from "@/modules/printing/print-layout";
 import type { ProjectId } from "@/modules/projects/project";
 import type { UsageStatus } from "@/modules/usage/usage";
 import { registeredSubject } from "@/modules/usage/usage-subject";
@@ -63,7 +72,7 @@ export async function handleExportPoster(
       assetId: asAssetId(body.assetId),
       size: asSize(body),
       crop: asCrop(body.crop),
-      print: asPrintConfiguration(body.paper),
+      print: asPosterPrint(body),
       consume: async () => {
         usage = await consumeUsage(context.usage, subject);
       },
@@ -137,4 +146,26 @@ export function asCrop(value: unknown): ImageCrop | undefined {
   }
 
   return { x, y, width, height };
+}
+
+/**
+ * Paper and how the sheets go together (docs/pdf.md §99). Without
+ * `joining`, they overlap, as always; an unknown value is refused rather
+ * than guessed.
+ */
+export function asPosterPrint(
+  body: Record<string, unknown>,
+): PrintConfiguration {
+  const paper = (
+    asPrintConfiguration(body.paper) ?? DEFAULT_PRINT_CONFIGURATION
+  ).paper;
+  const joining = body.joining ?? "OVERLAP";
+
+  if (!isPosterJoining(joining)) {
+    throw new InvalidExportError(
+      `Unknown joining "${String(joining)}", expected OVERLAP or TRIM.`,
+    );
+  }
+
+  return posterPrintConfiguration(paper, joining);
 }

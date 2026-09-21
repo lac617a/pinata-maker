@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import type { ImageCrop } from "@/modules/posters/crop";
+import type { PosterJoining } from "@/modules/posters/joining";
 import type {
   PaperFormat,
   PaperOrientation,
@@ -23,6 +24,7 @@ export type PosterDownloadRequest = {
     readonly format: PaperFormat;
     readonly orientation: PaperOrientation;
   };
+  readonly joining: PosterJoining;
 };
 
 /** Cómo se descarga, sin que el estudio sepa si hay proyecto detrás. */

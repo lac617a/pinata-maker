@@ -1872,7 +1872,8 @@ Block Posters no solapa: cada hoja lleva su trozo con un borde blanco que se
 recorta. Aquí cada hoja repite una franja de la vecina (10 mm por defecto)
 con marcas de alineación encima, que es más fácil de pegar a ojo. La
 contrapartida es que un ancho dado puede necesitar una columna más; la
-interfaz propone las medidas que llenan hojas enteras.
+interfaz propone las medidas que llenan hojas enteras. Since 2026-09-21 the
+Block Posters way is an option too: §99.
 
 ---
 
@@ -2034,3 +2035,44 @@ La transparencia se conserva: el fondo sale del color del papel, no negro.
 
 La prueba `should compress a PNG instead of embedding its raw pixels` falla
 si vuelve el crudo.
+
+---
+
+# 99. Joining the sheets: overlap or trim
+
+Since 2026-09-21 the person chooses how the sheets go together
+(`modules/posters/joining.ts`):
+
+```text
+OVERLAP   "Solapar 1 cm"   each sheet repeats 1 cm of its neighbour; lay one
+                           over the other until the crosses meet. Default.
+TRIM      "Sin solape"     like Block Posters: no repeated strip; trim the
+                           white margin and butt the sheets edge to edge.
+```
+
+It is only the overlap of the print configuration: 10 mm or 0. Everything
+else follows from it, and the document reads the joining back from the
+overlap (`joiningOf`), so there is no second flag to keep in sync.
+
+## What changes with TRIM
+
+* **More poster per sheet.** Three A4 sheets wide cover 60 cm instead of
+  58; the whole-sheet buttons become round numbers (20, 40, 60, 80 cm).
+* **Trim marks.** At each corner of the printed area, two short lines in the
+  white margin continue its edges (`TRIM` stroke). A ruler across the two
+  marks of an edge gives the cut. They never touch the image and go away
+  with the margin.
+* **The crosses sit on the edge.** With no shared strip, the middle of the
+  strip is the edge itself: half of each cross is on the image, half in the
+  margin. Trimmed and butted, the two halves meet.
+* **Instructions.** Step 3 of the summary sheet says to trim along the corner
+  marks and join edge to edge, instead of overlapping.
+
+## Checked
+
+A 40 x 56 cm poster, TRIM, 2 x 2 A4, rendered with pdf.js: summary with the
+trimming instruction, trim marks at the corners of every sheet, crosses on
+the edges.
+
+The joining is sent with the request (`joining`) and is not stored in the
+export record, like the crop (§95): the stored PDF is what matters.

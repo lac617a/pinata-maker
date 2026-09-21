@@ -159,6 +159,40 @@ describe("Poster endpoints", () => {
     );
   });
 
+  it("should print without overlap when the sheets are trimmed", async () => {
+    const shared = services();
+    const { project, asset } = await projectWithImage(shared);
+
+    const overlapped = await handleExportPoster(
+      posterRequest({ assetId: asset.id, width: 600 }),
+      project.id,
+      { services: shared, userId: owner, usage: usage() },
+    );
+    const trimmed = await handleExportPoster(
+      posterRequest({ assetId: asset.id, width: 600, joining: "TRIM" }),
+      project.id,
+      { services: shared, userId: owner, usage: usage() },
+    );
+
+    // Sin franja repetida, 60 cm caben en menos hojas.
+    expect((await trimmed.json()).export.pageCount).toBeLessThan(
+      (await overlapped.json()).export.pageCount,
+    );
+  });
+
+  it("should refuse an unknown way of joining the sheets", async () => {
+    const shared = services();
+    const { project, asset } = await projectWithImage(shared);
+
+    const response = await handleExportPoster(
+      posterRequest({ assetId: asset.id, width: 600, joining: "GLUE" }),
+      project.id,
+      { services: shared, userId: owner, usage: usage() },
+    );
+
+    expect(response.status).toBe(400);
+  });
+
   it("should refuse a request that gives both sides", async () => {
     const shared = services();
     const { project, asset } = await projectWithImage(shared);

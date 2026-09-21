@@ -27,7 +27,7 @@ export const GUIDES: readonly Guide[] = [
     slug: "como-imprimir-y-unir-las-hojas",
     title: "Cómo imprimir y unir las hojas de tu póster",
     description:
-      "Cómo imprimir el PDF a tamaño real sin que la impresora lo encoja, cómo comprobarlo con la regla de 10 cm y cómo unir las hojas por las cruces siguiendo el mapa.",
+      "Cómo imprimir el PDF a tamaño real sin que la impresora lo encoja, cómo comprobarlo con la regla de 10 cm y cómo unir las hojas por las cruces siguiendo el mapa, solapadas o borde con borde.",
     minutes: 5,
     updated: "2026-09-21",
   },

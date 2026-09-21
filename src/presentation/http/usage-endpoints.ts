@@ -8,8 +8,7 @@ import type { UsageSubject } from "@/modules/usage/usage-subject";
 
 import { readImageFile } from "./asset-endpoints";
 import { jsonResponse, toErrorResponse } from "./error-response";
-import { asPrintConfiguration } from "./export-endpoints";
-import { asCrop, asSize } from "./poster-endpoints";
+import { asCrop, asPosterPrint, asSize } from "./poster-endpoints";
 import { toUsagePayload } from "./usage-payload";
 
 /**
@@ -67,7 +66,7 @@ export async function handleUnsavedPoster(
       bytes: new Uint8Array(await file.arrayBuffer()),
       size: asSize(options),
       crop: asCrop(options.crop),
-      print: asPrintConfiguration(options.paper),
+      print: asPosterPrint(options),
       subject: context.subject(),
     });
 

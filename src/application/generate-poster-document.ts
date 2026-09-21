@@ -9,6 +9,7 @@ import {
   type ImageCrop,
   posterImagePlacement,
 } from "@/modules/posters/crop";
+import { joiningOf } from "@/modules/posters/joining";
 import {
   type Poster,
   posterGeometry,
@@ -55,6 +56,8 @@ export async function generatePosterDocument(
 ): Promise<PrintableDocument> {
   const print = input.print ?? DEFAULT_PRINT_CONFIGURATION;
   const layout = posterLayout(input.poster, print);
+  // Decided by the overlap: none means the sheets are trimmed and butted.
+  const joining = joiningOf(print);
   const placement = posterImagePlacement(
     input.poster,
     input.imageSize,
@@ -70,6 +73,7 @@ export async function generatePosterDocument(
       paper: describePaper(print.paper.format, print.paper.orientation),
       image: input.image,
       placement,
+      joining,
     },
     sections: [
       {
@@ -78,6 +82,7 @@ export async function generatePosterDocument(
         label: "",
         layout,
         kind: "POSTER",
+        trimMarks: joining === "TRIM",
         artwork: {
           image: input.image,
           placement,

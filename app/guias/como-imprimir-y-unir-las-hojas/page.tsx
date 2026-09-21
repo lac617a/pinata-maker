@@ -152,6 +152,13 @@ export default function Page() {
           <strong>las filas entre sí</strong>, de arriba abajo. Es mucho más
           fácil alinear tiras largas que hojas sueltas.
         </p>
+        <p>
+          <strong>¿Elegiste «Sin solape»?</strong> Entonces las hojas no repiten
+          ninguna franja. En cada esquina hay dos marcas pequeñas en el margen
+          blanco: recorta el margen siguiendo esas marcas, con regla y cúter, y
+          junta las hojas borde con borde. Las medias cruces de los bordes se
+          completan al unirlas. Pega con cinta por detrás.
+        </p>
         <GuideNote>
           <strong>Si algo no encaja por uno o dos milímetros,</strong> es
           normal: el papel se estira un poco y las impresoras no son perfectas.
