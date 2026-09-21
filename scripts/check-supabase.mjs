@@ -54,6 +54,42 @@ if (url && anonKey) {
       error ? `denegado (${error.code})` : "lista vacía",
     );
   }
+
+  // Migración 0002: tabla de assets y bucket privado.
+  const assets = await client.from("assets").select("id").limit(1);
+  const assetsMissing = TABLE_MISSING_CODES.includes(assets.error?.code ?? "");
+
+  report(
+    "la tabla assets existe",
+    !assetsMissing,
+    assetsMissing ? "aplica supabase/migrations/0002_assets.sql" : "",
+  );
+
+  if (!assetsMissing) {
+    report(
+      "RLS oculta los assets a un anónimo",
+      Boolean(assets.error) || (assets.data?.length ?? 0) === 0,
+      assets.error ? `denegado (${assets.error.code})` : "lista vacía",
+    );
+  }
+
+  // El bucket debe existir y no ser público: las imágenes se sirven con una
+  // URL firmada, no por una ruta adivinable.
+  const bucket = await client.storage.getBucket("project-assets");
+
+  report(
+    "el bucket project-assets existe",
+    !bucket.error,
+    bucket.error ? "aplica supabase/migrations/0002_assets.sql" : "",
+  );
+
+  if (!bucket.error) {
+    report(
+      "el bucket project-assets es privado",
+      bucket.data?.public === false,
+      bucket.data?.public ? "está publico: las imagenes serian accesibles" : "",
+    );
+  }
 }
 
 for (const { check, passed, detail } of results) {

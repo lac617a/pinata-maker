@@ -53,6 +53,18 @@ const KNOWN_ERRORS: Record<string, ErrorPresentation> = {
     status: 503,
     message: "No pudimos verificar tu cuenta. Inténtalo de nuevo.",
   },
+  INVALID_ASSET: {
+    status: 400,
+    message: "El archivo no es válido.",
+  },
+  ASSET_NOT_FOUND: {
+    status: 404,
+    message: "No encontramos esa imagen.",
+  },
+  ASSET_STORAGE_FAILED: {
+    status: 503,
+    message: "No pudimos guardar la imagen. Inténtalo de nuevo.",
+  },
   UNSUPPORTED_IMAGE_FORMAT: {
     status: 415,
     message: "Ese formato de imagen no está soportado. Usa PNG, JPEG o WEBP.",
