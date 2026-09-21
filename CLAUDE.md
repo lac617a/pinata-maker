@@ -196,8 +196,10 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
 * **La API existe y está autenticada:** proyectos, sesión, imágenes,
   versiones de plantilla y descarga de PDF. Sin
   sesión responde 401; un recurso ajeno responde 404 y no 403.
-* **Hay cinco migraciones y dos buckets privados.** La 0005 repara las
-  políticas de storage y se puede reejecutar (`docs/storage.md` §165). Se aplican a mano y en
+* **Hay seis migraciones y dos buckets privados.** La 0006 corrige las
+  políticas de storage. Dentro de la subconsulta de una política, toda
+  columna de la tabla protegida va calificada (`objects.name`): `projects`
+  también tiene `name` y la capturaba (`docs/storage.md` §165). Se aplican a mano y en
   orden. Comprueba siempre con `pnpm check:supabase` antes de dar por hecho
   que la base de datos está al día.
 * **La interfaz cubre el ciclo entero** (fase F parcial): entrar, crear

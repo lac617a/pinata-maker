@@ -2363,7 +2363,8 @@ supabase db push
 
 o pegar los archivos de `supabase/migrations/` en el editor SQL del panel,
 en orden: `0001_projects.sql`, `0002_assets.sql`,
-`0003_template_versions.sql`, `0004_exports.sql` y `0005_storage_policies.sql`.
+`0003_template_versions.sql`, `0004_exports.sql`, `0005_storage_policies.sql` y
+`0006_storage_policies_qualified_name.sql`.
 
 Para comprobar que el entorno está listo:
 
@@ -2738,32 +2739,46 @@ archivo es una descarga rota.
 
 ---
 
-# 165. Las políticas de storage se aplican aparte
+# 165. Una columna `name` que no era la que se creía
 
-En la base de datos real, las tablas de las migraciones 0002 y 0004 existían
-y sus buckets también, pero una subida a un proyecto propio fallaba con «new
-row violates row-level security policy». Las políticas de `storage.objects`
-no se habían aplicado.
+Subir una imagen fallaba siempre con «new row violates row-level security
+policy», también en un proyecto propio y con las políticas aplicadas.
 
-`pnpm check:supabase` no podía verlo: la clave anónima no lee
-`storage.buckets` ni `pg_policies` (§145). Se descubrió reproduciendo la
-subida con una cuenta de prueba y comparando con un bucket inexistente, que
-responde «Bucket not found» y no un rechazo de RLS.
+Las políticas de `storage.objects` comparaban el proyecto así:
 
-`0005_storage_policies.sql` deja las seis políticas en su sitio se hubieran
-aplicado o no: borra si existen y vuelve a crear. Es idempotente a propósito.
+```sql
+exists (
+  select 1 from public.projects p
+  where p.id = (storage.foldername(name))[2]::uuid
+    and p.owner_id = (select auth.uid())
+)
+```
 
-Dos detalles que conviene no perder:
+`projects` tiene una columna `name`, el nombre del proyecto. PostgreSQL
+resuelve un nombre de columna sin calificar contra la tabla más cercana, que
+dentro del `exists` es `projects` y no `storage.objects`. La política leía
+«Elefante» en lugar de la ruta del archivo, nunca encontraba el proyecto y
+denegaba siempre.
+
+`0006_storage_policies_qualified_name.sql` nombra la ruta como
+`objects.name`, que solo puede ser la columna de `storage.objects`. La regla
+que deja: **dentro de una subconsulta de una política, toda columna de la
+tabla protegida va calificada**.
+
+Un primer diagnóstico supuso que las políticas no se habían aplicado, y
+`0005_storage_policies.sql` las recreaba con el mismo error. Se deja en el
+historial porque ya se aplicó; la 0006 la sustituye.
+
+Otros detalles de estas políticas:
 
 * **Subir necesita también la política de lectura.** El servidor de storage
   inserta con `returning`, y PostgreSQL exige que la fila nueva pase además
   las políticas de SELECT.
-* **El proyecto se compara como texto**, `p.id::text = foldername(name)[2]`,
-  y no convirtiendo el segmento a `uuid`. Una ruta cuyo segundo segmento no
-  fuera un UUID haría fallar la conversión con un error en lugar de
-  denegarse limpiamente.
+* **El proyecto se compara como texto**, no convirtiendo el segmento de la
+  ruta a `uuid`: una ruta mal formada se deniega en lugar de romper con un
+  error de conversión.
 
-El fallo tardó en verse por otra razón: un error conocido de servidor —un
-503— no dejaba rastro en el registro. Ahora `toErrorResponse` registra la
-causa de todo fallo 5xx, aunque el usuario siga recibiendo el mensaje
-genérico.
+`pnpm check:supabase` no podía verlo —la clave anónima no lee políticas— y
+tardó en verse por otra razón: un error conocido de servidor, un 503, no
+dejaba rastro en el registro. Ahora `toErrorResponse` registra la causa de
+todo fallo 5xx.
