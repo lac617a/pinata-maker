@@ -5,6 +5,7 @@ import type {
   PaperFormat,
   PaperOrientation,
 } from "@/modules/printing/paper-format";
+import { usageKeys } from "@/presentation/client/api/usage";
 import { apiRequest } from "@/presentation/client/api-client";
 
 /** Un PDF ya generado. Ver docs/storage.md §160-§164. */
@@ -124,9 +125,12 @@ export function useExportPoster(projectId: string) {
           { method: "POST", body: JSON.stringify(input) },
         )
       ).export,
-    onSuccess: () =>
-      queryClient.invalidateQueries({
+    onSettled: () => {
+      void queryClient.invalidateQueries({
         queryKey: exportKeys.ofProject(projectId),
-      }),
+      });
+      // Cada PDF cuenta en el límite diario (docs/usage.md §8).
+      void queryClient.invalidateQueries({ queryKey: usageKeys.today });
+    },
   });
 }

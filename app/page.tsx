@@ -11,22 +11,31 @@ export default async function Page() {
       <div className="space-y-4">
         <h1 className="font-serif text-5xl">Piñata Maker</h1>
         <p className="text-muted-foreground text-lg">
-          Convierte una imagen en un molde imprimible a tamaño real, repartido
-          en hojas y listo para recortar.
+          Convierte una imagen en un póster a tamaño real, repartido en hojas
+          con su mapa de montaje, listo para pegar sobre cartón y recortar.
         </p>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
+        {/*
+          La herramienta primero y sin cuenta (docs/PRD.md §38): registrarse
+          antes de probarla echa a casi todo el que llega.
+        */}
+        <Button asChild size="lg">
+          <Link href="/crear">
+            {signedIn ? "Crear un póster" : "Crear un póster sin registrarte"}
+          </Link>
+        </Button>
         {signedIn ? (
-          <Button asChild>
+          <Button asChild size="lg" variant="ghost">
             <Link href="/proyectos">Ir a mis proyectos</Link>
           </Button>
         ) : (
           <>
-            <Button asChild>
+            <Button asChild size="lg" variant="ghost">
               <Link href="/crear-cuenta">Crear cuenta</Link>
             </Button>
-            <Button asChild variant="ghost">
+            <Button asChild size="lg" variant="ghost">
               <Link href="/acceder">Entrar</Link>
             </Button>
           </>

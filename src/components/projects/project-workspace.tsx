@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { ProjectExports } from "@/components/exports/project-exports";
+import { useProjectPosterDownload } from "@/components/posters/poster-downloads";
 import { PosterStudio } from "@/components/posters/poster-studio";
 import { ProjectImages } from "@/components/projects/project-images";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +29,11 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
     images.data?.find((image) => image.id === selectedImageId) ??
     images.data?.[0] ??
     null;
+
+  const download = useProjectPosterDownload(
+    projectId,
+    selectedImage?.id ?? null,
+  );
 
   if (project.error) {
     return (
@@ -68,8 +74,12 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
       {/* Otra imagen, otro recorte y otro tamaño: se empieza de cero. */}
       <PosterStudio
         key={selectedImage?.id ?? "none"}
-        projectId={projectId}
-        image={selectedImage}
+        image={
+          selectedImage
+            ? { key: selectedImage.id, url: selectedImage.url }
+            : null
+        }
+        download={download}
       />
 
       <details className="border-border space-y-4 rounded-lg border p-4">

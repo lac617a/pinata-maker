@@ -34,7 +34,7 @@ aquí.
 ## 2. Comandos
 
 ```bash
-pnpm test              # Vitest, 523 tests, entorno node
+pnpm test              # Vitest, 561 tests, entorno node
 ```
 
 ```bash
@@ -100,6 +100,7 @@ src/modules/
 ├── posters/                La salida del producto: imagen ampliada en hojas,
 │                           recorte y aviso de resolución.
 ├── projects/               Proyecto del usuario, con su repositorio.
+├── usage/                  Niveles de acceso y límite diario, con su contador.
 ├── templates/              Silueta + profundidad → piezas recortables, y la
 │                           versión inmutable con la que se publican.
 ├── printing/               Papel, márgenes, tiling, PrintLayout.
@@ -198,7 +199,12 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
 * **La API existe y está autenticada:** proyectos, sesión, imágenes,
   versiones de plantilla y descarga de PDF. Sin
   sesión responde 401; un recurso ajeno responde 404 y no 403.
-* **Hay siete migraciones y dos buckets privados.** La 0007 deja que un
+* **Uso sin cuenta con límite diario** (`docs/usage.md`): `/crear` es
+  pública y no guarda nada; cada PDF cuenta, 3 al día sin cuenta y 20 con
+  ella. El contador es la migración 0008 y necesita `USAGE_HASH_SECRET` en
+  el entorno. Queda el nivel de pago.
+* **Hay ocho migraciones y dos buckets privados.** La 0008 cuenta el uso
+  diario. La 0007 deja que un
   documento salga de una imagen (el póster). La 0006 corrige las
   políticas de storage. Dentro de la subconsulta de una política, toda
   columna de la tabla protegida va calificada (`objects.name`): `projects`
@@ -206,8 +212,8 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
   orden. Comprueba siempre con `pnpm check:supabase` antes de dar por hecho
   que la base de datos está al día.
 * **Siguiente:** imprimir un póster y medirlo con una regla
-  (`docs/roadmap.md` §8.1), el pulido del póster y la fase G
-  (`docs/roadmap.md` §4).
+  (`docs/roadmap.md` §8.1), el pulido del póster y la fase H: landing,
+  páginas legales y SEO (`docs/roadmap.md` §4).
 * **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,
   de pago) y la publicación con SEO y páginas legales. Los requisitos están en
   `docs/PRD.md` §38-§43, no en el roadmap: el roadmap solo registra cuándo se

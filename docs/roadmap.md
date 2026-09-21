@@ -39,7 +39,7 @@ base de datos al día (migraciones 0001 a 0007), confirmado por el usuario el
 [✓] Aviso de resolución antes de imprimir
 [✓] Proyecto, imagen y PDF persistidos con RLS; descarga con enlace firmado
 [ ] Imprimir un póster y medirlo con una regla (§8.1)
-[ ] Acceso sin cuenta con límite diario (fase G)
+[✓] Acceso sin cuenta con límite diario (fase G, `usage.md`)
 [ ] Landing, páginas legales y SEO (fase H)
 ```
 
@@ -50,7 +50,7 @@ ella sigue siendo cierto; ya no es el camino del usuario.
 Verificación:
 
 ```bash
-pnpm verify      # 523 tests, más 26 de integración que necesitan cuenta
+pnpm verify      # 561 tests, más 30 de integración que necesitan cuenta
 ```
 
 ---
@@ -582,7 +582,7 @@ Orden recomendado para el producto de hoy, el póster:
 
 1. Imprimir un póster y medirlo (§8.1).
 2. Pulido del póster (abajo).
-3. Fase G: acceso sin cuenta y límites.
+3. ~~Fase G: acceso sin cuenta y límites.~~ Hecha salvo el pago.
 4. Fase H: landing, páginas legales y SEO.
 
 **Las fases B, C y D quedan aparcadas**: servían al molde con piezas. El
@@ -695,6 +695,20 @@ Falta:
 ## Fase G — Acceso, límites y monetización
 
 Requisitos en `PRD.md` §38 y §39. Criterios AC-16 a AC-18 y AC-21.
+
+**Hecha salvo el nivel de pago, el 2026-09-21** (`usage.md`): `/crear` sin
+cuenta y sin guardar nada, límite diario de 3 sin cuenta y 20 con cuenta
+contado en la base de datos (migración 0008), el anónimo reconocido por
+cookie e IP con huella HMAC, y el límite alcanzado como estado previsto con
+el registro como salida.
+
+Queda:
+
+* El nivel de pago en el perfil del usuario: hoy toda cuenta es
+  `REGISTERED` (`usage.md` §7). Llega con el cobro.
+* Mencionar la IP en la política de privacidad (fase H, `usage.md` §5).
+
+Lo que pedía la fase, por contexto:
 
 El producto se usa **sin cuenta**, con un límite diario; la cuenta sirve para
 guardar proyectos y acceder a más herramientas; el nivel de pago quita la
@@ -824,6 +838,9 @@ posicionar.
 | AC-13 | Descargar el PDF | **Hecho y probado** |
 | AC-14 | Reabrir el proyecto | **Hecho y probado** |
 | AC-15 | Aislamiento entre usuarios | **Hecho y probado** para proyectos |
+| AC-16 | Generar y descargar sin cuenta | **Hecho y probado** (`usage.md` §10) |
+| AC-17 | El límite se cuenta en el servidor | **Hecho y probado**, atómico en la base de datos |
+| AC-18 | Al alcanzarlo se explica y se ofrece registrarse | **Hecho y probado** |
 
 ---
 

@@ -164,3 +164,34 @@ opcional. La respuesta en PDF trae `x-usage-limit` y `x-usage-remaining`, y
 Un límite alcanzado responde **429** con el código `USAGE_LIMIT_REACHED`. No
 es un fallo: la interfaz lo presenta como un estado previsto y ofrece
 registrarse o volver mañana (`PRD.md` §39).
+
+---
+
+# 10. La interfaz
+
+`/crear` es pública: elegir una imagen —con botón o arrastrándola—,
+recortarla, elegir el tamaño y descargar. La imagen se enseña desde un enlace
+local al archivo (`URL.createObjectURL`) y no sale del navegador hasta que se
+pide el PDF.
+
+El estudio del póster es el mismo en `/crear` y en un proyecto; lo único que
+cambia es qué hace el botón de descargar (`poster-downloads.ts`): guardar en
+el proyecto y bajar con enlace firmado, o recibir el PDF en la respuesta.
+
+Encima del estudio, siempre, cuánto queda hoy y a qué hora local se renueva.
+Al anónimo se le recuerda que con cuenta tiene más. Con el cupo gastado:
+
+* el botón de descargar se desactiva, pero recortar y medir siguen
+  funcionando;
+* el anónimo ve «Crear cuenta gratis» y «Ya tengo cuenta»;
+* quien tiene cuenta ve a qué hora se renueva.
+
+Un 429 que llegue igualmente —otra pestaña gastó el último— se enseña como
+aviso y vuelve a pedir el contador.
+
+## Cómo se comprobó
+
+En el navegador, sin sesión y contra la base de datos real: tres PDF
+generados (quedan 2, 1, 0), el cuarto responde 429, y al recargar la página
+enseña el estado de límite alcanzado con el botón desactivado. La cookie no
+se ve desde JavaScript (`httpOnly`).

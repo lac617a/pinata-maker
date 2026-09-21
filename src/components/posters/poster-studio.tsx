@@ -3,7 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import type { PercentCrop } from "react-image-crop";
-import { toast } from "sonner";
 
 import {
   ImageCropper,
@@ -11,11 +10,13 @@ import {
   toImageCrop,
   WHOLE_IMAGE,
 } from "@/components/posters/image-cropper";
+import type { PosterDownload } from "@/components/posters/poster-downloads";
 import { PosterPreview } from "@/components/posters/poster-preview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UsageNotice } from "@/components/usage/usage-notice";
 import {
   createImageCrop,
   CROP_MIN_SIDE,
@@ -47,11 +48,7 @@ import {
   type PrintConfiguration,
   type PrintLayout,
 } from "@/modules/printing/print-layout";
-import {
-  useDownloadExport,
-  useExportPoster,
-} from "@/presentation/client/api/exports";
-import type { ProjectImage } from "@/presentation/client/api/images";
+import { useUsage } from "@/presentation/client/api/usage";
 import { formatCentimeters } from "@/presentation/client/format";
 
 /** Qué lado fija el usuario, en centímetros. El otro sale de la imagen. */
@@ -68,11 +65,13 @@ type SizeChoice = { readonly axis: "width" | "height"; readonly cm: number };
  * pósters que usa el servidor para el PDF.
  */
 export function PosterStudio({
-  projectId,
   image,
+  download,
 }: {
-  projectId: string;
-  image: ProjectImage | null;
+  /** `key` distingue una imagen de otra; `url` es lo que ve el navegador. */
+  image: { readonly key: string; readonly url: string } | null;
+  /** Qué hacer al descargar: guardar en el proyecto o no guardar nada. */
+  download: PosterDownload;
 }) {
   const [format, setFormat] = useState<PaperFormat>("A4");
   const [orientation, setOrientation] = useState<PaperOrientation>("PORTRAIT");
@@ -92,10 +91,10 @@ export function PosterStudio({
   // Solo hace falta la proporción: el navegador la sabe sin decodificar
   // nada a mano. El servidor la vuelve a leer del archivo al generar.
   const size = useQuery({
-    queryKey: ["image-size", image?.id],
+    queryKey: ["image-size", image?.key],
     enabled: image !== null,
     staleTime: Infinity,
-    queryFn: () => naturalSize((image as ProjectImage).url),
+    queryFn: () => naturalSize((image as { url: string }).url),
   });
 
   // Por defecto, tres hojas de ancho: una piñata mediana que no deja una
@@ -150,8 +149,11 @@ export function PosterStudio({
   }, [size.data, percentCrop, effective.axis, effective.cm, print]);
 
   const ok = result !== null && "poster" in result ? result : null;
-  const ready = ok !== null;
-  const download = useOneClickPoster(projectId);
+  const usage = useUsage();
+  // Sin cupo no se deja empezar la descarga (PRD §39). Si el contador no
+  // responde, no se bloquea: el servidor tiene la última palabra.
+  const spent = usage.data?.remaining === 0;
+  const ready = ok !== null && !spent;
 
   return (
     <section className="space-y-6">
@@ -165,7 +167,6 @@ export function PosterStudio({
             ok &&
             image &&
             download.run({
-              assetId: image.id,
               [effective.axis]: effective.cm * 10,
               ...(ok.crop ? { crop: ok.crop } : {}),
               paper: { format, orientation },
@@ -179,6 +180,8 @@ export function PosterStudio({
               : "Descargar PDF"}
         </Button>
       </div>
+
+      <UsageNotice />
 
       {!image ? (
         <p className="text-muted-foreground text-sm">
@@ -515,39 +518,6 @@ function Centimeters({
       />
     </div>
   );
-}
-
-/**
- * Genera el póster y lo descarga.
- *
- * El enlace lleva el nombre del archivo y descarga sin abrir otra pestaña:
- * nada que el navegador pueda bloquear después de esperar al PDF.
- */
-function useOneClickPoster(projectId: string) {
-  const generate = useExportPoster(projectId);
-  const download = useDownloadExport();
-  const [step, setStep] = useState<string | null>(null);
-
-  async function run(input: Parameters<typeof generate.mutateAsync>[0]) {
-    try {
-      setStep("Generando PDF…");
-      const generated = await generate.mutateAsync(input);
-
-      setStep("Preparando la descarga…");
-      const ready = await download.mutateAsync(generated.id);
-
-      window.location.assign(ready.url);
-      toast.success(`${generated.fileName}: ${generated.pageCount} hojas.`);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "No pudimos generar el PDF.",
-      );
-    } finally {
-      setStep(null);
-    }
-  }
-
-  return { run, busy: step !== null, step: step ?? "" };
 }
 
 /** Tamaño natural de la imagen, tal y como la enseña el navegador. */
