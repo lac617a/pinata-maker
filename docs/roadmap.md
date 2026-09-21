@@ -740,8 +740,9 @@ posicionar.
   umbral de doblez, tolerancia de planitud— son un punto de partida razonado,
   no medido. Se ajustan cuando haya moldes impresos y montados
   (`template.md` §118).
-* La orientación EXIF no se normaliza. Una foto girada produciría un contorno
-  girado (`image-processing.md` §9).
+* La orientación EXIF se aplica al dibujar el póster (`pdf.md` §97), pero
+  no se normaliza para segmentar: una máscara de la fase B sacada de los
+  bytes guardados saldría tumbada (`image-processing.md` §9).
 * El umbral de figura ambigua (la mitad del área mayor) es provisional
   mientras el producto no decida si el usuario puede elegir la figura a mano
   (`image-processing.md` §101).

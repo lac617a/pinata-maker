@@ -21,10 +21,31 @@ export type ImageHeader = {
    * Orientación EXIF, del 1 al 8. 1 es «tal cual».
    *
    * Solo las fotos JPEG la traen. Un navegador la aplica al enseñar la
-   * imagen; un PDF que incrusta los bytes, no. Ver docs/image-processing.md §9.
+   * imagen; un PDF que incrusta los bytes, no: la aplica quien dibuja
+   * (docs/pdf.md §97). Ver docs/image-processing.md §9.
    */
   readonly orientation: number;
 };
+
+/**
+ * El tamaño de la imagen tal y como se ve, con la orientación aplicada.
+ *
+ * Las orientaciones 5 a 8 giran un cuarto de vuelta: la foto de un móvil en
+ * vertical se guarda apaisada y dice «gírame». El ancho que ve el usuario es
+ * el alto guardado, y es el que manda para el recorte y el póster.
+ */
+export function orientedSize(header: ImageHeader): {
+  readonly width: Pixels;
+  readonly height: Pixels;
+} {
+  return swapsSides(header.orientation)
+    ? { width: header.height, height: header.width }
+    : { width: header.width, height: header.height };
+}
+
+export function swapsSides(orientation: number): boolean {
+  return orientation >= 5 && orientation <= 8;
+}
 
 export function readImageHeader(bytes: Uint8Array): ImageHeader {
   if (isPng(bytes)) {

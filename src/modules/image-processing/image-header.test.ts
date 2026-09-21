@@ -4,7 +4,8 @@ import {
   InvalidImageDimensionsError,
   UnsupportedImageFormatError,
 } from "./errors";
-import { readImageHeader } from "./image-header";
+import { orientedSize, readImageHeader } from "./image-header";
+import { jpegHeader } from "./image-header.fixtures";
 
 function bytes(...parts: (number[] | string)[]): Uint8Array {
   return new Uint8Array(
@@ -158,5 +159,21 @@ describe("Image header", () => {
     expect(() => readImageHeader(bytes([0xff, 0xd8, 0xff, 0xd9]))).toThrow(
       InvalidImageDimensionsError,
     );
+  });
+});
+
+describe("Oriented size", () => {
+  it("should swap the sides of a photo turned a quarter", () => {
+    expect(orientedSize(readImageHeader(jpegHeader(4000, 3000, 6)))).toEqual({
+      width: 3000,
+      height: 4000,
+    });
+  });
+
+  it("should keep the sides of a photo turned half a turn", () => {
+    expect(orientedSize(readImageHeader(jpegHeader(4000, 3000, 3)))).toEqual({
+      width: 4000,
+      height: 3000,
+    });
   });
 });

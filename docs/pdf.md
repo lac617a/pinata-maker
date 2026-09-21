@@ -1960,3 +1960,45 @@ dejaría casi siempre una columna medio vacía, y el aviso de columna (§94)
 propondría otra medida distinta.
 
 El cálculo vive en `modules/posters/resolution.ts`; el servidor no lo usa.
+
+---
+
+# 97. Fotos giradas por la cámara
+
+Un móvil en vertical guarda la foto apaisada y le añade una orientación
+EXIF: «gírame un cuarto a la derecha». El navegador la aplica al enseñarla;
+un PDF que incrusta los bytes, no. Sin hacer nada, la vista previa sale
+derecha y las hojas impresas, tumbadas.
+
+## Se gira al dibujar, no al subir
+
+El archivo se guarda tal cual. `EmbeddedImage.orientation` dice cómo está
+y el renderer dibuja los bytes en el origen con una matriz que los lleva a
+su sitio (`image-orientation.ts`): un cuarto de vuelta, media o un espejo,
+las ocho orientaciones de EXIF.
+
+Girar al subir obligaría a decodificar y recodificar el JPEG: otra
+dependencia nativa en el servidor, otra pérdida de calidad, y el original
+dejaría de ser el original (`AGENTS.md` §19).
+
+## Todo se mide sobre la imagen girada
+
+El recorte y la proporción del póster usan el tamaño girado
+(`orientedSize`): es el que ve el usuario y el que da el navegador como
+`naturalWidth`. Las medidas de dibujo —colocación, recorte— también son de
+la imagen girada; solo el renderer sabe que los bytes están tumbados.
+
+## El eje y del PDF
+
+`setCurrentTransformationMatrix` de jsPDF escribe la matriz tal cual en el
+PDF, cuyo eje y crece hacia arriba, mientras el dibujo trabaja con y hacia
+abajo. Con `F(x, y) = (x, H − y)`, la matriz que se escribe es `F · T · F`.
+El espejo de la espalda (§93) no lo necesitaba porque solo toca x; un giro
+sin esta conversión sale al revés.
+
+## Cómo se comprobó
+
+Con una foto real generada con la orientación 6: el mapa y las cuatro hojas
+salen derechos, entera y recortada, y el navegador la enseña igual en el
+recuadro de recorte y en la vista previa.
+

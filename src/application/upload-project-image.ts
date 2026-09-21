@@ -1,10 +1,7 @@
 import { type Asset, type AssetId, createAsset } from "@/modules/assets/asset";
 import type { AssetRepository } from "@/modules/assets/asset-repository";
 import { AssetNotFoundError } from "@/modules/assets/errors";
-import {
-  UnsupportedImageFormatError,
-  UnsupportedImageOrientationError,
-} from "@/modules/image-processing/errors";
+import { UnsupportedImageFormatError } from "@/modules/image-processing/errors";
 import { readImageHeader } from "@/modules/image-processing/image-header";
 import {
   validateImageMetadata,
@@ -108,12 +105,6 @@ function assertContentMatches(mimeType: string, bytes: Uint8Array): void {
     width: header.width,
     height: header.height,
   });
-
-  if (header.orientation !== 1) {
-    throw new UnsupportedImageOrientationError(
-      `The photo carries EXIF orientation ${header.orientation}, which is not applied yet.`,
-    );
-  }
 }
 
 export type ViewableAsset = {

@@ -4,7 +4,10 @@ import {
   createProjectExport,
   type ProjectExport,
 } from "@/modules/exports/export";
-import { readImageHeader } from "@/modules/image-processing/image-header";
+import {
+  orientedSize,
+  readImageHeader,
+} from "@/modules/image-processing/image-header";
 import {
   type EmbeddedImageFormat,
   PDF_GENERATOR_VERSION,
@@ -63,16 +66,23 @@ export async function exportPoster(
   const header = readImageHeader(bytes);
   // El recorte se valida contra la imagen real, no contra lo que el
   // navegador creyó ver. El póster toma su proporción.
+  // Todo se mide sobre la imagen girada: es la que ve el usuario y la
+  // que sale en el PDF (docs/pdf.md §97).
+  const size = orientedSize(header);
   const crop = input.crop
-    ? createImageCrop(header, input.crop)
-    : fullImageCrop(header);
+    ? createImageCrop(size, input.crop)
+    : fullImageCrop(size);
   const poster = createPoster(crop, input.size);
   const print = input.print ?? DEFAULT_PRINT_CONFIGURATION;
 
   const document = await generatePosterDocument({
     poster,
-    image: { bytes, format: EMBEDDED_FORMATS[header.format] },
-    imageSize: header,
+    image: {
+      bytes,
+      format: EMBEDDED_FORMATS[header.format],
+      orientation: header.orientation,
+    },
+    imageSize: size,
     crop,
     title: project.name,
     renderer: services.renderer,

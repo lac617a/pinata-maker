@@ -7,6 +7,10 @@ import {
   UnsupportedPdfFeatureError,
 } from "@/modules/pdf-generation/errors";
 import {
+  type AffineTransform,
+  orientationTransform,
+} from "@/modules/pdf-generation/image-orientation";
+import {
   type CoverEntry,
   describeCoverPage,
   describePage,
@@ -319,17 +323,72 @@ function drawImage(doc: jsPDF, image: PageImage, alias: string): void {
     doc.setCurrentTransformationMatrix(doc.Matrix(-1, 0, 0, 1, 2 * axis, 0));
   }
 
-  doc.addImage(
-    image.image.bytes,
-    image.image.format,
-    millimetersToPoints(image.x),
-    millimetersToPoints(image.y),
-    millimetersToPoints(image.width),
-    millimetersToPoints(image.height),
-    alias,
-  );
+  const target = {
+    x: millimetersToPoints(image.x),
+    y: millimetersToPoints(image.y),
+    width: millimetersToPoints(image.width),
+    height: millimetersToPoints(image.height),
+  };
+  const orientation = image.image.orientation ?? 1;
+
+  if (orientation === 1) {
+    doc.addImage(
+      image.image.bytes,
+      image.image.format,
+      target.x,
+      target.y,
+      target.width,
+      target.height,
+      alias,
+    );
+  } else {
+    // Foto de cámara con orientación EXIF: se dibujan los bytes tal cual
+    // en el origen y la matriz los gira hasta su sitio (docs/pdf.md §97).
+    const { drawWidth, drawHeight, transform } = orientationTransform(
+      orientation,
+      target,
+    );
+    const pdf = toPdfSpace(transform, doc.internal.pageSize.getHeight());
+
+    doc.setCurrentTransformationMatrix(
+      doc.Matrix(pdf.a, pdf.b, pdf.c, pdf.d, pdf.e, pdf.f),
+    );
+    doc.addImage(
+      image.image.bytes,
+      image.image.format,
+      0,
+      0,
+      drawWidth,
+      drawHeight,
+      alias,
+    );
+  }
 
   doc.restoreGraphicsState();
+}
+
+/**
+ * La matriz de dibujo, pasada al espacio del PDF.
+ *
+ * `setCurrentTransformationMatrix` escribe la matriz tal cual en el PDF,
+ * cuyo eje y crece hacia arriba, mientras que las coordenadas de jsPDF
+ * crecen hacia abajo. Con `F(x, y) = (x, H − y)`, la matriz buscada es
+ * `F · T · F`. El espejo de la espalda no lo necesitaba porque solo toca x.
+ */
+function toPdfSpace(
+  transform: AffineTransform,
+  pageHeight: number,
+): AffineTransform {
+  const { a, b, c, d, e, f } = transform;
+
+  return {
+    a,
+    b: -b,
+    c: -c,
+    d,
+    e: e + c * pageHeight,
+    f: pageHeight - f - d * pageHeight,
+  };
 }
 
 function drawText(doc: jsPDF, text: PageText): void {

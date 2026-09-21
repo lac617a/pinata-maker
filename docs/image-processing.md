@@ -2342,6 +2342,11 @@ Una foto JPEG puede traer la orientación en el EXIF en lugar de en los
 pixels. El navegador la aplica al enseñarla; un PDF que incrusta los bytes,
 no. Aceptarla daría una vista previa derecha y un documento girado.
 
-Hasta que se aplique la rotación (§9), la subida la rechaza con un mensaje que
-dice qué hacer. Es preferible a que el usuario lo descubra con las hojas ya
-impresas.
+~~Hasta que se aplique la rotación (§9), la subida la rechaza con un mensaje
+que dice qué hacer.~~ **Desde el 2026-09-21 se acepta**: el archivo se
+guarda tal cual y el PDF la endereza al dibujarla (`pdf.md` §97). El tamaño
+que cuenta para el recorte y el póster es el girado (`orientedSize`), el que
+ve el usuario.
+
+Sigue pendiente para la segmentación de la fase B: una máscara sacada de los
+bytes guardados saldría tumbada.

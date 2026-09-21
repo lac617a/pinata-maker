@@ -5,7 +5,6 @@ import { InMemoryAssetRepository } from "@/modules/assets/in-memory-asset-reposi
 import {
   InvalidImageDimensionsError,
   UnsupportedImageFormatError,
-  UnsupportedImageOrientationError,
 } from "@/modules/image-processing/errors";
 import {
   jpegHeader,
@@ -303,20 +302,21 @@ describe("Upload a project image by what it really is", () => {
     ).rejects.toBeInstanceOf(InvalidImageDimensionsError);
   });
 
-  it("should refuse a photo rotated by the camera", async () => {
+  it("should accept a photo rotated by the camera", async () => {
     const context = services();
     const project = await projectOf(context);
 
-    // El navegador la enseñaría derecha y el PDF saldría girado.
-    await expect(
-      uploadProjectImage(context, {
-        projectId: project.id,
-        userId: owner,
-        fileName: "foto.jpg",
-        mimeType: "image/jpeg",
-        bytes: jpegHeader(4000, 3000, 6),
-      }),
-    ).rejects.toBeInstanceOf(UnsupportedImageOrientationError);
+    // El giro no se aplica al subir: se guarda el archivo tal cual y el PDF
+    // lo endereza al dibujarlo (docs/pdf.md §97).
+    const uploaded = await uploadProjectImage(context, {
+      projectId: project.id,
+      userId: owner,
+      fileName: "foto.jpg",
+      mimeType: "image/jpeg",
+      bytes: jpegHeader(4000, 3000, 6),
+    });
+
+    expect(uploaded.mimeType).toBe("image/jpeg");
   });
 
   it("should accept a photo that needs no rotation", async () => {

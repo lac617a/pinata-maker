@@ -35,6 +35,13 @@ export type EmbeddedImageFormat = "PNG" | "JPEG" | "WEBP";
 export type EmbeddedImage = {
   readonly bytes: Uint8Array;
   readonly format: EmbeddedImageFormat;
+  /**
+   * Orientación EXIF de los bytes, del 1 al 8. El PDF no la lee: el
+   * renderer gira la imagen al dibujarla para que salga como la enseña el
+   * navegador. Todas las medidas de dibujo son ya de la imagen girada.
+   * Ver docs/pdf.md §97.
+   */
+  readonly orientation?: number;
 };
 
 /**

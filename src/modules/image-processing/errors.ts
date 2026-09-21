@@ -79,20 +79,3 @@ export class AmbiguousSubjectError extends Error {
     this.name = "AmbiguousSubjectError";
   }
 }
-
-/**
- * La foto trae la rotación de la cámara y todavía no se aplica.
- *
- * El navegador la endereza al enseñarla; el PDF, que incrusta los bytes tal
- * cual, no. Aceptarla daría una vista previa derecha y un documento girado.
- * Es mejor decirlo al subir que descubrirlo con las hojas ya impresas.
- * Ver docs/image-processing.md §9 y §110.
- */
-export class UnsupportedImageOrientationError extends Error {
-  readonly code = "UNSUPPORTED_IMAGE_ORIENTATION";
-
-  constructor(message: string) {
-    super(message);
-    this.name = "UnsupportedImageOrientationError";
-  }
-}

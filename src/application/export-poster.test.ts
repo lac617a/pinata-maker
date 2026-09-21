@@ -4,7 +4,10 @@ import { createAsset } from "@/modules/assets/asset";
 import { AssetNotFoundError } from "@/modules/assets/errors";
 import { InMemoryAssetRepository } from "@/modules/assets/in-memory-asset-repository";
 import { InMemoryExportRepository } from "@/modules/exports/in-memory-export-repository";
-import { pngHeader } from "@/modules/image-processing/image-header.fixtures";
+import {
+  jpegHeader,
+  pngHeader,
+} from "@/modules/image-processing/image-header.fixtures";
 import {
   documentPageCount,
   PDF_CONTENT_TYPE,
@@ -175,6 +178,43 @@ describe("Export poster", () => {
     ).rejects.toBeInstanceOf(InvalidImageCropError);
 
     expect(context.exportStorage.keys()).toHaveLength(0);
+  });
+
+  it("should size a phone photo as it is seen, turned upright", async () => {
+    const { context, rendered } = services();
+    const project = await createProject(context, {
+      ownerId: owner,
+      name: "Foto",
+    });
+    const asset = createAsset({
+      id: "aaaaaaaa-0000-4000-8000-000000000099",
+      projectId: project.id,
+      kind: "ORIGINAL_IMAGE",
+      mimeType: "image/jpeg",
+      byteSize: 64,
+      originalName: "foto.jpg",
+      now: new Date(Date.UTC(2026, 8, 21)),
+    });
+
+    await context.assets.save(asset, owner);
+    // Guardada apaisada, 4000 × 3000, con la orden de girarla un cuarto.
+    await context.assetStorage.put({
+      key: asset.storageKey,
+      contentType: asset.mimeType,
+      bytes: jpegHeader(4000, 3000, 6),
+    });
+
+    const generated = await exportPoster(context, {
+      projectId: project.id,
+      userId: owner,
+      assetId: asset.id,
+      size: { width: 600 },
+      // El recorte llega en pixels de la foto ya girada: 3000 de ancho.
+      crop: { x: 0, y: 0, width: 3000, height: 4000 },
+    });
+
+    expect(generated.height).toBeCloseTo(800, 6);
+    expect(rendered[0].sections[0].artwork?.image.orientation).toBe(6);
   });
 
   it("should name the file after the project and its width", async () => {

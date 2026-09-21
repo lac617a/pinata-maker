@@ -114,11 +114,6 @@ const KNOWN_ERRORS: Record<string, ErrorPresentation> = {
     status: 415,
     message: "Ese formato de imagen no está soportado. Usa PNG, JPEG o WEBP.",
   },
-  UNSUPPORTED_IMAGE_ORIENTATION: {
-    status: 422,
-    message:
-      "Esta foto trae el giro de la cámara y todavía no sabemos aplicarlo. Ábrela, guárdala de nuevo o súbela como PNG.",
-  },
   IMAGE_FILE_TOO_LARGE: {
     status: 413,
     message: "La imagen pesa demasiado.",
