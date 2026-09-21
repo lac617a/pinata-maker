@@ -1,5 +1,9 @@
 import { exportPoster } from "@/application/export-poster";
-import { InvalidPosterSizeError } from "@/modules/posters/errors";
+import type { ImageCrop } from "@/modules/posters/crop";
+import {
+  InvalidImageCropError,
+  InvalidPosterSizeError,
+} from "@/modules/posters/errors";
 import type { PosterSizeRequest } from "@/modules/posters/poster";
 import type { ProjectId } from "@/modules/projects/project";
 
@@ -18,7 +22,7 @@ import {
 /**
  * Genera el póster de una imagen del proyecto (docs/PRD.md §44).
  *
- * La petición dice qué imagen, qué lado y en qué papel. Todo lo demás —la
+ * La petición dice qué imagen, qué parte de ella, qué lado y en qué papel. Todo lo demás —la
  * proporción, el reparto en hojas— lo decide el servidor con lo guardado.
  */
 export async function handleExportPoster(
@@ -38,6 +42,7 @@ export async function handleExportPoster(
       userId: context.userId,
       assetId: asAssetId(body.assetId),
       size: asSize(body),
+      crop: asCrop(body.crop),
       print: asPrintConfiguration(body.paper),
     });
 
@@ -78,4 +83,32 @@ function asSize(body: Record<string, unknown>): PosterSizeRequest {
   throw new InvalidPosterSizeError(
     "The request must give either the width or the height, in millimetres.",
   );
+}
+
+/**
+ * El recorte es opcional: sin él, la imagen entera. Si viene, que sean
+ * números; si caen dentro de la imagen lo decide el caso de uso, que es el
+ * que conoce su tamaño.
+ */
+function asCrop(value: unknown): ImageCrop | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  const crop = value as Record<string, unknown>;
+  const { x, y, width, height } = crop;
+
+  if (
+    typeof value !== "object" ||
+    typeof x !== "number" ||
+    typeof y !== "number" ||
+    typeof width !== "number" ||
+    typeof height !== "number"
+  ) {
+    throw new InvalidImageCropError(
+      "A crop must give x, y, width and height, in pixels.",
+    );
+  }
+
+  return { x, y, width, height };
 }

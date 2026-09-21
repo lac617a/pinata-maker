@@ -9,6 +9,11 @@ import {
   type EmbeddedImageFormat,
   PDF_GENERATOR_VERSION,
 } from "@/modules/pdf-generation/print-renderer";
+import {
+  createImageCrop,
+  fullImageCrop,
+  type ImageCrop,
+} from "@/modules/posters/crop";
 import { createPoster, type PosterSizeRequest } from "@/modules/posters/poster";
 import {
   DEFAULT_PRINT_CONFIGURATION,
@@ -29,6 +34,8 @@ export type ExportPosterInput = {
   readonly assetId: AssetId;
   /** Un lado en mm; el otro sale de la proporción de la imagen. */
   readonly size: PosterSizeRequest;
+  /** La parte de la imagen que se imprime, en pixels. Sin él, entera. */
+  readonly crop?: ImageCrop;
   readonly print?: PrintConfiguration;
 };
 
@@ -54,12 +61,19 @@ export async function exportPoster(
 
   const bytes = await services.assetStorage.get(asset.storageKey);
   const header = readImageHeader(bytes);
-  const poster = createPoster(header, input.size);
+  // El recorte se valida contra la imagen real, no contra lo que el
+  // navegador creyó ver. El póster toma su proporción.
+  const crop = input.crop
+    ? createImageCrop(header, input.crop)
+    : fullImageCrop(header);
+  const poster = createPoster(crop, input.size);
   const print = input.print ?? DEFAULT_PRINT_CONFIGURATION;
 
   const document = await generatePosterDocument({
     poster,
     image: { bytes, format: EMBEDDED_FORMATS[header.format] },
+    imageSize: header,
+    crop,
     title: project.name,
     renderer: services.renderer,
     print,

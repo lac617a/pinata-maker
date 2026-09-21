@@ -2,13 +2,27 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import type { PercentCrop } from "react-image-crop";
 import { toast } from "sonner";
 
+import {
+  ImageCropper,
+  isWholeImage,
+  toImageCrop,
+  WHOLE_IMAGE,
+} from "@/components/posters/image-cropper";
 import { PosterPreview } from "@/components/posters/poster-preview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  createImageCrop,
+  CROP_MIN_SIDE,
+  type ImageCrop,
+  posterImagePlacement,
+} from "@/modules/posters/crop";
+import { InvalidImageCropError } from "@/modules/posters/errors";
 import {
   createPoster,
   lastSheetUsage,
@@ -57,6 +71,9 @@ export function PosterStudio({
   const [format, setFormat] = useState<PaperFormat>("A4");
   const [orientation, setOrientation] = useState<PaperOrientation>("PORTRAIT");
   const [choice, setChoice] = useState<SizeChoice | null>(null);
+  // El recorte es de esta imagen: quien monta el componente lo reinicia al
+  // cambiar de imagen (`key`).
+  const [percentCrop, setPercentCrop] = useState<PercentCrop>(WHOLE_IMAGE);
 
   const print: PrintConfiguration = useMemo(
     () => ({
@@ -83,7 +100,12 @@ export function PosterStudio({
   };
 
   const result = useMemo(():
-    | { readonly poster: Poster; readonly layout: PrintLayout }
+    | {
+        readonly poster: Poster;
+        readonly layout: PrintLayout;
+        readonly crop: ImageCrop | null;
+        readonly placement: ReturnType<typeof posterImagePlacement>;
+      }
     | { readonly error: string }
     | null => {
     if (!size.data) {
@@ -91,17 +113,31 @@ export function PosterStudio({
     }
 
     try {
-      const poster = createPoster(size.data, {
+      // Los mismos pasos que el servidor: el recorte manda sobre la
+      // proporción, y la imagen entera se coloca para que lo llene.
+      const crop = createImageCrop(
+        size.data,
+        toImageCrop(percentCrop, size.data),
+      );
+      const poster = createPoster(crop, {
         [effective.axis]: effective.cm * 10,
       } as { width: number } | { height: number });
 
-      return { poster, layout: posterLayout(poster, print) };
-    } catch {
       return {
-        error: `Cada lado tiene que medir entre ${POSTER_LIMITS.minSide / 10} cm y ${POSTER_LIMITS.maxSide / 10} cm.`,
+        poster,
+        layout: posterLayout(poster, print),
+        crop: isWholeImage(percentCrop) ? null : crop,
+        placement: posterImagePlacement(poster, size.data, crop),
+      };
+    } catch (error) {
+      return {
+        error:
+          error instanceof InvalidImageCropError
+            ? `El recorte es demasiado pequeño: cada lado tiene que tener al menos ${CROP_MIN_SIDE} pixels de la imagen.`
+            : `Cada lado tiene que medir entre ${POSTER_LIMITS.minSide / 10} cm y ${POSTER_LIMITS.maxSide / 10} cm.`,
       };
     }
-  }, [size.data, effective.axis, effective.cm, print]);
+  }, [size.data, percentCrop, effective.axis, effective.cm, print]);
 
   const ok = result !== null && "poster" in result ? result : null;
   const ready = ok !== null;
@@ -116,11 +152,12 @@ export function PosterStudio({
           size="lg"
           disabled={!ready || !image || download.busy}
           onClick={() =>
-            ready &&
+            ok &&
             image &&
             download.run({
               assetId: image.id,
               [effective.axis]: effective.cm * 10,
+              ...(ok.crop ? { crop: ok.crop } : {}),
               paper: { format, orientation },
             })
           }
@@ -220,19 +257,43 @@ export function PosterStudio({
       ) : null}
 
       {ok && image ? (
-        <>
-          <Summary
-            poster={ok.poster}
-            layout={ok.layout}
-            print={print}
-            onFit={(cm) => setChoice({ axis: "width", cm })}
-          />
-          <PosterPreview
-            poster={ok.poster}
-            layout={ok.layout}
-            imageUrl={image.url}
-          />
-        </>
+        <Summary
+          poster={ok.poster}
+          layout={ok.layout}
+          print={print}
+          onFit={(cm) => setChoice({ axis: "width", cm })}
+        />
+      ) : null}
+
+      {image && size.data ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-2">
+            <h3 className="font-medium">Recorte</h3>
+            <ImageCropper
+              imageUrl={image.url}
+              crop={percentCrop}
+              onChange={setPercentCrop}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="font-medium">Así se reparte en hojas</h3>
+            {/* Alineado con el recortador, que lleva una fila de botones. */}
+            <p className="text-muted-foreground flex min-h-8 items-center text-sm">
+              Cada rectángulo es una hoja; se solapan en las juntas.
+            </p>
+            {ok ? (
+              <PosterPreview
+                poster={ok.poster}
+                layout={ok.layout}
+                imageUrl={image.url}
+                placement={ok.placement}
+              />
+            ) : (
+              <div className="border-border bg-card h-[32rem] rounded-lg border" />
+            )}
+          </div>
+        </div>
       ) : null}
     </section>
   );

@@ -93,6 +93,11 @@ const KNOWN_ERRORS: Record<string, ErrorPresentation> = {
     message:
       "Esa medida no sirve: cada lado tiene que medir entre 10 cm y 3 m.",
   },
+  INVALID_IMAGE_CROP: {
+    status: 400,
+    message:
+      "Ese recorte no sirve: tiene que caer dentro de la imagen y no ser diminuto.",
+  },
   INVALID_EXPORT: {
     status: 400,
     message: "No pudimos preparar esa descarga con lo que nos has pedido.",

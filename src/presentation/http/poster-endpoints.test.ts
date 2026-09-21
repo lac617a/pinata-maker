@@ -121,6 +121,38 @@ describe("Poster endpoints", () => {
     expect((await response.json()).code).toBe("INVALID_POSTER_SIZE");
   });
 
+  it("should refuse a crop that is not four numbers", async () => {
+    const shared = services();
+    const { project, asset } = await projectWithImage(shared);
+
+    const response = await handleExportPoster(
+      posterRequest({ assetId: asset.id, width: 600, crop: { x: "0" } }),
+      project.id,
+      { services: shared, userId: owner },
+    );
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe("INVALID_IMAGE_CROP");
+  });
+
+  it("should print only the crop when one is given", async () => {
+    const shared = services();
+    const { project, asset } = await projectWithImage(shared);
+
+    const response = await handleExportPoster(
+      posterRequest({
+        assetId: asset.id,
+        width: 600,
+        crop: { x: 0, y: 0, width: 720, height: 720 },
+      }),
+      project.id,
+      { services: shared, userId: owner },
+    );
+
+    expect(response.status).toBe(201);
+    expect((await response.json()).export.height).toBeCloseTo(600, 6);
+  });
+
   it("should refuse a request without an image", async () => {
     const shared = services();
     const { project } = await projectWithImage(shared);

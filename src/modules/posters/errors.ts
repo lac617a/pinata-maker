@@ -14,3 +14,13 @@ export class InvalidPosterSizeError extends Error {
     this.name = "InvalidPosterSizeError";
   }
 }
+
+/** El recorte pedido no cae dentro de la imagen o es demasiado pequeño. */
+export class InvalidImageCropError extends Error {
+  readonly code = "INVALID_IMAGE_CROP";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidImageCropError";
+  }
+}

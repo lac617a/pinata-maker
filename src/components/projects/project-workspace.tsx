@@ -65,7 +65,12 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
         onSelect={setSelectedImageId}
       />
 
-      <PosterStudio projectId={projectId} image={selectedImage} />
+      {/* Otra imagen, otro recorte y otro tamaño: se empieza de cero. */}
+      <PosterStudio
+        key={selectedImage?.id ?? "none"}
+        projectId={projectId}
+        image={selectedImage}
+      />
 
       <details className="border-border space-y-4 rounded-lg border p-4">
         <summary className="cursor-pointer font-serif text-lg">

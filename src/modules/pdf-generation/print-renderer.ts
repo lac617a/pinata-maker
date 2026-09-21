@@ -87,6 +87,12 @@ export type PosterCover = {
   readonly height: Millimeters;
   readonly paper: string;
   readonly image: EmbeddedImage;
+  /**
+   * Dónde va la imagen entera, en mm del póster. Con un recorte se sale del
+   * póster y el mapa la recorta igual que las hojas (docs/pdf.md §95). Sin
+   * él, ocupa el póster entero.
+   */
+  readonly placement?: SectionArtwork["placement"];
 };
 
 export type PrintDocument = {

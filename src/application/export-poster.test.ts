@@ -11,7 +11,10 @@ import {
   type PrintDocument,
   type PrintRenderer,
 } from "@/modules/pdf-generation/print-renderer";
-import { InvalidPosterSizeError } from "@/modules/posters/errors";
+import {
+  InvalidImageCropError,
+  InvalidPosterSizeError,
+} from "@/modules/posters/errors";
 import { ProjectNotFoundError } from "@/modules/projects/errors";
 import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
 import { InMemoryObjectStorage } from "@/modules/storage/in-memory-object-storage";
@@ -138,6 +141,40 @@ describe("Export poster", () => {
     expect(section.kind).toBe("POSTER");
     expect(section.artwork?.image.format).toBe("PNG");
     expect(rendered[0].cover).toMatchObject({ kind: "POSTER" });
+  });
+
+  it("should take the proportion of the crop, not of the whole image", async () => {
+    const { context } = services();
+    const { project, asset } = await projectWithImage(context);
+
+    const generated = await exportPoster(context, {
+      projectId: project.id,
+      userId: owner,
+      assetId: asset.id,
+      size: { width: 600 },
+      crop: { x: 0, y: 0, width: 720, height: 360 },
+    });
+
+    // Media imagen de alto: el póster sale el doble de ancho que de alto.
+    expect(generated.height).toBeCloseTo(300, 6);
+  });
+
+  it("should refuse a crop that falls outside the stored image", async () => {
+    const { context } = services();
+    const { project, asset } = await projectWithImage(context);
+
+    // El navegador puede creer que la imagen es más grande; manda el archivo.
+    await expect(
+      exportPoster(context, {
+        projectId: project.id,
+        userId: owner,
+        assetId: asset.id,
+        size: { width: 600 },
+        crop: { x: 0, y: 0, width: 1000, height: 894 },
+      }),
+    ).rejects.toBeInstanceOf(InvalidImageCropError);
+
+    expect(context.exportStorage.keys()).toHaveLength(0);
   });
 
   it("should name the file after the project and its width", async () => {

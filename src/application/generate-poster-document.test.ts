@@ -50,7 +50,8 @@ function opaquePng(): Uint8Array {
   );
 }
 
-const poster = createPoster({ width: 720, height: 894 }, { width: 600 });
+const imageSize = { width: 720, height: 894 };
+const poster = createPoster(imageSize, { width: 600 });
 const image = { bytes: opaquePng(), format: "PNG" as const };
 
 function capturing() {
@@ -74,24 +75,68 @@ describe("Generate poster document", () => {
   it("should print the whole image across the sheets", async () => {
     const { documents, renderer } = capturing();
 
-    await generatePosterDocument({ poster, image, title: "4", renderer });
+    await generatePosterDocument({
+      poster,
+      image,
+      imageSize,
+      title: "4",
+      renderer,
+    });
 
     const [section] = documents[0].sections;
 
     // La imagen ocupa el póster entero: nada recortado, nada deformado.
     expect(section.kind).toBe("POSTER");
-    expect(section.artwork?.placement).toEqual({
-      x: 0,
-      y: 0,
+    expect(section.artwork?.placement).toMatchObject({
+      x: expect.closeTo(0, 6),
+      y: expect.closeTo(0, 6),
       width: poster.width,
-      height: poster.height,
+      height: expect.closeTo(poster.height, 6),
     });
+  });
+
+  it("should print only the cropped part, enlarged to the poster", async () => {
+    const { documents, renderer } = capturing();
+    const crop = { x: 180, y: 0, width: 360, height: 447 };
+    const cropped = createPoster(crop, { width: 600 });
+
+    await generatePosterDocument({
+      poster: cropped,
+      image,
+      imageSize,
+      crop,
+      title: "4",
+      renderer,
+    });
+
+    const [section] = documents[0].sections;
+    const cover = documents[0].cover;
+
+    // Medio ancho de imagen en 60 cm: la imagen entera mediría 120 cm y
+    // empezaría 30 cm a la izquierda del póster, fuera del papel.
+    expect(section.artwork?.placement.x).toBeCloseTo(-300, 6);
+    expect(section.artwork?.placement.width).toBeCloseTo(1200, 6);
+    // El recorte sigue siendo el borde del póster, no el de la imagen.
+    expect(section.artwork?.clip[0].points[2]).toEqual({
+      x: cropped.width,
+      y: cropped.height,
+    });
+    // El mapa del resumen enseña lo mismo que las hojas.
+    expect(cover && "placement" in cover ? cover.placement : null).toEqual(
+      section.artwork?.placement,
+    );
   });
 
   it("should lay out the same sheets the preview shows", async () => {
     const { documents, renderer } = capturing();
 
-    await generatePosterDocument({ poster, image, title: "4", renderer });
+    await generatePosterDocument({
+      poster,
+      image,
+      imageSize,
+      title: "4",
+      renderer,
+    });
 
     expect(documents[0].sections[0].layout.pages.length).toBe(
       posterLayout(poster, DEFAULT_PRINT_CONFIGURATION).pages.length,
@@ -101,7 +146,13 @@ describe("Generate poster document", () => {
   it("should open with a summary sheet", async () => {
     const { documents, renderer } = capturing();
 
-    await generatePosterDocument({ poster, image, title: "4", renderer });
+    await generatePosterDocument({
+      poster,
+      image,
+      imageSize,
+      title: "4",
+      renderer,
+    });
 
     expect(documents[0].cover).toMatchObject({
       kind: "POSTER",
@@ -114,6 +165,7 @@ describe("Generate poster document", () => {
     const document = await generatePosterDocument({
       poster,
       image,
+      imageSize,
       title: "4",
       renderer: new JsPdfPrintRenderer(),
     });
@@ -131,6 +183,7 @@ describe("Generate poster document", () => {
     const document = await generatePosterDocument({
       poster,
       image,
+      imageSize,
       title: "4",
       renderer: new JsPdfPrintRenderer(),
     });

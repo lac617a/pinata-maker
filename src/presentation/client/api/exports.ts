@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import type { ImageCrop } from "@/modules/posters/crop";
 import type {
   PaperFormat,
   PaperOrientation,
@@ -103,6 +104,8 @@ export type ExportPosterInput = {
   /** Un lado en milímetros; el otro lo calcula el servidor con la imagen. */
   readonly width?: number;
   readonly height?: number;
+  /** La parte de la imagen que se imprime, en pixels. Sin él, entera. */
+  readonly crop?: ImageCrop;
   readonly paper: {
     readonly format: PaperFormat;
     readonly orientation: PaperOrientation;

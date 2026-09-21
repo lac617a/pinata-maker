@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+
 import type { Poster } from "@/modules/posters/poster";
 import type { PrintLayout } from "@/modules/printing/print-layout";
 
@@ -15,11 +17,16 @@ export function PosterPreview({
   poster,
   layout,
   imageUrl,
+  placement,
 }: {
   poster: Poster;
   layout: PrintLayout;
   imageUrl: string;
+  /** Dónde va la imagen entera en mm del póster: con un recorte se sale. */
+  placement: { x: number; y: number; width: number; height: number };
 }) {
+  const clipId = useId();
+
   // La vista cubre también lo que las hojas imprimen de más: la última
   // columna o fila puede quedar parcialmente en blanco.
   const last = layout.pages[layout.pages.length - 1].globalBounds;
@@ -49,13 +56,18 @@ export function PosterPreview({
         />
       ))}
 
+      {/* Lo mismo que hace el PDF: la imagen entera, recortada por el póster. */}
+      <clipPath id={clipId}>
+        <rect x={0} y={0} width={poster.width} height={poster.height} />
+      </clipPath>
       <image
         href={imageUrl}
-        x={0}
-        y={0}
-        width={poster.width}
-        height={poster.height}
+        x={placement.x}
+        y={placement.y}
+        width={placement.width}
+        height={placement.height}
         preserveAspectRatio="none"
+        clipPath={`url(#${clipId})`}
       />
 
       {/* Solape: la franja que cada hoja repite de la vecina. */}

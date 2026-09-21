@@ -434,8 +434,8 @@ ya existía.
 > **Desde el 2026-09-21 la salida del producto es la imagen en mosaico**
 > (`PRD.md` §44). Lo que sigue en esta sección describe la primera
 > interfaz, con plantillas; la pantalla del proyecto ahora es la del póster:
-> imagen, tamaño en cm con las hojas al lado, vista previa con la retícula y
-> descarga. Las piezas, las versiones de plantilla y su API siguen en el
+> imagen, recorte opcional (`pdf.md` §95), tamaño en cm con las hojas al
+> lado, vista previa con la retícula y descarga. Las piezas, las versiones de plantilla y su API siguen en el
 > código, sin interfaz.
 
 Lo que el usuario puede hacer hoy:

@@ -1142,6 +1142,10 @@ alto salen. Un fabricante piensa en centímetros, no en hojas.
 Como con N hojas se cubre una medida exacta, la interfaz ofrece esas medidas
 para que la última columna o fila no salga casi vacía.
 
+Antes de elegir el tamaño se puede recortar la imagen para quedarse con una
+parte. El recorte decide la proporción del póster; el archivo guardado no se
+modifica (`pdf.md` §95).
+
 ## Lo que no cambia
 
 Imprimir a tamaño real (§11), las marcas de alineación y la identidad de las

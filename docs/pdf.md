@@ -1873,3 +1873,53 @@ recorta. Aquí cada hoja repite una franja de la vecina (10 mm por defecto)
 con marcas de alineación encima, que es más fácil de pegar a ojo. La
 contrapartida es que un ancho dado puede necesitar una columna más; la
 interfaz propone las medidas que llenan hojas enteras.
+
+---
+
+# 95. Recortar la imagen del póster
+
+El usuario puede quedarse con una parte de la imagen antes de ampliarla
+(`PRD.md` §44). El recorte es un rectángulo en pixels de la imagen original
+(`ImageCrop`, en `modules/posters/crop.ts`).
+
+## El recorte manda sobre la proporción
+
+El póster toma la proporción del recorte, no la de la imagen entera: se
+elige un lado en centímetros y el otro sale del recorte. Sin recorte, es la
+imagen entera y nada cambia.
+
+## El archivo no se toca
+
+El PDF incrusta la imagen entera, una sola vez, y la dibuja desplazada y más
+grande para que el recorte llene exactamente el rectángulo del póster:
+
+```text
+escala      = ancho del póster / ancho del recorte   (mm por pixel)
+colocación  = (−x · escala, −y · escala,
+               ancho de la imagen · escala, alto de la imagen · escala)
+```
+
+Lo que queda fuera cae fuera del póster y lo tapa el mismo recorte por el
+borde del póster que ya usan las hojas (§93). El mapa de la hoja de resumen
+usa la misma colocación, así que enseña lo mismo que las hojas.
+
+No se recortan los bytes en el servidor: haría falta decodificar y volver a
+codificar la imagen —otra dependencia y otra pérdida de calidad en JPEG—
+para ahorrar unos kilobytes de un documento que ya lleva la imagen una sola
+vez.
+
+## Quién comprueba qué
+
+El navegador dibuja el recuadro (`react-image-crop`) y convierte su
+porcentaje a pixels enteros. El servidor vuelve a comprobarlo contra el
+tamaño leído de la cabecera del archivo (`image-processing.md` §110): un
+recorte que se sale de la imagen, o de menos de `CROP_MIN_SIDE` pixels de
+lado, responde `INVALID_IMAGE_CROP` (400).
+
+## Lo que no se guarda
+
+La fila del documento guarda el tamaño impreso, no el recorte. No hace falta
+para descargarlo —el PDF se guarda entero (`storage.md` §162)—, pero sin él
+no se puede regenerar el mismo documento. Si algún día hace falta, son
+cuatro columnas nuevas en `exports`.
+

@@ -5,6 +5,11 @@ import type {
   PrintRenderer,
 } from "@/modules/pdf-generation/print-renderer";
 import {
+  fullImageCrop,
+  type ImageCrop,
+  posterImagePlacement,
+} from "@/modules/posters/crop";
+import {
   type Poster,
   posterGeometry,
   posterLayout,
@@ -19,6 +24,10 @@ import { describePaper } from "./generate-printable-document";
 export type GeneratePosterDocumentInput = {
   readonly poster: Poster;
   readonly image: EmbeddedImage;
+  /** Tamaño en pixels de la imagen entera, el que dice su cabecera. */
+  readonly imageSize: { readonly width: number; readonly height: number };
+  /** La parte que se imprime. Sin él, la imagen entera. */
+  readonly crop?: ImageCrop;
   readonly title: string;
   /** La implementación concreta la decide quien llama, no este caso de uso. */
   readonly renderer: PrintRenderer;
@@ -34,6 +43,10 @@ export type GeneratePosterDocumentInput = {
  * después cada trozo de la imagen en su hoja, con su etiqueta y sus marcas de
  * alineación. Es la salida que pide el producto (docs/PRD.md §44).
  *
+ * Con un recorte, el PDF lleva la imagen entera y la dibuja desplazada y
+ * recortada por el borde del póster: las hojas y el mapa solo enseñan la
+ * parte elegida (docs/pdf.md §95).
+ *
  * No calcula nada propio: el tamaño y el reparto salen del módulo de pósters,
  * los mismos que usa la vista previa.
  */
@@ -42,6 +55,11 @@ export async function generatePosterDocument(
 ): Promise<PrintableDocument> {
   const print = input.print ?? DEFAULT_PRINT_CONFIGURATION;
   const layout = posterLayout(input.poster, print);
+  const placement = posterImagePlacement(
+    input.poster,
+    input.imageSize,
+    input.crop ?? fullImageCrop(input.imageSize),
+  );
 
   const document: PrintDocument = {
     cover: {
@@ -51,6 +69,7 @@ export async function generatePosterDocument(
       height: input.poster.height,
       paper: describePaper(print.paper.format, print.paper.orientation),
       image: input.image,
+      placement,
     },
     sections: [
       {
@@ -61,12 +80,7 @@ export async function generatePosterDocument(
         kind: "POSTER",
         artwork: {
           image: input.image,
-          placement: {
-            x: 0,
-            y: 0,
-            width: input.poster.width,
-            height: input.poster.height,
-          },
+          placement,
           mirrored: false,
           clip: posterGeometry(input.poster).outerContours,
         },

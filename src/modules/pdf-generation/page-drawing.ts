@@ -551,13 +551,20 @@ export function describePosterCover(
   const mapWidth = content.width * scale;
   const mapHeight = content.height * scale;
 
+  const placement = content.placement ?? {
+    x: 0,
+    y: 0,
+    width: content.width,
+    height: content.height,
+  };
+
   const images: PageImage[] = [
     {
       image: content.image,
-      x: origin.x,
-      y: origin.y,
-      width: mapWidth,
-      height: mapHeight,
+      x: origin.x + placement.x * scale,
+      y: origin.y + placement.y * scale,
+      width: placement.width * scale,
+      height: placement.height * scale,
       mirrored: false,
       clip: [rectangle(origin, onMap(content.width, content.height))],
       bounds: { x: origin.x, y: origin.y, width: mapWidth, height: mapHeight },
