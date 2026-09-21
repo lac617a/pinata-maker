@@ -27,8 +27,9 @@ Del lado de la imagen, todo lo determinista está hecho: validación del
 archivo, umbral del canal alfa, regiones conexas y trazado del contorno. Falta
 únicamente quitar el fondo, que es un adaptador de infraestructura.
 
-Hay capa de aplicación, persistencia con RLS y flujo de sesión. **Lo que no
-hay es interfaz**: `app/` solo contiene la API.
+Hay capa de aplicación, persistencia con RLS, flujo de sesión e **interfaz**:
+un PNG con el fondo ya recortado se convierte en un PDF descargable sin salir
+del navegador.
 
 ```text
 [✓] Máscara alfa → contorno en pixels → geometría en mm
@@ -40,7 +41,8 @@ hay es interfaz**: `app/` solo contiene la API.
 [✓] Plantilla publicada como versión inmutable, recuperable tal y como se guardó
 [✓] PDF generado, guardado en object storage y entregado con enlace firmado
 [ ] Imagen real → máscara alfa (eliminación de fondo)
-[ ] Interfaz de usuario
+[✓] Interfaz: sesión, proyectos, imagen, molde, versiones y descarga
+[ ] Imagen opaca → máscara alfa (una con transparencia ya funciona)
 ```
 
 De punta a punta, con un solo caso de uso: una máscara elíptica de 600 × 800
@@ -53,7 +55,7 @@ conocido y medirlo con una regla real (`printing.md` §75).
 Verificación:
 
 ```bash
-pnpm test        # 418 tests, más 26 de integración que necesitan cuenta
+pnpm test        # 424 tests, más 26 de integración que necesitan cuenta
 pnpm exec tsc --noEmit
 ```
 
@@ -411,7 +413,50 @@ daría un documento distinto del que el usuario tiene impreso.
 
 Decisiones documentadas en `storage.md` §160-§164.
 
-## 2.14 Prueba de la cadena completa
+## 2.14 Interfaz
+
+Primera parte de la fase F. Cubre el ciclo entero del producto con la API que
+ya existía.
+
+| Archivo | Responsabilidad |
+| --- | --- |
+| `app/acceder/`, `app/crear-cuenta/` | Entrar y registrarse |
+| `app/proyectos/layout.tsx` | Guarda de sesión, en servidor |
+| `app/proyectos/page.tsx` | Panel: crear, renombrar, borrar |
+| `app/proyectos/[id]/page.tsx` | Imagen, molde, versiones y documentos |
+| `presentation/client/api/` | Un archivo por recurso: tipos, peticiones y hooks |
+| `presentation/client/api-client.ts` | `{ code, message }` de la API → `ApiError` |
+| `presentation/client/image-decoding.ts` | Único archivo que toca un canvas |
+| `presentation/next/supabase.ts` | Cookies de la petición, en un solo sitio |
+| `components/ui/` | shadcn/ui |
+| `components/{session,projects,templates,exports}/` | Las pantallas |
+
+Lo que el usuario puede hacer hoy:
+
+1. Crear una cuenta y entrar.
+2. Crear un proyecto y subirle una imagen.
+3. Pedir medidas y papel, **ver el coste antes de decidir** —piezas, metros
+   cuadrados y hojas— y publicar la versión.
+4. Generar el PDF de una versión y descargarlo.
+
+## 2.15 La plantilla se deriva en el navegador
+
+El dominio es TypeScript puro y el navegador ya trae un decodificador, así que
+un PNG con transparencia se convierte en molde hoy, sin esperar a la fase B:
+`image-decoding.ts` saca la máscara alfa con un canvas y `generateTemplate`
+sigue desde ahí exactamente igual que en el servidor.
+
+Es el borrador de `storage.md` §18 y es provisional (§158): la verdad física
+pertenece al servidor. Lo que lo sostiene mientras tanto es que nada se guarda
+tal cual —la definición pasa por los constructores del dominio al publicarse—
+y que el PDF, que es lo que se imprime, se genera siempre en el servidor
+desde la versión guardada.
+
+Una imagen sin transparencia produce un molde con la forma del rectángulo
+entero. El sistema lo detecta y avisa en lugar de fallar: es correcto y casi
+nunca es lo que el usuario quería (`image-processing.md` §108).
+
+## 2.16 Prueba de la cadena completa
 
 `src/modules/pipeline.test.ts` recorre máscara → contorno → geometría →
 plantilla → reparto en páginas.
@@ -498,11 +543,15 @@ eliminación de fondo y la D a falta de lo que exige persistencia** (ver §2.3,
 §2.5, §2.6 y §2.7); las letras se mantienen para no invalidar las referencias
 de este documento.
 
-## Fase B — Eliminación de fondo (lo único que queda)
+## Fase B — Eliminación de fondo (para imágenes opacas)
 
 La parte determinista está hecha: validación, umbral, regiones conexas y
-trazado del contorno. Queda el adaptador que produce la máscara alfa a partir
-de la imagen del usuario.
+trazado del contorno. Y una imagen que **ya trae transparencia** funciona de
+punta a punta: el navegador la decodifica y el dominio sigue desde la máscara
+(§2.15).
+
+Queda el caso que exige decidir: una foto opaca, donde hay que separar figura
+de fondo.
 
 * Decidir servicio externo o implementación local (§5.2). Es un adaptador de
   infraestructura, no dominio, y su contrato ya está abstraído
@@ -571,18 +620,19 @@ y el usuario en cada operación.
 
 ## Fase F — Presentación
 
-`app/page.tsx` es todavía la página de bienvenida inicial. Lo que ya está
-puesto es el andamiaje: tema, sistema de componentes y cliente de datos
-(§2.1).
+**Parcial.** El ciclo completo está cubierto (§2.14): sesión, proyectos,
+imagen, molde con su coste, versiones y descarga del PDF.
 
-* Subida de imagen con arrastrar y soltar, previsualización y reemplazo.
-* Formulario de configuración: ancho, alto, profundidad, papel, orientación,
-  margen, solape.
-* Vista previa de la plantilla y del reparto en páginas. La previsualización
-  es orientativa: nunca es la fuente de verdad física (`printing.md` §78).
-* Pantallas de registro e inicio de sesión. La API existe (§2.10); lo que
-  falta es por dónde se usa.
-* Panel de proyectos, estados y manejo de errores (PRD §21, §22, §23).
+Falta:
+
+* Arrastrar y soltar al subir, y margen y solape en el formulario: hoy son
+  los valores del producto y no se pueden tocar desde la interfaz.
+* Vista previa de la plantilla y del reparto en páginas. Necesita un renderer
+  que no existe (§8.2). La previsualización es orientativa: nunca es la
+  fuente de verdad física (`printing.md` §78).
+* Los estados del proyecto no se mueven desde la interfaz: publicar una
+  versión no lo lleva a `READY` (`storage.md` §159).
+* La derivación bloquea el hilo del navegador mientras calcula.
 
 ## Fase G — Acceso, límites y monetización
 
@@ -694,11 +744,11 @@ posicionar.
 
 | AC | Criterio | Estado |
 | --- | --- | --- |
-| AC-01 | Crear un proyecto | Dominio y persistencia listos; falta interfaz (F) |
-| AC-02 | Subir una imagen válida | API lista; falta interfaz (F) |
-| AC-03 | Visualizar la imagen cargada | URL firmada lista; falta interfaz (F) |
-| AC-04 | Obtener una figura aislada | Parcial: falta la eliminación de fondo |
-| AC-05 | Configurar medidas y papel | Dominio listo; falta interfaz (F) |
+| AC-01 | Crear un proyecto | **Hecho y probado** |
+| AC-02 | Subir una imagen válida | **Hecho y probado** |
+| AC-03 | Visualizar la imagen cargada | **Hecho y probado** |
+| AC-04 | Obtener una figura aislada | Parcial: sirve si la imagen ya tiene transparencia |
+| AC-05 | Configurar medidas y papel | **Hecho y probado** |
 | AC-06 | Generar una plantilla | **Hecho y probado** |
 | AC-07 | Conservar las dimensiones físicas | **Hecho y probado** |
 | AC-08 | Dividir automáticamente en páginas | **Hecho y probado** |
@@ -706,8 +756,8 @@ posicionar.
 | AC-10 | Marcas de alineación | **Hecho y probado** |
 | AC-11 | Referencia de calibración | **Hecho y probado** |
 | AC-12 | Generar PDF | **Hecho y probado** |
-| AC-13 | Descargar el PDF | API lista; falta interfaz (F) |
-| AC-14 | Reabrir el proyecto | API lista; falta interfaz (F) |
+| AC-13 | Descargar el PDF | **Hecho y probado** |
+| AC-14 | Reabrir el proyecto | **Hecho y probado** |
 | AC-15 | Aislamiento entre usuarios | **Hecho y probado** para proyectos |
 
 ---

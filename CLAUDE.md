@@ -34,7 +34,7 @@ aquí.
 ## 2. Comandos
 
 ```bash
-pnpm test              # Vitest, 418 tests, entorno node
+pnpm test              # Vitest, 424 tests, entorno node
 ```
 
 ```bash
@@ -89,6 +89,7 @@ src/presentation/http/      Petición → caso de uso → respuesta. Sin Next.
 src/presentation/next/      Único punto que junta Next, Supabase y el dominio.
 src/presentation/client/    Navegador: cliente HTTP, TanStack Query, providers.
 src/components/ui/          Componentes de shadcn/ui. Código propio, no dependencia.
+src/components/<área>/      Las pantallas: session, projects, templates, exports.
 src/infrastructure/         Adaptadores compartidos (cliente de Supabase).
 supabase/migrations/        Esquema y políticas RLS. Se aplican a mano.
 src/modules/
@@ -116,7 +117,7 @@ Flujo del pipeline:
 
 ```text
 Imagen → máscara alfa → contorno px → geometría mm → piezas → PrintLayout → PDF
-         (falta B)       image-processing            templates   printing   pdf-generation
+         (canvas, B/2)   image-processing            templates   printing   pdf-generation
                          └────────── generateTemplate ─────────┘  └─ generatePrintableDocument ─┘
 ```
 
@@ -198,8 +199,15 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
 * **Hay cuatro migraciones y dos buckets privados.** Se aplican a mano y en
   orden. Comprueba siempre con `pnpm check:supabase` antes de dar por hecho
   que la base de datos está al día.
-* **Siguiente:** la interfaz (fase F). Seis criterios de aceptación esperan
-  solo por ella. La eliminación de fondo queda aparcada hasta el monorepo.
+* **La interfaz cubre el ciclo entero** (fase F parcial): entrar, crear
+  proyecto, subir imagen, calcular el molde con su coste, publicar versión,
+  generar el PDF y descargarlo.
+* **La plantilla se deriva en el navegador** mientras no exista la
+  eliminación de fondo: un PNG con transparencia no la necesita. El PDF, que
+  es lo que se imprime, se genera siempre en el servidor desde la versión
+  guardada (`docs/roadmap.md` §2.15).
+* **Siguiente:** imprimir un molde y medirlo con una regla (`docs/roadmap.md`
+  §8.1). Nada de lo construido lo ha comprobado todavía.
 * **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,
   de pago) y la publicación con SEO y páginas legales. Los requisitos están en
   `docs/PRD.md` §38-§43, no en el roadmap: el roadmap solo registra cuándo se

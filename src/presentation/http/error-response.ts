@@ -137,6 +137,17 @@ const UNEXPECTED: ErrorPresentation = {
   message: "Algo falló por nuestra parte. Inténtalo de nuevo en un momento.",
 };
 
+/**
+ * Qué se le dice al usuario por un código conocido.
+ *
+ * Lo usa también el navegador: cuando la plantilla se deriva ahí, el error
+ * del dominio no pasa por HTTP y no hay respuesta que traducir. El texto es
+ * el mismo en los dos sitios porque sale de la misma tabla.
+ */
+export function messageForErrorCode(code: string | undefined): string | null {
+  return code ? (KNOWN_ERRORS[code]?.message ?? null) : null;
+}
+
 export function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
     status,

@@ -2244,3 +2244,46 @@ eleva cuando no.
 
 `PhysicalContour.appliedSimplificationTolerance` declara la que se usó de
 verdad, para que la diferencia no sea invisible (§93).
+
+---
+
+# 108. De RGBA a máscara alfa
+
+Quien decodifica la imagen es de fuera del dominio: un canvas en el navegador
+hoy, una librería en el servidor cuando exista la eliminación de fondo. Lo que
+entrega son cuatro bytes por pixel, y de esos el dominio solo necesita el
+cuarto.
+
+`rgba-mask.ts` hace esa traducción y nada más:
+
+```text
+RGBA (de quien decodifique)
+   ↓
+alphaMaskFromRgba
+   ↓
+AlphaMask (§29)
+```
+
+Comprueba que el buffer mide exactamente `width × height × 4`. Si no cuadra,
+lo que llegó no es esa imagen, y seguir produciría una máscara desplazada en
+lugar de un error.
+
+## Una imagen que ya trae transparencia no necesita que le quiten el fondo
+
+Esto es la mitad de la fase B, la mitad que no exige decidir nada. Un PNG
+recortado ya declara qué es figura y qué es fondo; la eliminación de fondo
+solo hace falta para el caso contrario, una foto opaca.
+
+Por eso la aplicación puede derivar plantillas hoy: el navegador decodifica
+—`presentation/client/image-decoding.ts`, el único archivo que toca un
+canvas— y a partir de la máscara el pipeline es exactamente el mismo que
+correría en el servidor.
+
+## Sin transparencia el resultado es correcto e inútil
+
+`maskIsFullyOpaque` existe para poder avisar. Una imagen opaca produce una
+silueta que es el rectángulo entero de la imagen: el sistema no falla, entrega
+un molde con forma de caja.
+
+Es un aviso y no un error porque puede ser lo que el usuario quiere —una caja
+es una piñata perfectamente válida—, pero casi nunca lo es.
