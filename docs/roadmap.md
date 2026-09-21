@@ -744,6 +744,8 @@ posicionar.
   montaje, regla de calibración y aviso de resolución. Es también el
   contenido indexable que pide el SEO, y el sitio natural para la figura de
   ejemplo (§8.11).
+* **Existing accounts accept the policy once** (`legal.md` §7, migration
+  0011), and every account again when the policy version changes.
 * **Adapted to Colombian law on 2026-09-21** (`legal.md` §5): data policy
   per Decreto 1377, SIC as authority, required authorization box at sign-up
   with proof kept in `data_authorizations` (migration 0009).

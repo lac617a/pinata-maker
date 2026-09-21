@@ -117,8 +117,8 @@ Art. 9: prior, express and informed, and the controller keeps proof.
 * The same trigger **refuses any account without it.** The anon key is
   public and the Supabase sign-up API can be called directly; with this the
   rule holds in the database, whoever calls.
-* A substantial change of the policy bumps `DATA_POLICY_VERSION`. Asking
-  existing accounts to accept the new version is still to be built.
+* A substantial change of the policy bumps `DATA_POLICY_VERSION`, and every
+  account is asked to accept the new version (§7).
 
 Without an account, generating a PDF accepts the minimal treatment the
 policy describes; `/crear` says so next to the tool.
@@ -129,7 +129,8 @@ Order matters: **deploy the code first, then apply the migration.** Applied
 first, the trigger would refuse every sign-up from the old code, which does
 not send the authorization yet.
 
-Accounts created before 0009 have no recorded authorization.
+Accounts created before 0009 have no recorded authorization; they are
+asked once (§7).
 
 ---
 
@@ -173,3 +174,32 @@ deploying the code.** The old code never calls the function, so applying it
 first is harmless. Deployed without it, deleting an account would remove
 every project and then fail at the last step, leaving an empty account.
 `pnpm check:supabase` checks that the function exists.
+
+---
+
+# 7. Asking existing accounts
+
+Two kinds of account lack an authorization for the current policy: those
+created before 0009 recorded it, and all of them after the policy changes
+version. Entering `/proyectos`, such an account sees the same box as at
+sign-up, unticked and required, **instead of** its projects, once.
+
+* Accepting goes through `record_my_data_authorization`
+  (`0011_record_own_data_authorization.sql`): it takes the user from the
+  session and the time from the database, which is the proof.
+* The check reads `data_authorizations` (0009), where each person sees only
+  their own rows.
+* **If the check itself fails** — 0009 not applied yet, Supabase down — the
+  person gets through and the failure is logged. A pending migration must
+  not lock every account out of its own projects.
+* Declining is possible: sign out, or ask for the account to be deleted.
+
+## Deploying 0011
+
+Apply it **before** deploying the code: the old code never calls it, and
+without it an account asked to accept could not.
+
+```text
+0010, 0011   before the push
+0009         after the push
+```

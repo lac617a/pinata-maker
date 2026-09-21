@@ -9,7 +9,8 @@ Vercel sirve igual en cualquier otro.
 # 1. Antes de desplegar
 
 ```text
-[ ] Migraciones 0001 a 0010 aplicadas, en orden, en el proyecto de Supabase
+[ ] Migraciones 0001 a 0011 aplicadas en el proyecto de Supabase de
+    producción (0009 después del push: legal.md §5 y §7)
     de producción.                     →  pnpm check:supabase contra él
 [ ] Datos del titular en src/components/legal/site-owner.ts
                                        →  sin aviso de borrador (legal.md §2)

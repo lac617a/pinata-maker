@@ -61,3 +61,14 @@ export function useDeleteAccount() {
       }),
   });
 }
+
+/** Accepts the current data policy for the signed-in account. */
+export function useAcceptDataPolicy() {
+  return useMutation({
+    mutationFn: (input: { readonly acceptedDataPolicy: boolean }) =>
+      apiRequest<void>("/api/account/data-authorization", {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
+  });
+}

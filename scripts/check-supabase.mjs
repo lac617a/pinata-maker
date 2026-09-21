@@ -155,6 +155,22 @@ if (url && anonKey) {
       : (deletion.error?.code ?? "respondió sin sesión: revisa la migración"),
   );
 
+  // Migración 0011: una cuenta registra su propia autorización.
+  const recording = await client.rpc("record_my_data_authorization", {
+    policy_version: "check-supabase",
+  });
+  const recordingMissing = ["PGRST202", "42883"].includes(
+    recording.error?.code ?? "",
+  );
+
+  report(
+    "la función para registrar la autorización existe",
+    recording.error?.code === "42501",
+    recordingMissing
+      ? "aplica supabase/migrations/0011_record_own_data_authorization.sql antes de desplegar"
+      : (recording.error?.code ?? "respondió sin sesión: revisa la migración"),
+  );
+
   const counters = await client
     .from("usage_counters")
     .select("subject")

@@ -2,12 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import type { AccountServices } from "@/application/delete-account";
 import { createProject } from "@/application/manage-projects";
+import { DATA_POLICY_VERSION } from "@/modules/accounts/data-authorization";
+import { InMemoryDataAuthorizationStore } from "@/modules/accounts/data-authorization-store";
 import { InMemoryAssetRepository } from "@/modules/assets/in-memory-asset-repository";
 import { InMemoryExportRepository } from "@/modules/exports/in-memory-export-repository";
 import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-repository";
 import { InMemoryObjectStorage } from "@/modules/storage/in-memory-object-storage";
 
-import { handleDeleteAccount, handleDeleteProject } from "./account-endpoints";
+import {
+  handleAcceptDataPolicy,
+  handleDeleteAccount,
+  handleDeleteProject,
+} from "./account-endpoints";
 
 const owner = "11111111-1111-1111-1111-111111111111";
 const stranger = "22222222-2222-2222-2222-222222222222";
@@ -126,6 +132,58 @@ describe("Delete account endpoint", () => {
       services: services(),
       userId: null,
     });
+
+    expect(response.status).toBe(401);
+  });
+});
+
+describe("Accept data policy endpoint", () => {
+  function accept(body: unknown): Request {
+    return new Request("http://localhost/api/account/data-authorization", {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  function authorizations() {
+    const store = new InMemoryDataAuthorizationStore();
+
+    return {
+      store,
+      services: { authorizations: store, now: () => new Date() },
+    };
+  }
+
+  it("should record the current policy for the signed-in account", async () => {
+    const { store, services } = authorizations();
+
+    const response = await handleAcceptDataPolicy(
+      accept({ acceptedDataPolicy: true }),
+      { services, userId: owner },
+    );
+
+    expect(response.status).toBe(204);
+    expect(await store.hasAccepted(owner, DATA_POLICY_VERSION)).toBe(true);
+  });
+
+  it("should record nothing without an explicit yes", async () => {
+    const { store, services } = authorizations();
+
+    const response = await handleAcceptDataPolicy(accept({}), {
+      services,
+      userId: owner,
+    });
+
+    expect(response.status).toBe(400);
+    expect(await store.hasAccepted(owner, DATA_POLICY_VERSION)).toBe(false);
+  });
+
+  it("should answer 401 without a session", async () => {
+    const response = await handleAcceptDataPolicy(
+      accept({ acceptedDataPolicy: true }),
+      { services: authorizations().services, userId: null },
+    );
 
     expect(response.status).toBe(401);
   });

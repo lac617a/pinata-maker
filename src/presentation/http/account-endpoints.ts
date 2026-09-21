@@ -1,4 +1,8 @@
 import {
+  acceptDataPolicy,
+  type DataAuthorizationServices,
+} from "@/application/data-authorization";
+import {
   type AccountServices,
   deleteAccount,
   deleteProjectWithFiles,
@@ -66,6 +70,39 @@ export async function handleDeleteAccount(
     }
 
     await deleteAccount(context.services, context.userId);
+
+    return new Response(null, { status: 204 });
+  } catch (error) {
+    return toErrorResponse(error);
+  }
+}
+
+export type DataAuthorizationRequestContext = {
+  readonly services: DataAuthorizationServices;
+  readonly userId: UserId | null;
+};
+
+/**
+ * The signed-in person accepts the current data policy: accounts created
+ * before the proof was kept, or after the policy changes (docs/legal.md §7).
+ * The body says `{ "acceptedDataPolicy": true }`, as at sign-up.
+ */
+export async function handleAcceptDataPolicy(
+  request: Request,
+  context: DataAuthorizationRequestContext,
+): Promise<Response> {
+  if (!context.userId) {
+    return unauthorizedResponse();
+  }
+
+  try {
+    const body = await readJsonBody(request);
+
+    await acceptDataPolicy(
+      context.services,
+      context.userId,
+      body.acceptedDataPolicy,
+    );
 
     return new Response(null, { status: 204 });
   } catch (error) {

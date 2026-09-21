@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { DataAuthorizationGate } from "@/components/session/data-authorization-gate";
 import { SignOutButton } from "@/components/session/sign-out-button";
+import { mustAcceptDataPolicy } from "@/presentation/next/data-authorization-context";
 import { PRIVATE_PAGE_METADATA } from "@/presentation/next/public-pages";
 import { readSessionUserId } from "@/presentation/next/supabase";
 
@@ -21,9 +23,15 @@ export default async function ProjectsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  if (!(await readSessionUserId())) {
+  const userId = await readSessionUserId();
+
+  if (!userId) {
     redirect("/acceder");
   }
+
+  // An account without the current data authorization accepts it once,
+  // before anything it stores is shown (docs/legal.md §7).
+  const mustAccept = await mustAcceptDataPolicy(userId);
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
@@ -33,7 +41,7 @@ export default async function ProjectsLayout({
         </Link>
         <SignOutButton />
       </header>
-      {children}
+      {mustAccept ? <DataAuthorizationGate /> : children}
     </div>
   );
 }
