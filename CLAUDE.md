@@ -34,7 +34,7 @@ aquí.
 ## 2. Comandos
 
 ```bash
-pnpm test              # Vitest, 285 tests, entorno node
+pnpm test              # Vitest, 319 tests, entorno node
 ```
 
 ```bash
@@ -69,7 +69,7 @@ overrides de seguridad para `postcss` y `sharp`). No usar npm ni yarn.
 
 ```text
 app/                        Rutas (App Router). Permanece en la raíz.
-app/api/projects/           API de proyectos. Solo montan el contexto y delegan.
+app/api/                    API. Las rutas solo montan el contexto y delegan.
 src/application/            Casos de uso. Coordinan módulos, sin reglas propias.
 src/presentation/http/      Petición → caso de uso → respuesta. Sin Next.
 src/presentation/next/      Único punto que junta Next, Supabase y el dominio.
@@ -78,6 +78,8 @@ supabase/migrations/        Esquema y políticas RLS. Se aplican a mano.
 src/modules/
 ├── geometry/               Vocabulario físico en mm. No depende de nada.
 ├── image-processing/       Imagen → máscara → contorno → mm.
+├── accounts/               Registro y sesión, tras el puerto AuthGateway.
+├── assets/                 Imagen original del proyecto: fila y archivo.
 ├── projects/               Proyecto del usuario, con su repositorio.
 ├── templates/              Silueta + profundidad → piezas recortables.
 ├── printing/               Papel, márgenes, tiling, PrintLayout.
@@ -156,11 +158,12 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
 * **Fase E parcial:** el proyecto del usuario está persistido con RLS. **La
   migración `supabase/migrations/0001_projects.sql` está escrita pero no
   aplicada**; compruébalo con `pnpm check:supabase`.
-* **La API de proyectos existe y está autenticada.** Sin sesión responde 401;
-  un proyecto ajeno responde 404 y no 403.
-* **Siguiente:** el flujo de registro e inicio de sesión —la petición se
-  autentica, pero no hay forma de conseguir una sesión—, y después plantillas,
-  assets y exports siguiendo el patrón del repositorio de proyectos.
+* **La API existe y está autenticada:** proyectos, sesión e imágenes. Sin
+  sesión responde 401; un recurso ajeno responde 404 y no 403.
+* **Hay dos migraciones.** Comprueba siempre con `pnpm check:supabase` antes
+  de dar por hecho que la base de datos está al día.
+* **Siguiente:** la interfaz (fase F). Seis criterios de aceptación esperan
+  solo por ella. La eliminación de fondo queda aparcada hasta el monorepo.
 * **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,
   de pago) y la publicación con SEO y páginas legales. Los requisitos están en
   `docs/PRD.md` §38-§43, no en el roadmap: el roadmap solo registra cuándo se

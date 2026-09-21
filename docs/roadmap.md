@@ -47,7 +47,7 @@ conocido y medirlo con una regla real (`printing.md` §75).
 Verificación:
 
 ```bash
-pnpm test        # 297 tests, más 7 de integración que necesitan cuenta
+pnpm test        # 319 tests, más 7 de integración que necesitan cuenta
 pnpm exec tsc --noEmit
 ```
 
@@ -297,7 +297,31 @@ Invariantes cubiertas por tests:
 
 Decisiones en `architecture.md` §76.
 
-## 2.11 Prueba de la cadena completa
+## 2.11 `src/modules/assets/`
+
+La imagen original que sube el usuario.
+
+| Archivo | Responsabilidad |
+| --- | --- |
+| `asset.ts` | Entidad y ruta de almacenamiento determinista |
+| `asset-repository.ts` | Interfaz de la fila |
+| `asset-storage.ts` | Interfaz del archivo, aparte de la fila |
+| `infrastructure/` | Adaptadores de Supabase: tabla y bucket |
+| `supabase/migrations/0002_assets.sql` | Tabla, RLS, bucket privado y políticas |
+| `presentation/http/asset-endpoints.ts` | Subir, listar y borrar |
+
+Invariantes cubiertas por tests:
+
+* Subir a un proyecto ajeno no sube nada.
+* El original es inmutable: subir otra imagen crea un asset nuevo.
+* La ruta se organiza por proyecto y nunca lleva el nombre del archivo.
+* Si falla guardar la fila, el archivo subido se borra.
+* Borrar una imagen ajena no borra nada.
+* La respuesta no expone la ruta de almacenamiento.
+
+Decisiones en `storage.md` §147-§152.
+
+## 2.12 Prueba de la cadena completa
 
 `src/modules/pipeline.test.ts` recorre máscara → contorno → geometría →
 plantilla → reparto en páginas.
@@ -352,6 +376,9 @@ No volver a abrirlas sin un motivo nuevo.
 | `sign-in` no devuelve token | En el cuerpo acabaría en `localStorage` |
 | Contraseña de 8 caracteres mínimo | Más estricto que el mínimo de Supabase, a propósito |
 | Las credenciales de prueba viven en el entorno | Nunca en el código ni en el repositorio |
+| Fila y archivo son interfaces separadas | Fallan por separado y hay que poder deshacer una |
+| El bucket es privado, con URL firmada de 10 minutos | Bastante para mostrar, poco para repartir |
+| La sesión se comprueba antes de leer el cuerpo | Un anónimo no debe hacer que el servidor cargue 10 MB |
 
 Detalle que confunde al leer geometría de páginas: el recorte **une los
 fragmentos a través del punto de cierre** del polígono, así que el contorno de
@@ -402,10 +429,10 @@ Queda fuera, por decisión explícita:
 **Parcial.** Ver §2.7. `GenerateTemplate` y `GeneratePdf` están hechos: una
 máscara alfa produce un PDF completo sin pasar por ninguna capa más.
 
-`CreateProject` también, junto al resto del ciclo de vida del proyecto:
-listar, abrir, renombrar, avanzar de estado y eliminar (§2.7 y §2.9).
+`CreateProject` y `UploadImage` también (§2.7, §2.9 y §2.11).
 
-Falta `UploadImage` y `DownloadExport`, que dependen de object storage.
+Falta `DownloadExport`, que no depende de object storage sino de que exista
+una plantilla persistida que descargar: hoy se genera y se pierde (fase E).
 
 `ProcessImage` depende además de la eliminación de fondo (fase B). Cuando
 exista, será un caso de uso delgado: el adaptador entrega una `AlphaMask` y
@@ -427,10 +454,9 @@ Falta:
 
 * Plantillas y sus versiones, con inmutabilidad (`storage.md` §15-§22,
   `AGENTS.md` §17). Hoy una plantilla se genera y se pierde.
-* Assets, separando el original del procesado (`AGENTS.md` §19,
-  `storage.md` §37-§49).
-* Exports y object storage, sin los cuales el PDF no se puede entregar
-  (AC-13).
+* El asset procesado, que separa el original de lo que produce la
+  eliminación de fondo (`AGENTS.md` §19). El original ya está (§2.11).
+* Exports: guardar el PDF generado para poder entregarlo (AC-13).
 
 El repositorio de proyectos fija el patrón que los demás deben seguir:
 interfaz en el dominio, contrato compartido, adaptador en `infrastructure/`,
@@ -550,8 +576,8 @@ posicionar.
 | AC | Criterio | Estado |
 | --- | --- | --- |
 | AC-01 | Crear un proyecto | Dominio y persistencia listos; falta interfaz (F) |
-| AC-02 | Subir una imagen válida | Validación lista; falta interfaz (F) |
-| AC-03 | Visualizar la imagen cargada | Pendiente (F) |
+| AC-02 | Subir una imagen válida | API lista; falta interfaz (F) |
+| AC-03 | Visualizar la imagen cargada | URL firmada lista; falta interfaz (F) |
 | AC-04 | Obtener una figura aislada | Parcial: falta la eliminación de fondo |
 | AC-05 | Configurar medidas y papel | Dominio listo; falta interfaz (F) |
 | AC-06 | Generar una plantilla | **Hecho y probado** |
