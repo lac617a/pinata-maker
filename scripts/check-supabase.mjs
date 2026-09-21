@@ -140,6 +140,28 @@ if (url && anonKey) {
       : (usage.error?.code ?? ""),
   );
 
+  // Migración 0009: la prueba de la autorización de datos. Un anónimo no la
+  // lee (42501); si falta, PostgREST no encuentra la tabla.
+  const authorizations = await client
+    .from("data_authorizations")
+    .select("user_id")
+    .limit(1);
+  const authorizationsMissing = TABLE_MISSING_CODES.includes(
+    authorizations.error?.code ?? "",
+  );
+
+  report(
+    "la tabla data_authorizations existe y un anónimo no la lee",
+    !authorizationsMissing &&
+      (Boolean(authorizations.error) ||
+        (authorizations.data?.length ?? 0) === 0),
+    authorizationsMissing
+      ? "aplica supabase/migrations/0009_data_authorizations.sql después de desplegar"
+      : authorizations.error
+        ? `denegado (${authorizations.error.code})`
+        : "lista vacía",
+  );
+
   // Migración 0010: borrar la propia cuenta. Sin sesión, la función existe
   // si responde «Not signed in» (42501); si falta, PostgREST no la encuentra.
   const deletion = await client.rpc("delete_my_account");
