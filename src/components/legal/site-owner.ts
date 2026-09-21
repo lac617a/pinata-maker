@@ -7,18 +7,18 @@
  */
 export const SITE_OWNER = {
   /** Nombre completo de la persona o razón social de la empresa. */
-  name: "[TITULAR]",
+  name: "Dominyel Gregory Rivera Hernandez",
   /** Documento de identidad o identificador fiscal. */
-  taxId: "[IDENTIFICACIÓN FISCAL]",
-  address: "[DIRECCIÓN POSTAL]",
-  country: "[PAÍS]",
-  email: "[EMAIL DE CONTACTO]",
+  taxId: "27795845",
+  address: "Calle 1NA # 19-07, Bucaramanga, Colombia",
+  country: "Colombia",
+  email: "dominyel.r@gmail.com",
   /** Autoridad de protección de datos del país, ante la que reclamar. */
-  dataAuthority: "[AUTORIDAD DE PROTECCIÓN DE DATOS]",
+  dataAuthority: "Autoridad de Protección de Datos (Colombia)",
   /** Dónde se aloja la aplicación, p. ej. «Vercel Inc. (Estados Unidos)». */
-  hosting: "[PROVEEDOR DE ALOJAMIENTO]",
+  hosting: "Vercel Inc. (Estados Unidos)",
   /** Región del proyecto de Supabase, p. ej. «Estados Unidos (us-east-1)». */
-  dataRegion: "[REGIÓN DE SUPABASE]",
+  dataRegion: "Estados Unidos (us-east-1)",
 } as const;
 
 /** Fecha de la última revisión de los textos. */
