@@ -10,6 +10,18 @@ Guía operativa para Claude Code en este repositorio.
 
 ---
 
+## 0. Language
+
+Decided by the user on 2026-09-21:
+
+* **Talk to the user in Spanish.** Every message, summary, question and
+  explanation addressed to them.
+* **Everything else may be in English:** code, comments, docs, commit
+  messages. New text can be written in English; existing Spanish text does
+  not need translating and should not be rewritten just to change language.
+
+---
+
 ## 1. Antes de tocar código
 
 1. `AGENTS.md` — reglas vinculantes (§3 Golden Rule, §6 precedencia
@@ -142,8 +154,9 @@ errores que solo viven en la costura entre módulos correctos.
   archivo. El alias está en `tsconfig.json` y en `vitest.config.mts`.
 * El orden de los imports lo arregla ESLint: paquetes, después `@/`, después
   los hermanos. No se ordena a mano.
-* **Comentarios en español**, explicando el *porqué* y citando la sección de
-  la documentación que lo justifica (`Ver docs/printing.md §38`).
+* **Comments explain the *why*** and cite the doc section that justifies it
+  (`Ver docs/printing.md §38`). Existing ones are in Spanish; new ones may be
+  in English (§0).
 * **Tests en inglés**, describiendo comportamiento (`AGENTS.md` §28). Un
   archivo `*.test.ts` junto al módulo que prueba.
 * Vitest corre en entorno `node` y solo `src/**/*.test.ts`: el dominio se
