@@ -55,7 +55,7 @@ conocido y medirlo con una regla real (`printing.md` §75).
 Verificación:
 
 ```bash
-pnpm test        # 424 tests, más 26 de integración que necesitan cuenta
+pnpm test        # 431 tests, más 26 de integración que necesitan cuenta
 pnpm exec tsc --noEmit
 ```
 
@@ -435,9 +435,21 @@ Lo que el usuario puede hacer hoy:
 
 1. Crear una cuenta y entrar.
 2. Crear un proyecto y subirle una imagen.
-3. Pedir medidas y papel, **ver el coste antes de decidir** —piezas, metros
-   cuadrados y hojas— y publicar la versión.
-4. Generar el PDF de una versión y descargarlo.
+3. Ajustar medidas y papel **mirando el molde**: se recalcula solo y enseña
+   cada pieza con la figura recortada dentro, la retícula de hojas encima con
+   sus etiquetas y cuántas hojas lleva cada una (PRD §20).
+4. **Descargar el PDF en un clic.** Por debajo son tres operaciones —publicar
+   la versión, generar el documento y firmar el enlace—, pero el usuario no
+   tiene por qué saberlo.
+
+Las versiones y los documentos generados quedan como historial, plegado:
+son registro, no pasos. Una versión nace al descargar con medidas nuevas; si
+las medidas y la imagen no cambian, se reutiliza la de esa visita.
+
+La vista previa usa el mismo `createPrintLayout` que el documento, así que
+el reparto en hojas es exacto aunque el dibujo sea orientativa
+(`printing.md` §78). El enlace de descarga lleva el nombre del archivo y
+se descarga sin abrir otra pestaña: nada que el navegador pueda bloquear.
 
 ## 2.15 La plantilla se deriva en el navegador
 
@@ -627,9 +639,8 @@ Falta:
 
 * Arrastrar y soltar al subir, y margen y solape en el formulario: hoy son
   los valores del producto y no se pueden tocar desde la interfaz.
-* Vista previa de la plantilla y del reparto en páginas. Necesita un renderer
-  que no existe (§8.2). La previsualización es orientativa: nunca es la
-  fuente de verdad física (`printing.md` §78).
+* La figura no se imprime dentro de las piezas del PDF: la vista previa la
+  enseña, el documento solo lleva contornos (`pdf.md` §24 y §88).
 * Los estados del proyecto no se mueven desde la interfaz: publicar una
   versión no lo lleva a `READY` (`storage.md` §159).
 * La derivación bloquea el hilo del navegador mientras calcula.

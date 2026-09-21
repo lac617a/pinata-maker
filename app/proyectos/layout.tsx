@@ -22,7 +22,7 @@ export default async function ProjectsLayout({
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-10">
+    <div className="mx-auto w-full max-w-5xl px-6 py-10">
       <header className="mb-10 flex items-center justify-between">
         <Link href="/proyectos" className="font-serif text-xl">
           Piñata Maker

@@ -243,6 +243,22 @@ describe("Export printable document", () => {
     expect(downloadable.export.fileName).toBe(generated.fileName);
   });
 
+  it("should hand out a link that downloads under the document name", async () => {
+    const context = services();
+    const { version } = await publishedVersion(context);
+
+    const generated = await exportTemplateVersion(context, {
+      templateVersionId: version.id,
+      userId: owner,
+    });
+
+    const downloadable = await downloadExport(context, generated.id, owner);
+
+    // Descargar y no abrir: el usuario no sale de la página y el navegador no
+    // bloquea una ventana abierta después de esperar al PDF.
+    expect(downloadable.url).toContain(`download=${generated.fileName}`);
+  });
+
   it("should not export a version of somebody else", async () => {
     const context = services();
     const { version } = await publishedVersion(context);

@@ -14,6 +14,7 @@ import {
   pixelContourBounds,
   pixelContourSize,
   type PixelPoint,
+  type Pixels,
 } from "./pixel-contour";
 import { simplifyPixelContour } from "./simplification";
 
@@ -110,6 +111,16 @@ export type PhysicalContour = {
    * deformar la figura. El dominio nunca deforma; informa.
    */
   readonly requiresDistortionForExactFit: boolean;
+  /**
+   * Pixel de la imagen que cae en el origen (0,0) del contorno en mm.
+   *
+   * Junto a `millimetersPerPixel` dice dónde queda la imagen original
+   * respecto a la silueta, que es lo que hace falta para dibujarla dentro de
+   * la pieza. No vuelve a meter pixels en el dominio: es la única
+   * correspondencia que existe entre los dos espacios, y ya estaba calculada.
+   * Ver docs/image-processing.md §109.
+   */
+  readonly pixelOrigin: PixelPoint;
   readonly processorVersion: string;
 };
 
@@ -199,6 +210,7 @@ export function convertContourToPhysicalGeometry(
     holes,
     holesBelowTolerance,
     millimetersPerPixel,
+    pixelOrigin: { x: bounds.minX, y: bounds.minY },
     appliedSimplificationTolerance: pixelTolerance * millimetersPerPixel,
     // Se evalúa sobre el contorno limpio, antes de simplificar, para que la
     // respuesta dependa de la figura y no de la tolerancia elegida.
@@ -212,5 +224,35 @@ export function convertContourToPhysicalGeometry(
         targetDimensions.height,
       ),
     processorVersion: CONTOUR_PROCESSOR_VERSION,
+  };
+}
+
+/**
+ * Rectángulo que ocupa la imagen original en el espacio de la silueta, en mm.
+ *
+ * Sirve para dibujar la imagen dentro de la pieza —en la vista previa hoy,
+ * en el documento cuando se decida— sin volver a convertir pixels fuera de
+ * este módulo. Puede empezar en negativo: la imagen suele tener margen
+ * alrededor de la figura, y la silueta empieza en (0,0).
+ * Ver docs/image-processing.md §109.
+ */
+export type ImagePlacement = {
+  readonly x: Millimeters;
+  readonly y: Millimeters;
+  readonly width: Millimeters;
+  readonly height: Millimeters;
+};
+
+export function imagePlacementFor(
+  contour: Pick<PhysicalContour, "millimetersPerPixel" | "pixelOrigin">,
+  image: { readonly width: Pixels; readonly height: Pixels },
+): ImagePlacement {
+  const scale = contour.millimetersPerPixel;
+
+  return {
+    x: -contour.pixelOrigin.x * scale,
+    y: -contour.pixelOrigin.y * scale,
+    width: image.width * scale,
+    height: image.height * scale,
   };
 }

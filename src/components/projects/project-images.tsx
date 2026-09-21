@@ -74,7 +74,7 @@ export function ProjectImages({
       </p>
 
       {images.isPending ? (
-        <Skeleton className="h-40 w-full rounded-lg" />
+        <Skeleton className="h-28 w-full rounded-lg" />
       ) : null}
 
       {images.data?.length === 0 ? (
@@ -83,7 +83,7 @@ export function ProjectImages({
         </p>
       ) : null}
 
-      <ul className="grid gap-4 sm:grid-cols-2">
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {images.data?.map((image) => (
           <li
             key={image.id}
@@ -106,7 +106,7 @@ export function ProjectImages({
                 width={320}
                 height={240}
                 unoptimized
-                className="h-40 w-full rounded-md object-contain"
+                className="h-28 w-full rounded-md object-contain"
               />
             </button>
 

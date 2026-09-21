@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   type ObjectStorage,
   ObjectStorageError,
+  type SignedUrlOptions,
   type StoredFile,
 } from "@/modules/storage/object-storage";
 
@@ -60,10 +61,15 @@ export class SupabaseObjectStorage implements ObjectStorage {
   async createSignedUrl(
     key: string,
     expiresInSeconds: number,
+    options: SignedUrlOptions = {},
   ): Promise<string> {
     const { data, error } = await this.client.storage
       .from(this.bucket)
-      .createSignedUrl(key, expiresInSeconds);
+      .createSignedUrl(
+        key,
+        expiresInSeconds,
+        options.downloadAs ? { download: options.downloadAs } : undefined,
+      );
 
     if (error || !data) {
       throw new ObjectStorageError("Could not create a link for the file.", {

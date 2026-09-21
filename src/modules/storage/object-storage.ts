@@ -17,6 +17,17 @@ export type StoredFile = {
   readonly bytes: Uint8Array;
 };
 
+export type SignedUrlOptions = {
+  /**
+   * Nombre con el que el navegador guarda el archivo.
+   *
+   * Con él, el enlace se descarga en lugar de abrirse: el usuario no sale de
+   * la página y el navegador no bloquea una ventana abierta después de
+   * esperar a que el PDF esté listo.
+   */
+  readonly downloadAs?: string;
+};
+
 export interface ObjectStorage {
   put(file: StoredFile): Promise<void>;
 
@@ -28,7 +39,11 @@ export interface ObjectStorage {
    * Temporal y no pública: los archivos de un usuario no deben quedar
    * accesibles a quien adivine la ruta. Ver docs/PRD.md §26.
    */
-  createSignedUrl(key: string, expiresInSeconds: number): Promise<string>;
+  createSignedUrl(
+    key: string,
+    expiresInSeconds: number,
+    options?: SignedUrlOptions,
+  ): Promise<string>;
 }
 
 /** Diez minutos bastan para mostrar o descargar y no para repartir. */

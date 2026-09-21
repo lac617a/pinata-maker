@@ -2287,3 +2287,30 @@ un molde con forma de caja.
 
 Es un aviso y no un error porque puede ser lo que el usuario quiere —una caja
 es una piñata perfectamente válida—, pero casi nunca lo es.
+
+---
+
+# 109. Dónde queda la imagen respecto a la silueta
+
+`PhysicalContour` declara `pixelOrigin`: el pixel de la imagen que cae en el
+origen (0,0) de la silueta en milímetros. Junto a `millimetersPerPixel` es la
+única correspondencia que existe entre los dos espacios, y ya estaba
+calculada.
+
+`imagePlacementFor` la convierte en el rectángulo, en milímetros, que ocupa
+la imagen original respecto a la pieza `FRONT`:
+
+```text
+x = −pixelOrigin.x × mm/px        (negativo: la imagen tiene margen)
+y = −pixelOrigin.y × mm/px
+ancho = ancho de la imagen × mm/px
+alto  = alto de la imagen × mm/px
+```
+
+`generateTemplate` lo devuelve como `imagePlacement`. La plantilla no lo usa
+—la imagen no es fuente de verdad de la geometría (`pdf.md` §24)—; sirve
+para dibujar la figura dentro de la pieza. `BACK` es el reflejo horizontal
+de `FRONT` dentro de su ancho, así que la imagen se refleja igual.
+
+No vuelve a meter pixels en el dominio: sale de este módulo en milímetros,
+como todo lo demás.

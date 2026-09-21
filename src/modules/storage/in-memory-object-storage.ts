@@ -1,6 +1,7 @@
 import {
   type ObjectStorage,
   ObjectStorageError,
+  type SignedUrlOptions,
   type StoredFile,
 } from "./object-storage";
 
@@ -24,12 +25,18 @@ export class InMemoryObjectStorage implements ObjectStorage {
     this.files.delete(key);
   }
 
-  async createSignedUrl(key: string): Promise<string> {
+  async createSignedUrl(
+    key: string,
+    _expiresInSeconds?: number,
+    options: SignedUrlOptions = {},
+  ): Promise<string> {
     if (!this.files.has(key)) {
       throw new ObjectStorageError(`There is no file stored at ${key}.`);
     }
 
-    return `memory://${key}`;
+    return options.downloadAs
+      ? `memory://${key}?download=${encodeURIComponent(options.downloadAs)}`
+      : `memory://${key}`;
   }
 
   /** Solo para las pruebas: qué hay guardado de verdad. */

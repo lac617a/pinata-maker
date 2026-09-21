@@ -36,6 +36,40 @@ const ellipse = maskOf(
 const dimensions = createDimensions(800, 1000);
 
 describe("Generate template", () => {
+  it("should place the source image around the silhouette", () => {
+    // La elipse deja margen transparente alrededor, así que la imagen empieza
+    // antes que la silueta —en negativo— y termina después.
+    const { imagePlacement, template } = generateTemplate({
+      mask: ellipse,
+      dimensions,
+      depth: 200,
+    });
+
+    expect(imagePlacement.x).toBeLessThan(0);
+    expect(imagePlacement.y).toBeLessThan(0);
+    expect(imagePlacement.x + imagePlacement.width).toBeGreaterThan(
+      template.width,
+    );
+    expect(imagePlacement.y + imagePlacement.height).toBeGreaterThan(
+      template.height,
+    );
+  });
+
+  it("should scale the image evenly in both directions", () => {
+    const { imagePlacement } = generateTemplate({
+      mask: ellipse,
+      dimensions,
+      depth: 200,
+    });
+
+    // La silueta se escala sin deformar; si la imagen no, la figura dibujada
+    // dejaría de caer dentro del contorno que se recorta.
+    expect(imagePlacement.width / WIDTH).toBeCloseTo(
+      imagePlacement.height / HEIGHT,
+      6,
+    );
+  });
+
   it("should turn a mask into a template with pieces", () => {
     const result = generateTemplate({ mask: ellipse, dimensions, depth: 200 });
 

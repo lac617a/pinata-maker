@@ -34,7 +34,7 @@ aquí.
 ## 2. Comandos
 
 ```bash
-pnpm test              # Vitest, 428 tests, entorno node
+pnpm test              # Vitest, 431 tests, entorno node
 ```
 
 ```bash

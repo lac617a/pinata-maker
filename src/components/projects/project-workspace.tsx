@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { ProjectExports } from "@/components/exports/project-exports";
 import { ProjectImages } from "@/components/projects/project-images";
-import { PublishTemplateForm } from "@/components/templates/publish-template-form";
+import { TemplateStudio } from "@/components/templates/template-studio";
 import { TemplateVersions } from "@/components/templates/template-versions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProjectImages } from "@/presentation/client/api/images";
@@ -13,11 +13,11 @@ import { useProject } from "@/presentation/client/api/projects";
 import { useTemplateVersions } from "@/presentation/client/api/templates";
 
 /**
- * El proyecto de punta a punta: imagen, molde, versiones y documentos.
+ * El proyecto de punta a punta: imagen, molde y descarga.
  *
- * Es una sola pantalla a propósito. El trabajo del usuario es una cadena
- * —subir, medir, publicar, imprimir— y repartirla en pasos separados
- * obligaría a ir y volver para comparar lo que acaba de salir.
+ * El camino principal es corto a propósito: subir una imagen, ajustar las
+ * medidas mirando el molde y descargar. Las versiones y los documentos
+ * generados quedan como historial, plegados, porque son registro y no pasos.
  */
 export function ProjectWorkspace({ projectId }: { projectId: string }) {
   const project = useProject(projectId);
@@ -68,20 +68,29 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
         onSelect={setSelectedImageId}
       />
 
-      <PublishTemplateForm
+      <TemplateStudio
         projectId={projectId}
         projectName={project.data?.name ?? "Plantilla"}
         image={selectedImage}
-        latestVersionNumber={versions.data?.[0]?.versionNumber ?? 0}
       />
 
-      <TemplateVersions
-        projectId={projectId}
-        versions={versions.data}
-        isPending={versions.isPending}
-      />
+      <details className="border-border space-y-4 rounded-lg border p-4">
+        <summary className="cursor-pointer font-serif text-lg">
+          Historial
+          <span className="text-muted-foreground font-sans text-sm">
+            {" "}
+            · {versions.data?.length ?? 0} versiones
+          </span>
+        </summary>
 
-      <ProjectExports projectId={projectId} />
+        <div className="mt-4 space-y-6">
+          <ProjectExports projectId={projectId} />
+          <TemplateVersions
+            versions={versions.data}
+            isPending={versions.isPending}
+          />
+        </div>
+      </details>
     </main>
   );
 }

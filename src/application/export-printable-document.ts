@@ -165,9 +165,12 @@ export async function downloadExport(
 
   return {
     export: found,
+    // Un enlace que descarga, no que abre: el usuario se queda en la página
+    // y el archivo llega con el nombre de la plantilla y su versión.
     url: await services.exportStorage.createSignedUrl(
       found.storageKey,
       SIGNED_URL_TTL_SECONDS,
+      { downloadAs: found.fileName },
     ),
   };
 }

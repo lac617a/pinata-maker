@@ -26,8 +26,8 @@ export function ProjectExports({ projectId }: { projectId: string }) {
   const [downloading, setDownloading] = useState<string | null>(null);
 
   return (
-    <section className="space-y-4">
-      <h2 className="font-serif text-xl">Documentos</h2>
+    <section className="space-y-3">
+      <h3 className="font-medium">Documentos generados</h3>
 
       {exports.isPending ? (
         <Skeleton className="h-16 w-full rounded-lg" />
@@ -62,9 +62,10 @@ export function ProjectExports({ projectId }: { projectId: string }) {
 
                 download.mutate(generated.id, {
                   onSuccess: (ready) => {
-                    // El enlace es firmado y caduca: se pide al descargar y
-                    // se usa en el momento.
-                    window.open(ready.url, "_blank", "noopener,noreferrer");
+                    // El enlace es firmado, caduca y lleva el nombre del
+                    // archivo: se pide al descargar y descarga sin abrir otra
+                    // pestaña que el navegador pueda bloquear.
+                    window.location.assign(ready.url);
                   },
                   onError: (error) => toast.error(error.message),
                   onSettled: () => setDownloading(null),
