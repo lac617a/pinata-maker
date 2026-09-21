@@ -60,14 +60,13 @@ export function ImageCropper({
           keepSelection
           ruleOfThirds
           onChange={(_pixels, percent) => onChange(percent)}
-          className="max-h-full"
+          // El tope va aquí y no en la imagen: la hoja de estilos de la
+          // librería le pone `max-height: inherit` a la imagen, y como no
+          // está en ninguna capa de Tailwind gana a cualquier clase.
+          style={{ maxHeight: "30rem" }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element -- URL firmada que caduca: el optimizador de Next la cachearía. */}
-          <img
-            src={imageUrl}
-            alt="Imagen del proyecto"
-            className="max-h-[30rem] w-auto"
-          />
+          <img src={imageUrl} alt="Imagen del proyecto" />
         </ReactCrop>
       </div>
     </div>
