@@ -50,7 +50,10 @@ function posterForm(options: unknown, fileName = "piñata.png"): Request {
     "image",
     new File([pngHeader(720, 894)], fileName, { type: "image/png" }),
   );
-  form.set("options", JSON.stringify(options));
+  form.set(
+    "options",
+    JSON.stringify({ acceptedTerms: true, ...(options as object) }),
+  );
 
   return new Request("http://localhost/api/posters", {
     method: "POST",
@@ -120,6 +123,16 @@ describe("Usage endpoints", () => {
     );
 
     expect(response.status).toBe(400);
+  });
+
+  it("should refuse a download without the terms accepted", async () => {
+    const response = await handleUnsavedPoster(
+      posterForm({ width: 600, acceptedTerms: false }),
+      context(),
+    );
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe("TERMS_ACCEPTANCE_REQUIRED");
   });
 
   it("should refuse a crop outside the image", async () => {

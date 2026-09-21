@@ -72,3 +72,16 @@ export class AccountDeletionNotConfirmedError extends Error {
     this.name = "AccountDeletionNotConfirmedError";
   }
 }
+
+/**
+ * A download without an account needs the terms and the data policy
+ * accepted first, explicitly (docs/legal.md §8).
+ */
+export class TermsAcceptanceRequiredError extends Error {
+  readonly code = "TERMS_ACCEPTANCE_REQUIRED";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "TermsAcceptanceRequiredError";
+  }
+}

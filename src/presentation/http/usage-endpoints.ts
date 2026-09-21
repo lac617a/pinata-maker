@@ -68,6 +68,7 @@ export async function handleUnsavedPoster(
       crop: asCrop(options.crop),
       print: asPosterPrint(options),
       subject: context.subject(),
+      acceptedTerms: options.acceptedTerms,
     });
 
     // Copia con su propio `ArrayBuffer`: es lo que acepta `Response`.

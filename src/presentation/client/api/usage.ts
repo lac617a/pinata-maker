@@ -43,6 +43,8 @@ export type UnsavedPosterInput = {
   };
   /** Overlap or trim; without it the server overlaps (docs/pdf.md §99). */
   readonly joining?: PosterJoining;
+  /** Required by the server without an account (docs/legal.md §8). */
+  readonly acceptedTerms: boolean;
 };
 
 /**

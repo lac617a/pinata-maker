@@ -1,13 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useUnsavedPosterDownload } from "@/components/posters/poster-downloads";
 import { PosterStudio } from "@/components/posters/poster-studio";
+import {
+  TermsAcceptanceBox,
+  useTermsAcceptance,
+} from "@/components/posters/terms-acceptance";
 import { Button } from "@/components/ui/button";
 import { SUPPORTED_IMAGE_FORMATS } from "@/modules/image-processing/image-validation";
+import { useUsage } from "@/presentation/client/api/usage";
 import { formatBytes } from "@/presentation/client/format";
 import {
   type PreparedImage,
@@ -28,7 +32,12 @@ export function CreatePoster() {
   const [url, setUrl] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const input = useRef<HTMLInputElement>(null);
-  const download = useUnsavedPosterDownload(file);
+  // With an account the terms were accepted at sign-up; without one, or
+  // while the usage is unknown, the box is asked (docs/legal.md §8).
+  const usage = useUsage();
+  const anonymous = usage.data?.level !== "REGISTERED";
+  const terms = useTermsAcceptance();
+  const download = useUnsavedPosterDownload(file, terms.accepted);
 
   // Un enlace local por archivo, y se suelta al cambiarlo: si no, cada
   // imagen elegida se queda en memoria hasta cerrar la pestaña.
@@ -123,18 +132,6 @@ export function CreatePoster() {
         </div>
       </section>
 
-      <p className="text-muted-foreground text-xs">
-        Al generar el PDF aceptas los{" "}
-        <Link href="/terminos" className="underline underline-offset-4">
-          términos de uso
-        </Link>{" "}
-        y el tratamiento mínimo de datos que describe la{" "}
-        <Link href="/privacidad" className="underline underline-offset-4">
-          política de tratamiento de datos
-        </Link>
-        .
-      </p>
-
       <PosterStudio
         // Otra imagen, otro recorte y otro tamaño: se empieza de cero.
         key={file ? `${file.name}-${file.lastModified}-${file.size}` : "none"}
@@ -142,6 +139,19 @@ export function CreatePoster() {
           file && url ? { key: `${file.name}-${file.lastModified}`, url } : null
         }
         download={download}
+        beforeDownload={
+          anonymous ? (
+            <TermsAcceptanceBox
+              accepted={terms.accepted}
+              onChange={terms.change}
+            />
+          ) : null
+        }
+        downloadBlocked={
+          anonymous && !terms.accepted
+            ? "Acepta los términos para descargar el PDF."
+            : null
+        }
       />
     </div>
   );

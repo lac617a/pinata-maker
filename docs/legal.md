@@ -120,8 +120,7 @@ Art. 9: prior, express and informed, and the controller keeps proof.
 * A substantial change of the policy bumps `DATA_POLICY_VERSION`, and every
   account is asked to accept the new version (§7).
 
-Without an account, generating a PDF accepts the minimal treatment the
-policy describes; `/crear` says so next to the tool.
+Without an account, the download needs an explicit tick too (§8).
 
 ## Deploying 0009
 
@@ -203,3 +202,28 @@ without it an account asked to accept could not.
 0010, 0011   before the push
 0009         after the push
 ```
+
+---
+
+# 8. Accepting without an account
+
+Decided on 2026-09-21, like Block Posters: a download without an account
+starts by accepting the terms and the data policy, with a tick of the
+person's own. A passive "by generating you accept" notice was there before;
+it is gone.
+
+* In `/crear`, once an image is chosen, an **unticked box** appears next to
+  the download. Until it is ticked the buttons stay disabled, and on a phone
+  the floating bar says why.
+* **The server requires it too.** `POST /api/posters` from an anonymous
+  visitor without `acceptedTerms: true` answers 400
+  `TERMS_ACCEPTANCE_REQUIRED`, before generating or counting anything. An
+  account is not asked: it accepted at sign-up.
+* **Remembered per browser and per policy version** (`localStorage`,
+  `pm-terms-accepted`): ticked once, not asked again on the next visit;
+  asked again when `DATA_POLICY_VERSION` changes. If storage is blocked it
+  is simply asked every time. The server check does not depend on it.
+
+There is no record of the anonymous acceptance: there is no identity to tie
+it to, and the treatment it covers is minimal (the image is not stored).
+The proof is that no PDF is generated without it.

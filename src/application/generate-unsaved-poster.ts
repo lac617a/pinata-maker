@@ -1,3 +1,4 @@
+import { TermsAcceptanceRequiredError } from "@/modules/accounts/errors";
 import { validateImageUpload } from "@/modules/image-processing/image-validation";
 import type {
   PrintableDocument,
@@ -23,6 +24,11 @@ export type GenerateUnsavedPosterInput = PosterRequest & {
   readonly mimeType: string;
   readonly bytes: Uint8Array;
   readonly subject: UsageSubject;
+  /**
+   * The explicit acceptance of the terms and the data policy. Required
+   * without an account; an account accepted them when it was created.
+   */
+  readonly acceptedTerms?: unknown;
 };
 
 /**
@@ -49,6 +55,15 @@ export async function generateUnsavedPoster(
   });
 
   assertImageContent(mimeType, input.bytes);
+
+  // Without an account, nothing is processed until the person accepted,
+  // with a tick of their own: like signing up, only an explicit yes counts
+  // (docs/legal.md §8).
+  if (input.subject.level === "ANONYMOUS" && input.acceptedTerms !== true) {
+    throw new TermsAcceptanceRequiredError(
+      "A download without an account needs the terms accepted.",
+    );
+  }
 
   // Sin cupo no se trabaja: generar para negar después no tiene sentido.
   await assertUsageLeft(services, input.subject);

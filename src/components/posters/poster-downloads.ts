@@ -68,7 +68,11 @@ export function useProjectPosterDownload(
  * Sin proyecto: la imagen viaja con la petición y el PDF vuelve en la
  * respuesta. No se guarda nada (docs/usage.md §2).
  */
-export function useUnsavedPosterDownload(file: File | null): PosterDownload {
+export function useUnsavedPosterDownload(
+  file: File | null,
+  /** The explicit acceptance of the terms, required without an account. */
+  acceptedTerms: boolean,
+): PosterDownload {
   const generate = useUnsavedPoster();
 
   return useSteps(async (request, setStep) => {
@@ -77,7 +81,11 @@ export function useUnsavedPosterDownload(file: File | null): PosterDownload {
     }
 
     setStep("Generando PDF…");
-    const { fileName } = await generate.mutateAsync({ ...request, file });
+    const { fileName } = await generate.mutateAsync({
+      ...request,
+      file,
+      acceptedTerms,
+    });
 
     toast.success(`${fileName} descargado.`);
   });

@@ -39,6 +39,11 @@ const KNOWN_ERRORS: Record<string, ErrorPresentation> = {
     status: 503,
     message: "No pudimos guardar los cambios. Inténtalo de nuevo.",
   },
+  TERMS_ACCEPTANCE_REQUIRED: {
+    status: 400,
+    message:
+      "Para descargar el PDF tienes que aceptar los términos de uso y la política de tratamiento de datos.",
+  },
   DATA_AUTHORIZATION_REQUIRED: {
     status: 400,
     message:

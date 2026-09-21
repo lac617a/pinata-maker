@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { PercentCrop } from "react-image-crop";
 
@@ -54,6 +55,9 @@ import type {
 import { useUsage } from "@/presentation/client/api/usage";
 import { formatCentimeters } from "@/presentation/client/format";
 
+/** Where the two ways of joining the sheets are explained. */
+const JOINING_GUIDE_PATH = "/guias/como-imprimir-y-unir-las-hojas";
+
 /** Qué lado fija el usuario, en centímetros. El otro sale de la imagen. */
 type SizeChoice = { readonly axis: "width" | "height"; readonly cm: number };
 
@@ -70,11 +74,17 @@ type SizeChoice = { readonly axis: "width" | "height"; readonly cm: number };
 export function PosterStudio({
   image,
   download,
+  beforeDownload,
+  downloadBlocked,
 }: {
   /** `key` distingue una imagen de otra; `url` es lo que ve el navegador. */
   image: { readonly key: string; readonly url: string } | null;
   /** Qué hacer al descargar: guardar en el proyecto o no guardar nada. */
   download: PosterDownload;
+  /** Shown next to the download, e.g. the terms box without an account. */
+  beforeDownload?: React.ReactNode;
+  /** Why the download cannot start yet; the buttons stay disabled. */
+  downloadBlocked?: string | null;
 }) {
   const [format, setFormat] = useState<PaperFormat>("A4");
   const [orientation, setOrientation] = useState<PaperOrientation>("PORTRAIT");
@@ -158,7 +168,8 @@ export function PosterStudio({
   const spent = usage.data?.remaining === 0;
   const ready = ok !== null && !spent;
 
-  const canDownload = ready && image !== null && !download.busy;
+  const canDownload =
+    ready && image !== null && !download.busy && !downloadBlocked;
   const startDownload = () =>
     ok &&
     image &&
@@ -191,6 +202,8 @@ export function PosterStudio({
       </div>
 
       <UsageNotice />
+
+      {image ? beforeDownload : null}
 
       {!image ? (
         <p className="text-muted-foreground text-sm">
@@ -275,10 +288,15 @@ export function PosterStudio({
             </div>
           </div>
 
+          {/* The explanation lives in the guide, with drawings (docs/pdf.md §99). */}
           <p className="text-muted-foreground text-xs">
-            {joining === "OVERLAP"
-              ? "Cada hoja repite un centímetro de la vecina: se pegan a ojo por las cruces, sin cortar nada."
-              : "Sin franja repetida: recortas el margen blanco por las marcas y unes las hojas borde con borde. Menos hojas para el mismo tamaño, pero hay que cortar con cuidado."}
+            <Link
+              href={`${JOINING_GUIDE_PATH}#solapar-o-sin-solape`}
+              target="_blank"
+              className="underline underline-offset-4"
+            >
+              ¿Solapar o sin solape? Cuál elegir
+            </Link>
           </p>
 
           <SheetsWide
@@ -360,7 +378,11 @@ export function PosterStudio({
             data-floating-download
             className="border-border bg-background/95 fixed inset-x-0 bottom-0 z-40 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:hidden"
           >
-            {ok ? (
+            {downloadBlocked ? (
+              <p className="text-muted-foreground mb-2 text-center text-xs">
+                {downloadBlocked}
+              </p>
+            ) : ok ? (
               <p className="text-muted-foreground mb-2 text-center text-xs">
                 {formatCentimeters(ok.poster.width)} ×{" "}
                 {formatCentimeters(ok.poster.height)} cm · {ok.layout.columns} ×{" "}

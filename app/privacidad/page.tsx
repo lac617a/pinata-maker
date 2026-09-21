@@ -104,9 +104,10 @@ export default function Page() {
           vigente: {DATA_POLICY_VERSION}.
         </p>
         <p>
-          Sin cuenta, al generar un PDF aceptas el tratamiento mínimo descrito
-          arriba: la imagen solo mientras se genera el documento, y la huella
-          del identificador y de la IP para el límite diario.
+          Sin cuenta, antes de descargar el PDF marcas una casilla con la que
+          aceptas el tratamiento mínimo descrito arriba: la imagen solo mientras
+          se genera el documento, y la huella del identificador y de la IP para
+          el límite diario.
         </p>
         <p>Puedes revocar tu autorización en cualquier momento (sección 6).</p>
       </LegalSection>

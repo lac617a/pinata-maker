@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { TermsAcceptanceRequiredError } from "@/modules/accounts/errors";
 import { UnsupportedImageFormatError } from "@/modules/image-processing/errors";
 import {
   jpegHeader,
@@ -14,7 +15,10 @@ import { InvalidPosterSizeError } from "@/modules/posters/errors";
 import { UsageLimitReachedError } from "@/modules/usage/errors";
 import { InMemoryUsageCounter } from "@/modules/usage/in-memory-usage-counter";
 import { DEFAULT_USAGE_LIMITS } from "@/modules/usage/usage";
-import { anonymousSubject } from "@/modules/usage/usage-subject";
+import {
+  anonymousSubject,
+  registeredSubject,
+} from "@/modules/usage/usage-subject";
 
 import {
   FALLBACK_POSTER_TITLE,
@@ -61,7 +65,31 @@ const request: GenerateUnsavedPosterInput = {
   bytes: pngHeader(720, 894),
   size: { width: 600 },
   subject,
+  acceptedTerms: true,
 };
+
+describe("Terms without an account", () => {
+  it("should generate nothing until the terms are accepted", async () => {
+    for (const acceptedTerms of [undefined, false, "true"]) {
+      const context = services();
+
+      await expect(
+        generateUnsavedPoster(context, { ...request, acceptedTerms }),
+      ).rejects.toBeInstanceOf(TermsAcceptanceRequiredError);
+      expect(context.rendered()).toBe(0);
+    }
+  });
+
+  it("should not ask an account, which accepted them when signing up", async () => {
+    const { document } = await generateUnsavedPoster(services(), {
+      ...request,
+      subject: registeredSubject("u-1"),
+      acceptedTerms: undefined,
+    });
+
+    expect(document.pageCount).toBeGreaterThan(0);
+  });
+});
 
 describe("Generate unsaved poster", () => {
   it("should hand the PDF back and count it", async () => {
