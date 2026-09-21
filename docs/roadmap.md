@@ -732,7 +732,12 @@ Condiciona poder publicar con Google AdSense, no la utilidad de la
 herramienta. Por eso va al final: sin molde correcto no hay nada que
 posicionar.
 
-* **Landing page amigable**, pedida el 2026-09-21: explica en pasos cómo
+* ~~**Landing page amigable**~~ **Hecha el 2026-09-21** (`app/page.tsx`):
+  cómo funciona en cuatro pasos, ejemplos, por qué aquí y preguntas
+  frecuentes con datos estructurados `FAQPage`. Los ejemplos no están
+  escritos a mano: medidas y hojas salen del módulo de pósters, y son hojas
+  justas en los dos sentidos. Las ilustraciones usan los tokens
+  `--illustration-*` del tema. Lo que se pidió: explica en pasos cómo
   funciona (subir, recortar, elegir tamaño, imprimir y pegar), enseña
   ejemplos de piñatas hechas con el póster y dice por qué usar esta web y no
   una herramienta genérica de pósters: medidas en cm, hojas justas, mapa de

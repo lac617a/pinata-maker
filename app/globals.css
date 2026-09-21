@@ -35,6 +35,18 @@
   --border: oklch(0.923 0.003 48.717);
   --input: oklch(0.923 0.003 48.717);
   --ring: oklch(0.709 0.01 56.259);
+
+  /*
+   * Colores de las ilustraciones de ejemplo: papel de seda de piñata. Solo
+   * para dibujos, nunca para controles. Fondo claro y figura saturada, por
+   * parejas: 1-2, 3-4, 5-6.
+   */
+  --illustration-1: oklch(0.9 0.06 85);
+  --illustration-2: oklch(0.55 0.19 25);
+  --illustration-3: oklch(0.92 0.04 240);
+  --illustration-4: oklch(0.8 0.16 85);
+  --illustration-5: oklch(0.94 0.03 350);
+  --illustration-6: oklch(0.6 0.2 15);
 }
 
 /**
@@ -63,6 +75,13 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.553 0.013 58.071);
+
+  --illustration-1: oklch(0.35 0.05 85);
+  --illustration-2: oklch(0.65 0.19 25);
+  --illustration-3: oklch(0.32 0.04 240);
+  --illustration-4: oklch(0.82 0.15 85);
+  --illustration-5: oklch(0.33 0.04 350);
+  --illustration-6: oklch(0.68 0.19 15);
 }
 
 @theme inline {
