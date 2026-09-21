@@ -10,7 +10,11 @@ import {
   useDownloadExport,
   useProjectExports,
 } from "@/presentation/client/api/exports";
-import { formatBytes, formatDate } from "@/presentation/client/format";
+import {
+  formatBytes,
+  formatCentimeters,
+  formatDate,
+} from "@/presentation/client/format";
 
 /**
  * Los documentos ya generados.
@@ -48,8 +52,14 @@ export function ProjectExports({ projectId }: { projectId: string }) {
             <div className="min-w-48 flex-1">
               <p className="font-medium">{generated.fileName}</p>
               <p className="text-muted-foreground text-sm">
-                {generated.pageCount} hojas · {generated.paperFormat} ·{" "}
-                {formatBytes(generated.byteSize)} ·{" "}
+                {generated.width && generated.height
+                  ? `${formatCentimeters(generated.width)} × ${formatCentimeters(generated.height)} cm · `
+                  : ""}
+                {generated.pageCount} hojas ·{" "}
+                {generated.paperFormat === "LETTER"
+                  ? "Carta"
+                  : generated.paperFormat}{" "}
+                · {formatBytes(generated.byteSize)} ·{" "}
                 {formatDate(generated.createdAt)}
               </p>
             </div>

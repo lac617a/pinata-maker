@@ -97,3 +97,33 @@ export function useDeleteExport(projectId: string) {
       }),
   });
 }
+
+export type ExportPosterInput = {
+  readonly assetId: string;
+  /** Un lado en milímetros; el otro lo calcula el servidor con la imagen. */
+  readonly width?: number;
+  readonly height?: number;
+  readonly paper: {
+    readonly format: PaperFormat;
+    readonly orientation: PaperOrientation;
+  };
+};
+
+/** Genera el póster de una imagen. Ver docs/PRD.md §44. */
+export function useExportPoster(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: ExportPosterInput) =>
+      (
+        await apiRequest<{ export: ProjectExport }>(
+          `/api/projects/${projectId}/posters`,
+          { method: "POST", body: JSON.stringify(input) },
+        )
+      ).export,
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: exportKeys.ofProject(projectId),
+      }),
+  });
+}

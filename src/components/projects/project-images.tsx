@@ -68,9 +68,8 @@ export function ProjectImages({
       />
 
       <p className="text-muted-foreground text-sm">
-        PNG con el fondo ya recortado. Una imagen sin transparencia produce un
-        molde con la forma del rectángulo entero: quitar el fondo todavía no lo
-        hace la aplicación.
+        PNG, JPEG o WEBP de al menos 200 × 200 px. Se imprime tal cual, ampliada
+        al tamaño que elijas: cuanta más resolución, más nítida sale en grande.
       </p>
 
       {images.isPending ? (

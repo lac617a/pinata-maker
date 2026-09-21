@@ -4,25 +4,22 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { ProjectExports } from "@/components/exports/project-exports";
+import { PosterStudio } from "@/components/posters/poster-studio";
 import { ProjectImages } from "@/components/projects/project-images";
-import { TemplateStudio } from "@/components/templates/template-studio";
-import { TemplateVersions } from "@/components/templates/template-versions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProjectImages } from "@/presentation/client/api/images";
 import { useProject } from "@/presentation/client/api/projects";
-import { useTemplateVersions } from "@/presentation/client/api/templates";
 
 /**
- * El proyecto de punta a punta: imagen, molde y descarga.
+ * El proyecto de punta a punta: imagen, tamaño y descarga.
  *
- * El camino principal es corto a propósito: subir una imagen, ajustar las
- * medidas mirando el molde y descargar. Las versiones y los documentos
- * generados quedan como historial, plegados, porque son registro y no pasos.
+ * El camino principal es corto a propósito: subir una imagen, elegir cuánto
+ * mide mirando cómo se reparte en hojas y descargar (docs/PRD.md §44). Los
+ * PDF ya generados quedan plegados debajo: son registro, no pasos.
  */
 export function ProjectWorkspace({ projectId }: { projectId: string }) {
   const project = useProject(projectId);
   const images = useProjectImages(projectId);
-  const versions = useTemplateVersions(projectId);
 
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
 
@@ -68,27 +65,15 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
         onSelect={setSelectedImageId}
       />
 
-      <TemplateStudio
-        projectId={projectId}
-        projectName={project.data?.name ?? "Plantilla"}
-        image={selectedImage}
-      />
+      <PosterStudio projectId={projectId} image={selectedImage} />
 
       <details className="border-border space-y-4 rounded-lg border p-4">
         <summary className="cursor-pointer font-serif text-lg">
-          Historial
-          <span className="text-muted-foreground font-sans text-sm">
-            {" "}
-            · {versions.data?.length ?? 0} versiones
-          </span>
+          PDF generados
         </summary>
 
-        <div className="mt-4 space-y-6">
+        <div className="mt-4">
           <ProjectExports projectId={projectId} />
-          <TemplateVersions
-            versions={versions.data}
-            isPending={versions.isPending}
-          />
         </div>
       </details>
     </main>
