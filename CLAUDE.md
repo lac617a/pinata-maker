@@ -34,7 +34,7 @@ aquí.
 ## 2. Comandos
 
 ```bash
-pnpm test              # Vitest, 382 tests, entorno node
+pnpm test              # Vitest, 418 tests, entorno node
 ```
 
 ```bash
@@ -84,6 +84,8 @@ src/modules/
 ├── templates/              Silueta + profundidad → piezas recortables, y la
 │                           versión inmutable con la que se publican.
 ├── printing/               Papel, márgenes, tiling, PrintLayout.
+├── storage/                Puerto de object storage: subir, borrar, firmar.
+├── exports/                PDF generado de una versión, con su archivo.
 └── pdf-generation/         PrintLayout → PDF. Boundary de salida.
     └── infrastructure/     Único sitio que importa jspdf.
 docs/                       Fuente de verdad del comportamiento.
@@ -156,15 +158,16 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
   abstraído y el resto del pipeline empieza en la máscara.
 * **Fase D parcial:** `generateTemplate` y `generatePrintableDocument` ya
   cubren la cadena entera. Falta lo que depende de persistencia.
-* **Fase E parcial:** proyecto, imagen original y versiones de plantilla
-  están persistidos con RLS. Una versión publicada es inmutable, y lo impone
-  la base de datos: no tiene política de UPDATE.
-* **La API existe y está autenticada:** proyectos, sesión, imágenes y
-  versiones de plantilla. Sin
+* **Fase E casi cerrada:** proyecto, imagen original, versiones de plantilla
+  y exports están persistidos con RLS. Una versión publicada es inmutable, y
+  lo impone la base de datos: no tiene política de UPDATE. Queda la limpieza
+  de archivos huérfanos y la retención (`docs/storage.md` §164).
+* **La API existe y está autenticada:** proyectos, sesión, imágenes,
+  versiones de plantilla y descarga de PDF. Sin
   sesión responde 401; un recurso ajeno responde 404 y no 403.
-* **Hay tres migraciones.** Se aplican a mano y en orden. Comprueba siempre
-  con `pnpm check:supabase` antes de dar por hecho que la base de datos está
-  al día.
+* **Hay cuatro migraciones y dos buckets privados.** Se aplican a mano y en
+  orden. Comprueba siempre con `pnpm check:supabase` antes de dar por hecho
+  que la base de datos está al día.
 * **Siguiente:** la interfaz (fase F). Seis criterios de aceptación esperan
   solo por ella. La eliminación de fondo queda aparcada hasta el monorepo.
 * **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,

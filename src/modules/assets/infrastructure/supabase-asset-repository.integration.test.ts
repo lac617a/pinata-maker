@@ -7,7 +7,10 @@ import { createProject, type Project, type UserId } from "../../projects/project
 import { SupabaseProjectRepository } from "../../projects/infrastructure/supabase-project-repository";
 import { createAsset, type Asset } from "../asset";
 import { SupabaseAssetRepository } from "./supabase-asset-repository";
-import { SupabaseAssetStorage } from "./supabase-asset-storage";
+import {
+  PROJECT_ASSETS_BUCKET,
+  SupabaseObjectStorage,
+} from "../../../infrastructure/supabase/supabase-object-storage";
 
 /**
  * Comprobación contra la base de datos y el object storage reales.
@@ -35,7 +38,7 @@ describe.skipIf(!configured)("Supabase asset repository", () => {
   let client: SupabaseClient;
   let projects: SupabaseProjectRepository;
   let assets: SupabaseAssetRepository;
-  let storage: SupabaseAssetStorage;
+  let storage: SupabaseObjectStorage;
   let userId: UserId;
   let project: Project;
   const storedKeys: string[] = [];
@@ -54,7 +57,7 @@ describe.skipIf(!configured)("Supabase asset repository", () => {
 
     projects = new SupabaseProjectRepository(client);
     assets = new SupabaseAssetRepository(client);
-    storage = new SupabaseAssetStorage(client);
+    storage = new SupabaseObjectStorage(client, PROJECT_ASSETS_BUCKET);
 
     project = createProject({
       id: crypto.randomUUID(),

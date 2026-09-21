@@ -113,6 +113,42 @@ if (url && anonKey) {
       versions.error ? `denegado (${versions.error.code})` : "lista vacía",
     );
   }
+
+  // Migración 0004: exports y su bucket privado.
+  const exports = await client.from("exports").select("id").limit(1);
+  const exportsMissing = TABLE_MISSING_CODES.includes(exports.error?.code ?? "");
+
+  report(
+    "la tabla exports existe",
+    !exportsMissing,
+    exportsMissing ? "aplica supabase/migrations/0004_exports.sql" : "",
+  );
+
+  if (!exportsMissing) {
+    report(
+      "RLS oculta los exports a un anónimo",
+      Boolean(exports.error) || (exports.data?.length ?? 0) === 0,
+      exports.error ? `denegado (${exports.error.code})` : "lista vacía",
+    );
+  }
+
+  const exportsBucket = await client.storage.getBucket("project-exports");
+
+  report(
+    "el bucket project-exports existe",
+    !exportsBucket.error,
+    exportsBucket.error ? "aplica supabase/migrations/0004_exports.sql" : "",
+  );
+
+  if (!exportsBucket.error) {
+    report(
+      "el bucket project-exports es privado",
+      exportsBucket.data?.public === false,
+      exportsBucket.data?.public
+        ? "está publico: los documentos serian accesibles"
+        : "",
+    );
+  }
 }
 
 for (const { check, passed, detail } of results) {

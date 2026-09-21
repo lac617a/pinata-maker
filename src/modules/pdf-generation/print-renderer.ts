@@ -85,6 +85,16 @@ export interface PrintRenderer {
 
 export const PDF_CONTENT_TYPE = "application/pdf";
 
+/**
+ * Versión del generador de documentos.
+ *
+ * Se guarda con cada archivo generado para poder relacionar un PDF que el
+ * usuario ya imprimió con las reglas que lo produjeron. Sin ella, un cambio
+ * en el dibujo dejaría los documentos antiguos sin explicación.
+ * Ver docs/storage.md §54.
+ */
+export const PDF_GENERATOR_VERSION = "1.0";
+
 export const DEFAULT_PDF_FILE_NAME = "pinata-template.pdf";
 
 /** Ver docs/pdf.md §36. No debe contener datos del usuario. */

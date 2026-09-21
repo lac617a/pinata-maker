@@ -25,7 +25,13 @@ export class AssetNotFoundError extends Error {
   }
 }
 
-/** Falló guardar o recuperar el archivo. Ver docs/storage.md §77. */
+/**
+ * Falló guardar o recuperar la fila del asset.
+ *
+ * El archivo tiene el suyo, `ObjectStorageError`: la fila y el archivo son
+ * dos almacenamientos distintos y fallan por separado.
+ * Ver docs/storage.md §77 y §148.
+ */
 export class AssetStorageError extends Error {
   readonly code = "ASSET_STORAGE_FAILED";
 

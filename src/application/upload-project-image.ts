@@ -6,8 +6,8 @@ import {
 import type { AssetRepository } from "../modules/assets/asset-repository";
 import {
   SIGNED_URL_TTL_SECONDS,
-  type AssetStorage,
-} from "../modules/assets/asset-storage";
+  type ObjectStorage,
+} from "../modules/storage/object-storage";
 import { AssetNotFoundError } from "../modules/assets/errors";
 import { validateImageUpload } from "../modules/image-processing/image-validation";
 import type { ProjectId, UserId } from "../modules/projects/project";
@@ -15,7 +15,7 @@ import { openProject, type ProjectServices } from "./manage-projects";
 
 export type AssetServices = ProjectServices & {
   readonly assets: AssetRepository;
-  readonly storage: AssetStorage;
+  readonly storage: ObjectStorage;
   readonly newAssetId: () => AssetId;
 };
 

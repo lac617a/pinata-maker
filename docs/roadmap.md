@@ -35,6 +35,7 @@ hay es interfaz**: `app/` solo contiene la API.
 [✓] Proyecto persistido, aislado por usuario, con registro y sesión
 [✓] Imagen original guardada en un bucket privado, servida con URL firmada
 [✓] Plantilla publicada como versión inmutable, recuperable tal y como se guardó
+[✓] PDF generado, guardado en object storage y entregado con enlace firmado
 [ ] Imagen real → máscara alfa (eliminación de fondo)
 [ ] Interfaz de usuario
 ```
@@ -49,7 +50,7 @@ conocido y medirlo con una regla real (`printing.md` §75).
 Verificación:
 
 ```bash
-pnpm test        # 382 tests, más 20 de integración que necesitan cuenta
+pnpm test        # 418 tests, más 26 de integración que necesitan cuenta
 pnpm exec tsc --noEmit
 ```
 
@@ -360,7 +361,46 @@ Invariantes cubiertas por tests:
 
 Decisiones documentadas en `storage.md` §153-§159.
 
-## 2.13 Prueba de la cadena completa
+## 2.13 Exports y object storage
+
+El documento generado de una versión de plantilla, y el puerto de
+almacenamiento de archivos que comparte con las imágenes.
+
+| Archivo | Responsabilidad |
+| --- | --- |
+| `storage/object-storage.ts` | Puerto: subir, borrar y firmar un enlace |
+| `storage/in-memory-object-storage.ts` | Implementación de referencia |
+| `infrastructure/supabase/supabase-object-storage.ts` | Un adaptador, dos buckets |
+| `exports/export.ts` | Entidad del documento y su ruta |
+| `exports/export-repository.ts` | Interfaz: crear, listar y borrar |
+| `exports/export-repository.contract.ts` | Qué significa cumplirlo |
+| `application/export-printable-document.ts` | Generar, entregar y borrar |
+| `presentation/http/export-endpoints.ts` | Las cuatro rutas |
+| `supabase/migrations/0004_exports.sql` | Tabla, RLS, bucket y políticas |
+
+Invariantes cubiertas por tests:
+
+* El documento guardado es un PDF de verdad, con el renderer real de punta a
+  punta: versión guardada → PDF → archivo → enlace de descarga.
+* Cada generación es un artefacto propio: volver a exportar no pisa el
+  documento anterior.
+* El export registra de qué versión, con qué papel y con qué generador salió.
+* Si falla guardar la fila, el archivo subido se borra.
+* Al borrar, primero la fila y después el archivo.
+* La ruta de almacenamiento no sale en la respuesta de la API.
+* Un formato de papel desconocido se rechaza con 400.
+* Exportar una versión de otro proyecto responde 404.
+* Contra la base de datos real: un export no se puede modificar, la versión
+  de la que salió no se puede borrar mientras exista, y el bucket no entrega
+  el documento sin firma.
+
+El PDF se guarda entero en lugar de regenerarse en cada descarga, por la misma
+razón por la que las versiones son inmutables: regenerarlo con otro generador
+daría un documento distinto del que el usuario tiene impreso.
+
+Decisiones documentadas en `storage.md` §160-§164.
+
+## 2.14 Prueba de la cadena completa
 
 `src/modules/pipeline.test.ts` recorre máscara → contorno → geometría →
 plantilla → reparto en páginas.
@@ -405,6 +445,10 @@ No volver a abrirlas sin un motivo nuevo.
 | Toda la piñata en un solo PDF, con hoja de instrucciones | El usuario descarga un archivo, no uno por pieza |
 | La numeración de hoja es local a la pieza | Al montar se trabaja pieza a pieza, no por número global |
 | Estados `DRAFT`, `PROCESSING`, `READY`, `ERROR` | Los del PRD §22; `ARCHIVED` no lo pide nadie |
+| Un solo puerto de object storage para imágenes y documentos | Dos consumidores que necesitan lo mismo; el bucket lo decide el adaptador |
+| El PDF se guarda entero y no se regenera al descargarlo | Otro generador daría un documento distinto del que el usuario imprimió |
+| El PDF se entrega con un enlace firmado, no servido por la aplicación | Cincuenta hojas no deben atravesar el proceso que atiende peticiones |
+| Un export sí se puede borrar; una versión no | El documento es regenerable desde su versión; la versión no lo es |
 | La plantilla de un proyecto es la serie de sus versiones | Una tabla `templates` con solo un id no responde a ninguna pregunta |
 | El repositorio de versiones no tiene `save` | Una versión publicada no se corrige: se publica la siguiente |
 | La tabla de versiones no tiene política de UPDATE ni de DELETE | La inmutabilidad no puede depender de que el código se acuerde |
@@ -475,10 +519,10 @@ Queda fuera, por decisión explícita:
 **Parcial.** Ver §2.7. `GenerateTemplate` y `GeneratePdf` están hechos: una
 máscara alfa produce un PDF completo sin pasar por ninguna capa más.
 
-`CreateProject`, `UploadImage` y la publicación de versiones de plantilla
-también (§2.7, §2.9, §2.11 y §2.12).
+`CreateProject`, `UploadImage`, la publicación de versiones y
+`DownloadExport` también (§2.7, §2.9, §2.11, §2.12 y §2.13).
 
-Falta `DownloadExport`: el PDF se genera y no se guarda en ninguna parte.
+Lo único que falta de esta fase es `ProcessImage`.
 
 `ProcessImage` depende además de la eliminación de fondo (fase B). Cuando
 exista, será un caso de uso delgado: el adaptador entrega una `AlphaMask` y
@@ -496,14 +540,15 @@ que RLS—.
 
 El registro y el inicio de sesión también están hechos (§2.10).
 
-Las versiones de plantilla también (§2.12), con su inmutabilidad impuesta por
-la base de datos y no solo por el código.
+Las versiones de plantilla (§2.12) y los exports (§2.13) también. Las cuatro
+migraciones se aplican a mano y en orden; `pnpm check:supabase` comprueba las
+cuatro tablas y los dos buckets.
 
 Falta:
 
 * El asset procesado, que separa el original de lo que produce la
   eliminación de fondo (`AGENTS.md` §19). El original ya está (§2.11).
-* Exports: guardar el PDF generado para poder entregarlo (AC-13).
+* Limpiar los archivos huérfanos y decidir la retención (`storage.md` §164).
 
 El repositorio de proyectos fija el patrón que los demás deben seguir:
 interfaz en el dominio, contrato compartido, adaptador en `infrastructure/`,
@@ -614,6 +659,12 @@ posicionar.
   (`image-processing.md` §101).
 * El reparto en páginas no descarta hojas sin geometría. Optimizar el uso de
   papel es una decisión pendiente, no un olvido.
+* Los archivos del object storage no se borran al borrar un proyecto: las
+  filas se van en cascada y el bucket no se entera. Hace falta un proceso de
+  limpieza o borrar los archivos antes (`storage.md` §59 y §164).
+* El PDF se genera dentro de la petición. Para una piñata de un metro son
+  unos segundos; si llega a molestar, el export ya tiene identidad propia
+  para poder consultarse en segundo plano (`storage.md` §115).
 * Los márgenes de hardware de la impresora no se modelan (`printing.md` §12).
 
 ---
@@ -634,6 +685,6 @@ posicionar.
 | AC-10 | Marcas de alineación | **Hecho y probado** |
 | AC-11 | Referencia de calibración | **Hecho y probado** |
 | AC-12 | Generar PDF | **Hecho y probado** |
-| AC-13 | Descargar el PDF | Documento listo; falta entregarlo (E, F) |
+| AC-13 | Descargar el PDF | API lista; falta interfaz (F) |
 | AC-14 | Reabrir el proyecto | API lista; falta interfaz (F) |
 | AC-15 | Aislamiento entre usuarios | **Hecho y probado** para proyectos |

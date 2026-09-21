@@ -65,6 +65,10 @@ const KNOWN_ERRORS: Record<string, ErrorPresentation> = {
     status: 503,
     message: "No pudimos guardar la imagen. Inténtalo de nuevo.",
   },
+  OBJECT_STORAGE_FAILED: {
+    status: 503,
+    message: "No pudimos guardar el archivo. Inténtalo de nuevo.",
+  },
   INVALID_TEMPLATE_DEFINITION: {
     status: 400,
     message: "Esa plantilla no se puede guardar tal y como llega.",
@@ -83,6 +87,18 @@ const KNOWN_ERRORS: Record<string, ErrorPresentation> = {
   TEMPLATE_STORAGE_FAILED: {
     status: 503,
     message: "No pudimos guardar la plantilla. Inténtalo de nuevo.",
+  },
+  INVALID_EXPORT: {
+    status: 400,
+    message: "No pudimos preparar esa descarga con lo que nos has pedido.",
+  },
+  EXPORT_NOT_FOUND: {
+    status: 404,
+    message: "No encontramos ese documento.",
+  },
+  EXPORT_STORAGE_FAILED: {
+    status: 503,
+    message: "No pudimos guardar el documento. Inténtalo de nuevo.",
   },
   UNSUPPORTED_IMAGE_FORMAT: {
     status: 415,

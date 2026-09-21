@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { InMemoryAssetRepository } from "../modules/assets/in-memory-asset-repository";
-import { InMemoryAssetStorage } from "../modules/assets/in-memory-asset-storage";
+import { InMemoryObjectStorage } from "../modules/storage/in-memory-object-storage";
 import { AssetNotFoundError } from "../modules/assets/errors";
 import { UnsupportedImageFormatError } from "../modules/image-processing/errors";
 import { IMAGE_LIMITS } from "../modules/image-processing/image-validation";
@@ -18,9 +18,9 @@ import {
 const owner = "11111111-1111-1111-1111-111111111111";
 const stranger = "22222222-2222-2222-2222-222222222222";
 
-function services(): AssetServices & { storage: InMemoryAssetStorage } {
+function services(): AssetServices & { storage: InMemoryObjectStorage } {
   const projects = new InMemoryProjectRepository();
-  const storage = new InMemoryAssetStorage();
+  const storage = new InMemoryObjectStorage();
 
   let clock = 0;
   let projectSequence = 0;

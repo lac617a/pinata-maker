@@ -1,7 +1,10 @@
 import { cookies } from "next/headers";
 
 import { SupabaseAssetRepository } from "../../modules/assets/infrastructure/supabase-asset-repository";
-import { SupabaseAssetStorage } from "../../modules/assets/infrastructure/supabase-asset-storage";
+import {
+  PROJECT_ASSETS_BUCKET,
+  SupabaseObjectStorage,
+} from "../../infrastructure/supabase/supabase-object-storage";
 import {
   createRequestClient,
   readCurrentUserId,
@@ -29,7 +32,7 @@ export async function assetRequestContext(): Promise<AssetRequestContext> {
     services: {
       repository: new SupabaseProjectRepository(client),
       assets: new SupabaseAssetRepository(client),
-      storage: new SupabaseAssetStorage(client),
+      storage: new SupabaseObjectStorage(client, PROJECT_ASSETS_BUCKET),
       now: () => new Date(),
       newId: () => crypto.randomUUID(),
       newAssetId: () => crypto.randomUUID(),

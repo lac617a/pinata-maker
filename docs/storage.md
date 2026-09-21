@@ -2362,8 +2362,8 @@ supabase db push
 ```
 
 o pegar los archivos de `supabase/migrations/` en el editor SQL del panel,
-en orden: `0001_projects.sql`, `0002_assets.sql` y
-`0003_template_versions.sql`.
+en orden: `0001_projects.sql`, `0002_assets.sql`,
+`0003_template_versions.sql` y `0004_exports.sql`.
 
 Para comprobar que el entorno está listo:
 
@@ -2372,16 +2372,17 @@ pnpm check:supabase
 ```
 
 Verifica que las variables están definidas, que el proyecto responde, que las
-tablas existen, que **RLS las oculta a un cliente anónimo** y que el bucket de
-archivos existe y **no es público**. No imprime ningún valor de configuración.
+cuatro tablas existen, que **RLS las oculta a un cliente anónimo** y que los
+dos buckets existen y **no son públicos**. No imprime ningún valor de
+configuración.
 
 ---
 
 # 146. Lo que falta de la persistencia
 
 ```text
-exports (§50 en adelante)
 la imagen procesada, que depende de la eliminación de fondo (§48)
+la limpieza de archivos huérfanos y la retención (§59, §113, §164)
 ```
 
 El repositorio de proyectos fija el patrón que los demás deben seguir:
@@ -2633,3 +2634,99 @@ publica.
 del ciclo de vida del proyecto (`PRD.md` §22) y las decide quien orquesta el
 procesado, no quien guarda: desde `DRAFT` ni siquiera existe la transición a
 `READY`, y meterla aquí obligaría a inventar una.
+
+---
+
+# 160. Implementación de referencia: exports y object storage
+
+Cuarta parte de la persistencia, y la que cierra AC-13: hasta aquí el PDF se
+generaba en memoria y se perdía con la petición.
+
+```text
+src/modules/storage/
+├── object-storage.ts              Puerto: subir, borrar y firmar
+└── in-memory-object-storage.ts    Implementación de referencia
+
+src/infrastructure/supabase/
+└── supabase-object-storage.ts     Un adaptador, dos buckets
+
+src/modules/exports/
+├── export.ts                        Entidad y ruta del documento
+├── export-repository.ts             Interfaz: crear, listar y borrar
+├── export-repository.contract.ts    Qué significa cumplirlo
+├── in-memory-export-repository.ts
+├── errors.ts
+└── infrastructure/
+    └── supabase-export-repository.ts
+
+src/application/export-printable-document.ts   Generar, entregar y borrar
+src/presentation/http/export-endpoints.ts      Las cuatro rutas
+
+supabase/migrations/0004_exports.sql   Tabla, RLS, bucket y sus políticas
+```
+
+---
+
+# 161. Un solo puerto de object storage
+
+Los dos archivos que el sistema guarda —la imagen original y el PDF
+generado— necesitan exactamente lo mismo: subir, borrar y firmar un enlace
+temporal. El puerto es uno solo (`ObjectStorage`) y lo que cambia entre ellos
+es el bucket, que decide el adaptador.
+
+Esto reemplaza al `AssetStorage` que tenían los assets. No es una abstracción
+inventada por si acaso (`AGENTS.md` §7): hay dos consumidores concretos, y la
+alternativa era un segundo adaptador de Supabase Storage idéntico al primero.
+
+Los buckets sí están separados: cada uno puede tener su política de retención
+y su límite de tamaño sin afectar al otro (§6, §45).
+
+---
+
+# 162. El PDF se guarda entero, no se regenera al descargarlo
+
+Podría no guardarse: el molde está persistido y el documento es una función de
+la versión más la configuración de papel.
+
+No se hace, y por la misma razón por la que las versiones son inmutables. Un
+PDF generado es un artefacto (§50) e inmutable (§55): regenerarlo con otra
+versión del generador daría un documento distinto del que el usuario tiene
+impreso y recortado. Por eso el export guarda con qué versión de plantilla,
+con qué papel y con qué generador se hizo (§53, §54).
+
+La descarga es un **enlace firmado** al object storage y no el archivo servido
+por la aplicación: un documento de cincuenta hojas no debería atravesar el
+proceso que atiende las peticiones cada vez que alguien lo descarga.
+
+---
+
+# 163. Qué se puede borrar y qué no
+
+```text
+versión de plantilla   no se borra suelta; se va con su proyecto
+export                 sí se borra: es regenerable y ocupa espacio
+```
+
+La clave foránea del export hacia su versión es `restrict` y no `cascade`:
+mientras exista un documento que dice haber salido de un molde, ese molde no
+desaparece. Borrar el proyecto se lleva las dos cosas a la vez.
+
+Al borrar un export se borra primero la fila y después el archivo, igual que
+con las imágenes (§148): un archivo sin fila es desperdicio, una fila sin
+archivo es una descarga rota.
+
+---
+
+# 164. Lo que todavía no está resuelto
+
+* **Archivos huérfanos** (§59). Borrar un proyecto borra sus filas en
+  cascada, pero el object storage no se entera: los archivos se quedan. Hace
+  falta un proceso periódico que compare bucket y base de datos, o borrar los
+  archivos explícitamente antes de borrar el proyecto.
+* **Retención** (§56, §113). No hay política: los exports se acumulan hasta
+  que el usuario los borra a mano.
+* **Generación síncrona**. El PDF se produce dentro de la petición. Para una
+  piñata de un metro son unos segundos; si llega a ser un problema, el trabajo
+  en segundo plano de §115 es la salida, y el export ya tiene la identidad
+  propia que haría falta para consultar su estado.
+* **La imagen procesada** (§48), que depende de la eliminación de fondo.
