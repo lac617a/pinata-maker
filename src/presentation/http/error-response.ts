@@ -88,6 +88,11 @@ const KNOWN_ERRORS: Record<string, ErrorPresentation> = {
     status: 503,
     message: "No pudimos guardar la plantilla. Inténtalo de nuevo.",
   },
+  INVALID_POSTER_SIZE: {
+    status: 400,
+    message:
+      "Esa medida no sirve: cada lado tiene que medir entre 10 cm y 3 m.",
+  },
   INVALID_EXPORT: {
     status: 400,
     message: "No pudimos preparar esa descarga con lo que nos has pedido.",

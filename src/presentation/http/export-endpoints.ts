@@ -136,11 +136,14 @@ export async function handleDeleteExport(
  * La ruta de almacenamiento no sale: es detalle de infraestructura y
  * conocerla no le sirve de nada a quien consume la API.
  */
-function toPayload(generated: ProjectExport) {
+export function toPayload(generated: ProjectExport) {
   return {
     id: generated.id,
     projectId: generated.projectId,
     templateVersionId: generated.templateVersionId,
+    sourceAssetId: generated.sourceAssetId,
+    width: generated.width,
+    height: generated.height,
     fileName: generated.fileName,
     contentType: generated.contentType,
     pageCount: generated.pageCount,
@@ -153,7 +156,7 @@ function toPayload(generated: ProjectExport) {
 }
 
 /** Un cuerpo que no es JSON es un error del cliente, no una excepción. */
-async function readJsonBody(
+export async function readJsonBody(
   request: Request,
 ): Promise<Record<string, unknown>> {
   try {
@@ -184,7 +187,9 @@ function asTemplateVersionId(value: unknown): string {
  * siguen siendo los del producto: son decisiones físicas ya tomadas
  * (`printing.md` §45) y no algo que cada petición deba poder alterar.
  */
-function asPrintConfiguration(value: unknown): PrintConfiguration | undefined {
+export function asPrintConfiguration(
+  value: unknown,
+): PrintConfiguration | undefined {
   if (value === undefined || value === null) {
     return undefined;
   }

@@ -108,6 +108,8 @@ export async function exportTemplateVersion(
     id: services.newExportId(),
     projectId: version.projectId,
     templateVersionId: version.id,
+    width: template.width,
+    height: template.height,
     fileName: document.fileName,
     contentType: document.contentType,
     pageCount: document.pageCount,
@@ -118,18 +120,36 @@ export async function exportTemplateVersion(
     now: services.now(),
   });
 
+  return storeGeneratedDocument(
+    services,
+    generated,
+    document.bytes,
+    input.userId,
+  );
+}
+
+/**
+ * Guarda un documento ya generado: primero el archivo, después la fila.
+ *
+ * Si falla la fila se borra el archivo: sin eso quedaría un documento que
+ * nadie referencia, ocupando espacio para siempre. Mismo orden que en la
+ * subida de imágenes. Ver docs/storage.md §148.
+ */
+export async function storeGeneratedDocument(
+  services: ExportServices,
+  generated: ProjectExport,
+  bytes: Uint8Array,
+  userId: UserId,
+): Promise<ProjectExport> {
   await services.exportStorage.put({
     key: generated.storageKey,
     contentType: generated.contentType,
-    bytes: document.bytes,
+    bytes,
   });
 
   try {
-    await services.exports.create(generated, input.userId);
+    await services.exports.create(generated, userId);
   } catch (error) {
-    // El archivo ya está subido y la fila no. Sin esto quedaría un documento
-    // que nadie referencia, ocupando espacio para siempre. Mismo orden que en
-    // la subida de imágenes. Ver docs/storage.md §148.
     await services.exportStorage
       .remove(generated.storageKey)
       .catch(() => undefined);

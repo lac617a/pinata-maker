@@ -10,7 +10,11 @@ import { apiRequest } from "@/presentation/client/api-client";
 export type ProjectExport = {
   readonly id: string;
   readonly projectId: string;
-  readonly templateVersionId: string;
+  readonly templateVersionId: string | null;
+  readonly sourceAssetId: string | null;
+  /** Tamaño impreso en mm; nulo en documentos antiguos. */
+  readonly width: number | null;
+  readonly height: number | null;
   readonly fileName: string;
   readonly contentType: string;
   readonly pageCount: number;

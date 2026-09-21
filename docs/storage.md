@@ -2785,3 +2785,32 @@ Otros detalles de estas políticas:
 tardó en verse por otra razón: un error conocido de servidor, un 503, no
 dejaba rastro en el registro. Ahora `toErrorResponse` registra la causa de
 todo fallo 5xx.
+
+---
+
+# 166. Un documento puede salir de una imagen
+
+Desde la decisión de `PRD.md` §44, el PDF principal es la imagen ampliada en
+mosaico, y no sale de ninguna versión de plantilla. `0007_poster_exports.sql`
+lo recoge:
+
+```text
+template_version_id   ahora opcional
+source_asset_id       de qué imagen salió; se vacía si se borra la imagen
+width_mm, height_mm   tamaño físico impreso
+```
+
+Un documento tiene que poder decir de dónde salió: la restricción
+`exports_has_origin` exige una versión de plantilla o un tamaño. No exige la
+imagen porque borrarla vacía `source_asset_id` en documentos que sí salieron
+de ella, y borrar una imagen no debe fallar por eso.
+
+## El servidor decide con lo guardado
+
+`exportPoster` recibe qué imagen, qué lado en milímetros y qué papel. Los
+bytes salen del bucket y el tamaño en pixels de su propia cabecera
+(`image-processing.md` §110), no de lo que diga el navegador: si el cliente
+mintiera sobre la proporción, el póster saldría deformado.
+
+La imagen tiene que ser del proyecto de la ruta. Una imagen de otro proyecto
+del mismo usuario responde como inexistente.

@@ -14,7 +14,10 @@ import type { ProjectId, UserId } from "@/modules/projects/project";
 type ExportRow = {
   readonly id: string;
   readonly project_id: string;
-  readonly template_version_id: string;
+  readonly template_version_id: string | null;
+  readonly source_asset_id: string | null;
+  readonly width_mm: number | null;
+  readonly height_mm: number | null;
   readonly storage_key: string;
   readonly file_name: string;
   readonly content_type: string;
@@ -29,7 +32,7 @@ type ExportRow = {
 const TABLE = "exports";
 
 const COLUMNS =
-  "id, project_id, template_version_id, storage_key, file_name, content_type, page_count, byte_size, paper_format, paper_orientation, generator_version, created_at";
+  "id, project_id, template_version_id, source_asset_id, width_mm, height_mm, storage_key, file_name, content_type, page_count, byte_size, paper_format, paper_orientation, generator_version, created_at";
 
 /**
  * Repositorio de exports sobre Supabase.
@@ -102,6 +105,9 @@ function toExport(row: ExportRow): ProjectExport {
     id: row.id,
     projectId: row.project_id,
     templateVersionId: row.template_version_id,
+    sourceAssetId: row.source_asset_id,
+    width: row.width_mm,
+    height: row.height_mm,
     storageKey: row.storage_key,
     fileName: row.file_name,
     contentType: row.content_type,
@@ -119,6 +125,9 @@ function toRow(projectExport: ProjectExport): ExportRow {
     id: projectExport.id,
     project_id: projectExport.projectId,
     template_version_id: projectExport.templateVersionId,
+    source_asset_id: projectExport.sourceAssetId,
+    width_mm: projectExport.width,
+    height_mm: projectExport.height,
     storage_key: projectExport.storageKey,
     file_name: projectExport.fileName,
     content_type: projectExport.contentType,

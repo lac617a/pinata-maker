@@ -1,3 +1,5 @@
+import type { AssetId } from "@/modules/assets/asset";
+import type { Millimeters } from "@/modules/geometry/units";
 import type {
   PaperFormat,
   PaperOrientation,
@@ -24,12 +26,22 @@ export type ProjectExport = {
   readonly id: ExportId;
   readonly projectId: ProjectId;
   /**
-   * Versión de la que salió.
+   * Versión de plantilla de la que salió, si salió de una.
    *
    * Es lo que permite reproducir el contexto del archivo: con qué molde se
    * generó. Ver docs/storage.md §53 y §54.
    */
-  readonly templateVersionId: TemplateVersionId;
+  readonly templateVersionId: TemplateVersionId | null;
+  /**
+   * Imagen de la que salió un póster (docs/PRD.md §44).
+   *
+   * Un documento sale de una versión de plantilla o de una imagen: siempre de
+   * algo que se pueda nombrar, para poder decir qué se imprimió.
+   */
+  readonly sourceAssetId: AssetId | null;
+  /** Tamaño físico impreso, en mm. Lo que el usuario pidió, no el papel. */
+  readonly width: Millimeters | null;
+  readonly height: Millimeters | null;
   /** Dónde vive el archivo. Solo la infraestructura lo necesita (§39, §40). */
   readonly storageKey: string;
   readonly fileName: string;
@@ -61,7 +73,10 @@ export function exportStorageKey(input: {
 export type CreateProjectExportInput = {
   readonly id: ExportId;
   readonly projectId: ProjectId;
-  readonly templateVersionId: TemplateVersionId;
+  readonly templateVersionId?: TemplateVersionId | null;
+  readonly sourceAssetId?: AssetId | null;
+  readonly width?: Millimeters | null;
+  readonly height?: Millimeters | null;
   readonly fileName: string;
   readonly contentType: string;
   readonly pageCount: number;
@@ -75,13 +90,13 @@ export type CreateProjectExportInput = {
 export function createProjectExport(
   input: CreateProjectExportInput,
 ): ProjectExport {
-  if (
-    input.id.trim().length === 0 ||
-    input.projectId.trim().length === 0 ||
-    input.templateVersionId.trim().length === 0
-  ) {
+  if (input.id.trim().length === 0 || input.projectId.trim().length === 0) {
+    throw new InvalidExportError("An export needs an id and a project.");
+  }
+
+  if (!input.templateVersionId && !input.sourceAssetId) {
     throw new InvalidExportError(
-      "An export needs an id, a project and the version it came from.",
+      "An export needs the template version or the image it came from.",
     );
   }
 
@@ -100,7 +115,10 @@ export function createProjectExport(
   return {
     id: input.id,
     projectId: input.projectId,
-    templateVersionId: input.templateVersionId,
+    templateVersionId: input.templateVersionId ?? null,
+    sourceAssetId: input.sourceAssetId ?? null,
+    width: input.width ?? null,
+    height: input.height ?? null,
     storageKey: exportStorageKey({
       projectId: input.projectId,
       exportId: input.id,
