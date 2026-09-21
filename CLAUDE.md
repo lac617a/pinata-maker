@@ -34,7 +34,7 @@ aquí.
 ## 2. Comandos
 
 ```bash
-pnpm test              # Vitest, 424 tests, entorno node
+pnpm test              # Vitest, 428 tests, entorno node
 ```
 
 ```bash
@@ -196,7 +196,8 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
 * **La API existe y está autenticada:** proyectos, sesión, imágenes,
   versiones de plantilla y descarga de PDF. Sin
   sesión responde 401; un recurso ajeno responde 404 y no 403.
-* **Hay cuatro migraciones y dos buckets privados.** Se aplican a mano y en
+* **Hay cinco migraciones y dos buckets privados.** La 0005 repara las
+  políticas de storage y se puede reejecutar (`docs/storage.md` §165). Se aplican a mano y en
   orden. Comprueba siempre con `pnpm check:supabase` antes de dar por hecho
   que la base de datos está al día.
 * **La interfaz cubre el ciclo entero** (fase F parcial): entrar, crear

@@ -2363,7 +2363,7 @@ supabase db push
 
 o pegar los archivos de `supabase/migrations/` en el editor SQL del panel,
 en orden: `0001_projects.sql`, `0002_assets.sql`,
-`0003_template_versions.sql` y `0004_exports.sql`.
+`0003_template_versions.sql`, `0004_exports.sql` y `0005_storage_policies.sql`.
 
 Para comprobar que el entorno está listo:
 
@@ -2735,3 +2735,35 @@ archivo es una descarga rota.
   en segundo plano de §115 es la salida, y el export ya tiene la identidad
   propia que haría falta para consultar su estado.
 * **La imagen procesada** (§48), que depende de la eliminación de fondo.
+
+---
+
+# 165. Las políticas de storage se aplican aparte
+
+En la base de datos real, las tablas de las migraciones 0002 y 0004 existían
+y sus buckets también, pero una subida a un proyecto propio fallaba con «new
+row violates row-level security policy». Las políticas de `storage.objects`
+no se habían aplicado.
+
+`pnpm check:supabase` no podía verlo: la clave anónima no lee
+`storage.buckets` ni `pg_policies` (§145). Se descubrió reproduciendo la
+subida con una cuenta de prueba y comparando con un bucket inexistente, que
+responde «Bucket not found» y no un rechazo de RLS.
+
+`0005_storage_policies.sql` deja las seis políticas en su sitio se hubieran
+aplicado o no: borra si existen y vuelve a crear. Es idempotente a propósito.
+
+Dos detalles que conviene no perder:
+
+* **Subir necesita también la política de lectura.** El servidor de storage
+  inserta con `returning`, y PostgreSQL exige que la fila nueva pase además
+  las políticas de SELECT.
+* **El proyecto se compara como texto**, `p.id::text = foldername(name)[2]`,
+  y no convirtiendo el segmento a `uuid`. Una ruta cuyo segundo segmento no
+  fuera un UUID haría fallar la conversión con un error en lugar de
+  denegarse limpiamente.
+
+El fallo tardó en verse por otra razón: un error conocido de servidor —un
+503— no dejaba rastro en el registro. Ahora `toErrorResponse` registra la
+causa de todo fallo 5xx, aunque el usuario siga recibiendo el mensaje
+genérico.

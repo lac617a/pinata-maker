@@ -186,6 +186,14 @@ export function toErrorResponse(error: unknown): Response {
     );
   }
 
+  if (known.status >= 500) {
+    // Un fallo nuestro conocido sigue siendo un fallo nuestro. El usuario
+    // recibe el mensaje genérico de la tabla; la causa —la respuesta de
+    // Supabase, la política que rechazó la fila— tiene que quedar en el
+    // registro o nadie podrá saber qué pasó. Ver docs/roadmap.md §8.4.
+    console.error(`Request failed with ${code}`, error);
+  }
+
   return jsonResponse({ code, message: known.message }, known.status);
 }
 
