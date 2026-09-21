@@ -39,7 +39,8 @@ añade ahí y usa `publicPageMetadata` para su título, descripción, canónica 
 Open Graph.
 
 ```text
-indexables   /  /crear  /privacidad  /terminos  /cookies  /aviso-legal
+indexables   /  /crear  /guias  /guias/*  /privacidad  /terminos  /cookies
+             /aviso-legal
 noindex      /proyectos (y todo lo que cuelga)  /acceder  /crear-cuenta
 bloqueado    /api/   en robots.txt
 ```
@@ -53,9 +54,8 @@ si alguien la enlaza. Lo protegen su `noindex` y que sin sesión redirige a
 
 # 4. Lo que falta
 
-* Contenido que posicione más allá de la portada: guías sobre cómo hacer una
-  piñata de cartón o cómo ensamblarla (`PRD.md` §42 lo pide). Cada guía, una
-  página en `PUBLIC_PAGES`.
+* More guides beyond the first two (§6): decorating with crepe paper, a
+  number piñata step by step, how much a piñata can hold.
 * Medir los Core Web Vitals de la portada y de `/crear` una vez desplegado.
 
 ---
@@ -77,4 +77,36 @@ is generated at build time, so it cannot drift from the product.
 
 After a deploy, WhatsApp and Facebook may keep showing a cached preview for
 a while. Facebook's Sharing Debugger refreshes it on demand.
+
+---
+
+# 6. Guides
+
+Indexable content beyond the landing, as `PRD.md` §42 asks: "qué es una
+piñata de cartón, cómo se imprime un molde a tamaño real, cómo se ensambla".
+
+```text
+/guias                                        index
+/guias/como-hacer-una-pinata-de-carton       from image to hanging piñata
+/guias/como-imprimir-y-unir-las-hojas        print at real size, join sheets
+```
+
+* **One list** (`components/guides/guides.ts`) feeds the index, the sitemap,
+  the landing section and the links between guides. A new guide is a page
+  under `app/guias/<slug>/` plus an entry there.
+* **Server-rendered**, with Article and BreadcrumbList structured data built
+  from the same fields that are shown.
+* **The drawings are SVG with the theme tokens** (`guides/diagrams.tsx`), and
+  they show what the PDF really prints: the 100 mm ruler, the 1 cm strip with
+  crosses, row letters and column numbers. If the PDF changes, the guides
+  change with it.
+* **The text describes the real product.** The tool gives the front at real
+  size; the guide covers what it does not: the back traced in mirror from the
+  front, the side strip with tabs, closing it with the sweets inside.
+
+Slugs are plain ASCII (`pinata`, not `piñata`): they are shared on WhatsApp
+and typed by hand, and an encoded `ñ` looks broken in both.
+
+On a phone the header has no room for three buttons, so the "Guías" link
+hides below `sm`; the footer and the landing keep it one tap away.
 

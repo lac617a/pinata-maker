@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { guidePath, GUIDES } from "@/components/guides/guides";
 import { ExamplePoster } from "@/components/landing/example-poster";
 import { SiteHeader } from "@/components/site/site-header";
 import { Button } from "@/components/ui/button";
@@ -203,6 +204,29 @@ export default function Page() {
                 <h3 className="font-medium">{reason.title}</h3>
                 <p className="text-muted-foreground text-sm">{reason.text}</p>
               </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-8">
+          <div className="space-y-3">
+            <h2 className="font-serif text-3xl">Guías</h2>
+            <p className="text-muted-foreground">
+              De la imagen a la piñata colgada, paso a paso.
+            </p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {GUIDES.map((guide) => (
+              <Link
+                key={guide.slug}
+                href={guidePath(guide)}
+                className="border-border bg-card hover:border-foreground/30 space-y-2 rounded-lg border p-6 transition-colors"
+              >
+                <h3 className="font-serif text-xl">{guide.title}</h3>
+                <p className="text-muted-foreground text-sm">
+                  {guide.description}
+                </p>
+              </Link>
             ))}
           </div>
         </section>

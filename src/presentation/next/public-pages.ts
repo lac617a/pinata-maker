@@ -1,5 +1,7 @@
 import type { Metadata, MetadataRoute } from "next";
 
+import { guidePath, GUIDES } from "@/components/guides/guides";
+
 /**
  * Las páginas que deben encontrarse en buscadores (docs/PRD.md §42).
  *
@@ -14,6 +16,12 @@ export const PUBLIC_PAGES: readonly {
 }[] = [
   { path: "/", changeFrequency: "monthly", priority: 1 },
   { path: "/crear", changeFrequency: "monthly", priority: 0.9 },
+  { path: "/guias", changeFrequency: "monthly", priority: 0.7 },
+  ...GUIDES.map((guide) => ({
+    path: guidePath(guide),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  })),
   { path: "/privacidad", changeFrequency: "yearly", priority: 0.2 },
   { path: "/terminos", changeFrequency: "yearly", priority: 0.2 },
   { path: "/cookies", changeFrequency: "yearly", priority: 0.2 },

@@ -13,10 +13,20 @@ export async function SiteHeader() {
 
   return (
     <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-6">
-      <Link href="/" className="font-serif text-xl">
+      <Link href="/" className="font-serif text-xl whitespace-nowrap">
         Piñata Maker
       </Link>
-      <nav className="flex items-center gap-2">
+      <nav className="flex items-center gap-1 sm:gap-2">
+        {/* On a phone there is no room for three buttons; the guides stay
+            one tap away in the footer and on the landing. */}
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="hidden sm:inline-flex"
+        >
+          <Link href="/guias">Guías</Link>
+        </Button>
         {signedIn ? (
           <Button asChild variant="ghost" size="sm">
             <Link href="/proyectos">Mis proyectos</Link>

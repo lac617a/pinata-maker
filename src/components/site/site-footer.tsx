@@ -12,7 +12,15 @@ export function SiteFooter() {
   return (
     <footer className="border-border mt-auto border-t">
       <div className="text-muted-foreground mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-6 py-8 text-sm">
-        <p>Piñata Maker · Tu imagen a tamaño piñata.</p>
+        <p>
+          Piñata Maker · Tu imagen a tamaño piñata ·{" "}
+          <Link
+            href="/guias"
+            className="hover:text-foreground underline-offset-4 hover:underline"
+          >
+            Guías
+          </Link>
+        </p>
         <nav aria-label="Páginas legales">
           <ul className="flex flex-wrap gap-x-5 gap-y-2">
             {LEGAL_LINKS.map((link) => (
