@@ -2372,9 +2372,14 @@ pnpm check:supabase
 ```
 
 Verifica que las variables están definidas, que el proyecto responde, que las
-cuatro tablas existen, que **RLS las oculta a un cliente anónimo** y que los
-dos buckets existen y **no son públicos**. No imprime ningún valor de
-configuración.
+cuatro tablas existen y que **RLS las oculta a un cliente anónimo**. No
+imprime ningún valor de configuración.
+
+Los buckets no los comprueba: `storage.buckets` tiene sus propias políticas y
+la clave anónima no puede leerla, así que `getBucket` responde «Bucket not
+found» tanto si el bucket falta como si existe. Quien los verifica es
+`pnpm test:integration`, que entra con una cuenta, sube un archivo, lo firma y
+comprueba que la URL pública no lo sirve.
 
 ---
 

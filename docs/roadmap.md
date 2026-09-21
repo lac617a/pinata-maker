@@ -69,8 +69,9 @@ pnpm exec tsc --noEmit
 * Supabase con `@supabase/supabase-js` y `@supabase/ssr`. El esquema vive en
   `supabase/migrations/` y se aplica a mano: la clave anónima no puede
   ejecutar DDL, que es justo lo que se quiere.
-* `pnpm check:supabase` comprueba entorno, conexión, tabla y RLS sin imprimir
-  ningún valor de configuración.
+* `pnpm check:supabase` comprueba entorno, conexión, tablas y RLS sin imprimir
+  ningún valor de configuración. Los buckets no: la clave anónima no puede
+  leer `storage.buckets`, y de eso se encargan las pruebas de integración.
 * `pnpm test:integration` ejecuta las pruebas contra la base de datos real.
   Necesita `SUPABASE_TEST_EMAIL` y `SUPABASE_TEST_PASSWORD` en el entorno; sin
   ellas se salta.

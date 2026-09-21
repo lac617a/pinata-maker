@@ -73,24 +73,6 @@ if (url && anonKey) {
     );
   }
 
-  // El bucket debe existir y no ser público: las imágenes se sirven con una
-  // URL firmada, no por una ruta adivinable.
-  const bucket = await client.storage.getBucket("project-assets");
-
-  report(
-    "el bucket project-assets existe",
-    !bucket.error,
-    bucket.error ? "aplica supabase/migrations/0002_assets.sql" : "",
-  );
-
-  if (!bucket.error) {
-    report(
-      "el bucket project-assets es privado",
-      bucket.data?.public === false,
-      bucket.data?.public ? "está publico: las imagenes serian accesibles" : "",
-    );
-  }
-
   // Migración 0003: versiones de plantilla.
   const versions = await client
     .from("template_versions")
@@ -132,24 +114,15 @@ if (url && anonKey) {
     );
   }
 
-  const exportsBucket = await client.storage.getBucket("project-exports");
-
-  report(
-    "el bucket project-exports existe",
-    !exportsBucket.error,
-    exportsBucket.error ? "aplica supabase/migrations/0004_exports.sql" : "",
-  );
-
-  if (!exportsBucket.error) {
-    report(
-      "el bucket project-exports es privado",
-      exportsBucket.data?.public === false,
-      exportsBucket.data?.public
-        ? "está publico: los documentos serian accesibles"
-        : "",
-    );
-  }
 }
+
+// Los buckets no se comprueban aquí.
+//
+// `storage.buckets` tiene sus propias políticas y la clave anónima no puede
+// leerla: `getBucket` responde «Bucket not found» tanto si el bucket falta
+// como si existe, así que la comprobación no distinguiría nada. Quien verifica
+// los buckets de verdad es `pnpm test:integration`, que entra con una cuenta,
+// sube un archivo, lo firma y comprueba que la URL pública no lo sirve.
 
 for (const { check, passed, detail } of results) {
   console.log(`${passed ? "OK  " : "FALLA"} ${check}${detail ? ` — ${detail}` : ""}`);
