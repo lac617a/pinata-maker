@@ -66,6 +66,9 @@ pnpm exec tsc --noEmit
 * `pnpm` con overrides de seguridad para `postcss` y `sharp` en
   `pnpm-workspace.yaml`.
 * `.gitignore` cubriendo artefactos de Next, pnpm, Supabase CLI y entorno.
+* Tailwind v4, shadcn/ui sobre la escala `stone` y TanStack Query para los
+  datos del navegador. Los componentes viven en `src/components/ui/` y son
+  código del proyecto, no una dependencia.
 * ESLint 9 en config plana y Prettier. El lint comprueba el orden de los
   imports y prohíbe los que suben por el árbol de carpetas: entre carpetas se
   importa con el alias absoluto `@/`. `pnpm verify` encadena formato, lint,
@@ -450,6 +453,10 @@ No volver a abrirlas sin un motivo nuevo.
 | Toda la piñata en un solo PDF, con hoja de instrucciones | El usuario descarga un archivo, no uno por pieza |
 | La numeración de hoja es local a la pieza | Al montar se trabaja pieza a pieza, no por número global |
 | Estados `DRAFT`, `PROCESSING`, `READY`, `ERROR` | Los del PRD §22; `ARCHIVED` no lo pide nadie |
+| Entre carpetas se importa con el alias `@/`, nunca con `../` | Un import que sube por el árbol se rompe al mover el archivo |
+| TanStack Query y no SWR | El flujo es de mutaciones —subir, publicar, exportar— y necesita invalidación y reintentos con criterio |
+| shadcn/ui en lugar de una librería de componentes | El código es del proyecto: se ajusta sin pelearse con el tema de nadie |
+| Un 4xx no se reintenta y una mutación nunca se repite sola | Publicar dos veces crearía dos versiones |
 | Un solo puerto de object storage para imágenes y documentos | Dos consumidores que necesitan lo mismo; el bucket lo decide el adaptador |
 | El PDF se guarda entero y no se regenera al descargarlo | Otro generador daría un documento distinto del que el usuario imprimió |
 | El PDF se entrega con un enlace firmado, no servido por la aplicación | Cincuenta hojas no deben atravesar el proceso que atiende peticiones |
@@ -561,7 +568,9 @@ y el usuario en cada operación.
 
 ## Fase F — Presentación
 
-`app/page.tsx` es todavía la página de bienvenida inicial.
+`app/page.tsx` es todavía la página de bienvenida inicial. Lo que ya está
+puesto es el andamiaje: tema, sistema de componentes y cliente de datos
+(§2.1).
 
 * Subida de imagen con arrastrar y soltar, previsualización y reemplazo.
 * Formulario de configuración: ancho, alto, profundidad, papel, orientación,

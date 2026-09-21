@@ -87,6 +87,8 @@ app/api/                    API. Las rutas solo montan el contexto y delegan.
 src/application/            Casos de uso. Coordinan módulos, sin reglas propias.
 src/presentation/http/      Petición → caso de uso → respuesta. Sin Next.
 src/presentation/next/      Único punto que junta Next, Supabase y el dominio.
+src/presentation/client/    Navegador: cliente HTTP, TanStack Query, providers.
+src/components/ui/          Componentes de shadcn/ui. Código propio, no dependencia.
 src/infrastructure/         Adaptadores compartidos (cliente de Supabase).
 supabase/migrations/        Esquema y políticas RLS. Se aplican a mano.
 src/modules/
@@ -142,6 +144,16 @@ errores que solo viven en la costura entre módulos correctos.
   archivo `*.test.ts` junto al módulo que prueba.
 * Vitest corre en entorno `node` y solo `src/**/*.test.ts`: el dominio se
   prueba sin React, Next ni navegador. No añadir tests de UI a esa suite.
+* **La interfaz usa los tokens del tema**, nunca un color a mano:
+  `bg-background`, `text-muted-foreground`, `border-border`. Están definidos
+  en `app/globals.css` sobre la escala `stone`.
+* Los componentes de `src/components/ui/` los genera `shadcn` pero son
+  **código del proyecto**: se editan y se versionan. Después de
+  `pnpm dlx shadcn@latest add <componente>`, pasar `pnpm lint:fix` y
+  `pnpm format`: la CLI no escribe con estas reglas.
+* Los datos del navegador van por TanStack Query
+  (`src/presentation/client/`). Un 4xx no se reintenta y una mutación nunca
+  se repite sola: publicar dos veces crearía dos versiones.
 
 ---
 
