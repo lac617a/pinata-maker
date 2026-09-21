@@ -1,11 +1,8 @@
-import { cookies } from "next/headers";
-
-import {
-  createRequestClient,
-  readCurrentUserId,
-} from "@/infrastructure/supabase/request-client";
+import { readCurrentUserId } from "@/infrastructure/supabase/request-client";
 import { SupabaseProjectRepository } from "@/modules/projects/infrastructure/supabase-project-repository";
 import type { ProjectRequestContext } from "@/presentation/http/project-endpoints";
+
+import { createCookieClient } from "./supabase";
 
 /**
  * Monta lo que necesita un endpoint de proyectos para esta petición.
@@ -15,22 +12,7 @@ import type { ProjectRequestContext } from "@/presentation/http/project-endpoint
  * probar con un repositorio en memoria.
  */
 export async function projectRequestContext(): Promise<ProjectRequestContext> {
-  const store = await cookies();
-
-  const client = createRequestClient({
-    getAll: () => store.getAll(),
-    setAll: (updated) => {
-      try {
-        for (const cookie of updated) {
-          store.set(cookie.name, cookie.value, cookie.options);
-        }
-      } catch {
-        // Escribir cookies solo es posible en rutas y acciones. Desde un
-        // Server Component, Next lo impide; la sesión se renueva entonces en
-        // la siguiente petición que sí pueda escribirlas.
-      }
-    },
-  });
+  const client = await createCookieClient();
 
   return {
     services: {

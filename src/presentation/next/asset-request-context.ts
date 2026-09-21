@@ -1,9 +1,4 @@
-import { cookies } from "next/headers";
-
-import {
-  createRequestClient,
-  readCurrentUserId,
-} from "@/infrastructure/supabase/request-client";
+import { readCurrentUserId } from "@/infrastructure/supabase/request-client";
 import {
   PROJECT_ASSETS_BUCKET,
   SupabaseObjectStorage,
@@ -12,21 +7,10 @@ import { SupabaseAssetRepository } from "@/modules/assets/infrastructure/supabas
 import { SupabaseProjectRepository } from "@/modules/projects/infrastructure/supabase-project-repository";
 import type { AssetRequestContext } from "@/presentation/http/asset-endpoints";
 
-export async function assetRequestContext(): Promise<AssetRequestContext> {
-  const store = await cookies();
+import { createCookieClient } from "./supabase";
 
-  const client = createRequestClient({
-    getAll: () => store.getAll(),
-    setAll: (updated) => {
-      try {
-        for (const cookie of updated) {
-          store.set(cookie.name, cookie.value, cookie.options);
-        }
-      } catch {
-        // Solo las rutas y las acciones pueden escribir cookies.
-      }
-    },
-  });
+export async function assetRequestContext(): Promise<AssetRequestContext> {
+  const client = await createCookieClient();
 
   return {
     services: {

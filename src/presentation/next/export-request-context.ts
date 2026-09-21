@@ -1,9 +1,4 @@
-import { cookies } from "next/headers";
-
-import {
-  createRequestClient,
-  readCurrentUserId,
-} from "@/infrastructure/supabase/request-client";
+import { readCurrentUserId } from "@/infrastructure/supabase/request-client";
 import {
   PROJECT_EXPORTS_BUCKET,
   SupabaseObjectStorage,
@@ -14,6 +9,8 @@ import { SupabaseProjectRepository } from "@/modules/projects/infrastructure/sup
 import { SupabaseTemplateVersionRepository } from "@/modules/templates/infrastructure/supabase-template-version-repository";
 import type { ExportRequestContext } from "@/presentation/http/export-endpoints";
 
+import { createCookieClient } from "./supabase";
+
 /**
  * Único punto donde se juntan Next, Supabase, el renderer y el dominio.
  *
@@ -21,20 +18,7 @@ import type { ExportRequestContext } from "@/presentation/http/export-endpoints"
  * uso solo conoce la interfaz. Ver docs/printing.md §66.
  */
 export async function exportRequestContext(): Promise<ExportRequestContext> {
-  const store = await cookies();
-
-  const client = createRequestClient({
-    getAll: () => store.getAll(),
-    setAll: (updated) => {
-      try {
-        for (const cookie of updated) {
-          store.set(cookie.name, cookie.value, cookie.options);
-        }
-      } catch {
-        // Solo las rutas y las acciones pueden escribir cookies.
-      }
-    },
-  });
+  const client = await createCookieClient();
 
   return {
     services: {
