@@ -44,6 +44,15 @@ const KNOWN_ERRORS: Record<string, ErrorPresentation> = {
     message:
       "Para crear la cuenta tienes que autorizar el tratamiento de tus datos.",
   },
+  ACCOUNT_DELETION_NOT_CONFIRMED: {
+    status: 400,
+    message: "Confirma que quieres borrar la cuenta.",
+  },
+  ACCOUNT_DELETION_FAILED: {
+    status: 503,
+    message:
+      "No pudimos borrar la cuenta. Inténtalo de nuevo o escríbenos para hacerlo nosotros.",
+  },
   INVALID_CREDENTIALS_FORMAT: {
     status: 400,
     message: "Revisa el correo y la contraseña.",

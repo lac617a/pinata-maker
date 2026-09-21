@@ -1,8 +1,9 @@
+import { handleDeleteProject } from "@/presentation/http/account-endpoints";
 import {
-  handleDeleteProject,
   handleGetProject,
   handleRenameProject,
 } from "@/presentation/http/project-endpoints";
+import { exportRequestContext } from "@/presentation/next/export-request-context";
 import { projectRequestContext } from "@/presentation/next/project-request-context";
 
 type RouteParams = { params: Promise<{ id: string }> };
@@ -31,5 +32,6 @@ export async function DELETE(
 ): Promise<Response> {
   const { id } = await params;
 
-  return handleDeleteProject(id, await projectRequestContext());
+  // With files: the export context carries the buckets (docs/legal.md §6).
+  return handleDeleteProject(id, await exportRequestContext());
 }

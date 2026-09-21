@@ -140,6 +140,21 @@ if (url && anonKey) {
       : (usage.error?.code ?? ""),
   );
 
+  // Migración 0010: borrar la propia cuenta. Sin sesión, la función existe
+  // si responde «Not signed in» (42501); si falta, PostgREST no la encuentra.
+  const deletion = await client.rpc("delete_my_account");
+  const deletionMissing = ["PGRST202", "42883"].includes(
+    deletion.error?.code ?? "",
+  );
+
+  report(
+    "la función para borrar la cuenta existe",
+    deletion.error?.code === "42501",
+    deletionMissing
+      ? "aplica supabase/migrations/0010_delete_own_account.sql antes de desplegar"
+      : (deletion.error?.code ?? "respondió sin sesión: revisa la migración"),
+  );
+
   const counters = await client
     .from("usage_counters")
     .select("subject")

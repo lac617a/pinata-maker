@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { ProjectsPanel } from "@/components/projects/projects-panel";
+import { DeleteAccount } from "@/components/session/delete-account";
 
 export const metadata: Metadata = { title: "Proyectos · Piñata Maker" };
 
@@ -16,6 +17,8 @@ export default function Page() {
       </div>
 
       <ProjectsPanel />
+
+      <DeleteAccount />
     </main>
   );
 }

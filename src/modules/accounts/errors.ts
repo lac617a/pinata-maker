@@ -52,3 +52,23 @@ export class DataAuthorizationRequiredError extends Error {
     this.name = "DataAuthorizationRequiredError";
   }
 }
+
+/** The account could not be deleted; nothing the person did wrong. */
+export class AccountDeletionError extends Error {
+  readonly code = "ACCOUNT_DELETION_FAILED";
+
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = "AccountDeletionError";
+  }
+}
+
+/** Deleting an account needs an explicit confirmation in the request. */
+export class AccountDeletionNotConfirmedError extends Error {
+  readonly code = "ACCOUNT_DELETION_NOT_CONFIRMED";
+
+  constructor(message: string) {
+    super(message);
+    this.name = "AccountDeletionNotConfirmedError";
+  }
+}

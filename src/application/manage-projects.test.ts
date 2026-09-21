@@ -7,7 +7,6 @@ import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-
 import {
   advanceProject,
   createProject,
-  deleteProject,
   listProjects,
   openProject,
   type ProjectServices,
@@ -138,30 +137,5 @@ describe("Manage projects", () => {
     await expect(
       advanceProject(context, project.id, owner, "READY"),
     ).rejects.toThrow(InvalidProjectTransitionError);
-  });
-
-  it("should delete a project of the user", async () => {
-    const context = services();
-    const project = await createProject(context, {
-      ownerId: owner,
-      name: "Elefante",
-    });
-
-    await deleteProject(context, project.id, owner);
-
-    expect(await listProjects(context, owner)).toHaveLength(0);
-  });
-
-  it("should not delete a project of somebody else", async () => {
-    const context = services();
-    const project = await createProject(context, {
-      ownerId: owner,
-      name: "Elefante",
-    });
-
-    await expect(deleteProject(context, project.id, stranger)).rejects.toThrow(
-      ProjectNotFoundError,
-    );
-    expect(await listProjects(context, owner)).toHaveLength(1);
   });
 });

@@ -141,8 +141,9 @@ export default function Page() {
           <li>El contador diario: se borra a los siete días.</li>
           <li>
             Con cuenta: tus datos, mientras la cuenta exista o hasta que los
-            borres. Puedes borrar cada imagen y cada PDF desde tu proyecto; se
-            borran el registro y el archivo.
+            borres. Puedes borrar cada imagen, cada PDF, cada proyecto o la
+            cuenta entera desde la aplicación; se borran los registros y los
+            archivos.
           </li>
         </ul>
       </LegalSection>
@@ -188,8 +189,10 @@ export default function Page() {
           responderemos en los ocho días hábiles siguientes.
         </p>
         <p>
-          Para borrar tu cuenta con todo lo que contiene, pídelo por correo y lo
-          haremos dentro de esos plazos.
+          <strong>Borrar tu cuenta</strong> con todos tus proyectos, imágenes y
+          PDF lo puedes hacer tú mismo, en cualquier momento, desde «Tu cuenta»
+          en Mis proyectos. Se borra al instante. También puedes pedírnoslo por
+          correo.
         </p>
       </LegalSection>
 

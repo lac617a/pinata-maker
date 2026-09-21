@@ -823,9 +823,11 @@ posicionar.
   (`image-processing.md` §101).
 * El reparto en páginas no descarta hojas sin geometría. Optimizar el uso de
   papel es una decisión pendiente, no un olvido.
-* Borrar una cuenta entera no se puede hacer desde la aplicación: la
-  política de privacidad lo ofrece por correo, en 30 días, y alguien lo
-  tiene que hacer a mano hasta que exista (`legal.md` §3).
+* ~~Deleting a whole account was manual.~~ Done from the app since
+  2026-09-21 (`legal.md` §6, migration 0010).
+* ~~Files stayed in the buckets when a project was deleted.~~ Resolved:
+  files first, then the project (`legal.md` §6). What follows is the
+  original note:
 * Los archivos del object storage no se borran al borrar un proyecto: las
   filas se van en cascada y el bucket no se entera. Hace falta un proceso de
   limpieza o borrar los archivos antes (`storage.md` §59 y §164).

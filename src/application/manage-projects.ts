@@ -117,12 +117,3 @@ export async function advanceProject(
 
   return advanced;
 }
-
-export async function deleteProject(
-  services: ProjectServices,
-  id: ProjectId,
-  userId: UserId,
-): Promise<void> {
-  await openProject(services, id, userId);
-  await services.repository.delete(id, userId);
-}

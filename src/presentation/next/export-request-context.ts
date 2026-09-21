@@ -6,11 +6,13 @@ import {
   PROJECT_EXPORTS_BUCKET,
   SupabaseObjectStorage,
 } from "@/infrastructure/supabase/supabase-object-storage";
+import { SupabaseAccountRemoval } from "@/modules/accounts/infrastructure/supabase-account-removal";
 import { SupabaseAssetRepository } from "@/modules/assets/infrastructure/supabase-asset-repository";
 import { SupabaseExportRepository } from "@/modules/exports/infrastructure/supabase-export-repository";
 import { JsPdfPrintRenderer } from "@/modules/pdf-generation/infrastructure/jspdf-print-renderer";
 import { SupabaseProjectRepository } from "@/modules/projects/infrastructure/supabase-project-repository";
 import { SupabaseTemplateVersionRepository } from "@/modules/templates/infrastructure/supabase-template-version-repository";
+import type { AccountRequestContext } from "@/presentation/http/account-endpoints";
 import type { ExportRequestContext } from "@/presentation/http/export-endpoints";
 import type { PosterRequestContext } from "@/presentation/http/poster-endpoints";
 
@@ -32,6 +34,20 @@ export async function posterRequestContext(): Promise<PosterRequestContext> {
   const client = await createCookieClient();
 
   return { ...(await exportContextFor(client)), usage: usageServices(client) };
+}
+
+/** The signed-in account can be deleted with everything it holds. */
+export async function accountRequestContext(): Promise<AccountRequestContext> {
+  const client = await createCookieClient();
+  const context = await exportContextFor(client);
+
+  return {
+    ...context,
+    services: {
+      ...context.services,
+      accounts: new SupabaseAccountRemoval(client),
+    },
+  };
 }
 
 async function exportContextFor(

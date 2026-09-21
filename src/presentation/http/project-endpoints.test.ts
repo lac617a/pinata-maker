@@ -8,7 +8,6 @@ import { InMemoryProjectRepository } from "@/modules/projects/in-memory-project-
 
 import {
   handleCreateProject,
-  handleDeleteProject,
   handleGetProject,
   handleListProjects,
   handleRenameProject,
@@ -77,7 +76,6 @@ describe("Project endpoints", () => {
       handleCreateProject(post({ name: "Elefante" }), anonymous),
       handleGetProject("whatever", anonymous),
       handleRenameProject(post({ name: "x" }), "whatever", anonymous),
-      handleDeleteProject("whatever", anonymous),
     ]);
 
     for (const response of responses) {
@@ -188,37 +186,5 @@ describe("Project endpoints", () => {
     expect((await shared.repository.findById(project.id, owner))?.name).toBe(
       "Elefante",
     );
-  });
-
-  it("should delete a project of the user", async () => {
-    const shared = services();
-    const project = await createProject(shared, {
-      ownerId: owner,
-      name: "Elefante",
-    });
-
-    const response = await handleDeleteProject(
-      project.id,
-      context(owner, shared),
-    );
-
-    expect(response.status).toBe(204);
-    expect(await shared.repository.listByOwner(owner)).toHaveLength(0);
-  });
-
-  it("should not delete a project of somebody else", async () => {
-    const shared = services();
-    const project = await createProject(shared, {
-      ownerId: owner,
-      name: "Elefante",
-    });
-
-    const response = await handleDeleteProject(
-      project.id,
-      context(stranger, shared),
-    );
-
-    expect(response.status).toBe(404);
-    expect(await shared.repository.listByOwner(owner)).toHaveLength(1);
   });
 });

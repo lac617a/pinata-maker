@@ -37,7 +37,7 @@ export default function Page() {
         <p>
           Si creas una cuenta, eres responsable de mantener tu contraseña en
           secreto y de lo que se haga con ella. Puedes dejar de usarla cuando
-          quieras y pedirnos que la borremos.
+          quieras y borrarla tú mismo desde «Tu cuenta».
         </p>
       </LegalSection>
 

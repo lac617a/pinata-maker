@@ -47,3 +47,17 @@ export function useSignOut() {
       apiRequest<void>("/api/auth/sign-out", { method: "POST" }),
   });
 }
+
+/**
+ * Deletes the signed-in account with everything it holds (docs/legal.md §6).
+ * The body carries the confirmation the server requires.
+ */
+export function useDeleteAccount() {
+  return useMutation({
+    mutationFn: () =>
+      apiRequest<void>("/api/account", {
+        method: "DELETE",
+        body: JSON.stringify({ confirm: true }),
+      }),
+  });
+}

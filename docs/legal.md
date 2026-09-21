@@ -130,3 +130,46 @@ first, the trigger would refuse every sign-up from the old code, which does
 not send the authorization yet.
 
 Accounts created before 0009 have no recorded authorization.
+
+---
+
+# 6. Deleting data
+
+The right to deletion (Ley 1581, art. 8) is exercised from the app, not by
+e-mail:
+
+```text
+an image or a PDF    from the project; row and file go
+a project            from the list; its images and PDFs go first
+the account          "Tu cuenta" in /proyectos, typing BORRAR
+```
+
+## Files before rows
+
+The storage policies let an owner delete a file only while its project
+exists (0006). So `deleteProjectWithFiles` removes images and PDFs through
+the Storage API first, then the project. If a file cannot be removed,
+nothing else is deleted and trying again finishes the job. Deleting the
+project first would leave files nobody can reach or remove; that was the
+debt of `storage.md` §164, now closed.
+
+## The account
+
+There is no service key, so the admin API that deletes users is out of
+reach. `delete_my_account()` (`0010_delete_own_account.sql`) deletes the
+caller's own account only, and **refuses while it still has projects**: the
+app deletes every project with its files first, and only then calls it.
+The usage counter goes explicitly (it is keyed by text); the proof of
+authorization, sessions and identities go by cascade. The session cookies
+are cleared afterwards.
+
+The server requires `{ "confirm": true }` in the request, and the screen
+asks to type BORRAR: it cannot be undone.
+
+## Deploying 0010
+
+Order matters, and it is the opposite of 0009: **apply 0010 before
+deploying the code.** The old code never calls the function, so applying it
+first is harmless. Deployed without it, deleting an account would remove
+every project and then fail at the last step, leaving an empty account.
+`pnpm check:supabase` checks that the function exists.

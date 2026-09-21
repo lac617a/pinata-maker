@@ -1,6 +1,5 @@
 import {
   createProject,
-  deleteProject,
   listProjects,
   openProject,
   type ProjectServices,
@@ -111,23 +110,6 @@ export async function handleRenameProject(
     );
 
     return jsonResponse({ project: toPayload(project) }, 200);
-  } catch (error) {
-    return toErrorResponse(error);
-  }
-}
-
-export async function handleDeleteProject(
-  id: ProjectId,
-  context: ProjectRequestContext,
-): Promise<Response> {
-  if (!context.userId) {
-    return unauthorizedResponse();
-  }
-
-  try {
-    await deleteProject(context.services, id, context.userId);
-
-    return new Response(null, { status: 204 });
   } catch (error) {
     return toErrorResponse(error);
   }
