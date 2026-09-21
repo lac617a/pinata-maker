@@ -17,8 +17,10 @@ import { DEFAULT_USAGE_LIMITS } from "@/modules/usage/usage";
 import { anonymousSubject } from "@/modules/usage/usage-subject";
 
 import {
+  FALLBACK_POSTER_TITLE,
   generateUnsavedPoster,
   type GenerateUnsavedPosterInput,
+  titleFrom,
   type UnsavedPosterServices,
 } from "./generate-unsaved-poster";
 
@@ -113,5 +115,26 @@ describe("Generate unsaved poster", () => {
     });
 
     expect(document.fileName).toBe("piñata script-60cm.pdf");
+  });
+});
+
+describe("Poster title from the file name", () => {
+  it("should keep a name that says what the image is", () => {
+    expect(titleFrom("spiderman 4.png")).toBe("spiderman 4");
+    expect(titleFrom("foto de Ana.jpg")).toBe("foto de Ana");
+    expect(titleFrom("número_cumpleaños.webp")).toBe("número_cumpleaños");
+  });
+
+  it("should not title the poster with a camera or app file name", () => {
+    for (const name of [
+      "486610417_122147236376460730_1218234615504898445_n.jpg",
+      "IMG_20240912_153011.jpg",
+      "PXL_20260101_101010123.jpg",
+      "WhatsApp Image 2026-09-15 at 9.14.04 AM.jpeg",
+      "Captura de pantalla 2026-09-21 101010.png",
+      "1234.png",
+    ]) {
+      expect(titleFrom(name)).toBe(FALLBACK_POSTER_TITLE);
+    }
   });
 });

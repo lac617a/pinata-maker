@@ -68,13 +68,41 @@ export async function generateUnsavedPoster(
   return { document, usage };
 }
 
+/** The title when the file name says nothing about the image. */
+export const FALLBACK_POSTER_TITLE = "Mi póster";
+
 /**
- * El nombre del archivo sin extensión, como título del documento.
- *
- * Solo letras, números, espacios y guiones: acaba en el nombre del PDF y
- * en la cabecera de la descarga.
+ * Words cameras and apps put in file names. They say how the picture was
+ * taken, not what it shows.
  */
-function titleFrom(fileName: string): string {
+const CAMERA_WORDS = new Set([
+  "img",
+  "dsc",
+  "dscn",
+  "dcim",
+  "pxl",
+  "mvimg",
+  "whatsapp",
+  "image",
+  "photo",
+  "screenshot",
+  "captura",
+  "pantalla",
+]);
+
+/**
+ * The file name without extension, as the document title — when it means
+ * something.
+ *
+ * Facebook, WhatsApp and phone cameras name files with numbers
+ * (`486610417_122147236376460730_…_n.jpg`, `IMG_20240912_153011.jpg`).
+ * As a title that is noise on the summary sheet and in the PDF name, so
+ * without a single real word it becomes "Mi póster".
+ *
+ * Only letters, digits, spaces and hyphens survive: the title ends up in the
+ * PDF name and in the download header.
+ */
+export function titleFrom(fileName: string): string {
   const base = fileName
     .replace(/\.[^.]*$/, "")
     .replace(/[^\p{L}\p{N} _-]+/gu, " ")
@@ -82,5 +110,12 @@ function titleFrom(fileName: string): string {
     .trim()
     .slice(0, 60);
 
-  return base.length > 0 ? base : "poster";
+  const meaningful = base
+    .split(/[\s_-]+/)
+    .some(
+      (word) =>
+        /^\p{L}{3,}$/u.test(word) && !CAMERA_WORDS.has(word.toLowerCase()),
+    );
+
+  return meaningful ? base : FALLBACK_POSTER_TITLE;
 }
