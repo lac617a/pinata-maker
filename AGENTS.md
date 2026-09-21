@@ -304,6 +304,21 @@ Use it whenever an action counts against the daily limit.
 
 ---
 
+### legal.md
+
+Defines:
+
+```text
+legal pages
+site owner data
+what the privacy texts must reflect
+cookie consent
+```
+
+Use it whenever a change alters what data is stored, for how long or by whom.
+
+---
+
 ### roadmap.md
 
 Defines:

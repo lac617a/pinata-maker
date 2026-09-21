@@ -744,6 +744,10 @@ posicionar.
   montaje, regla de calibración y aviso de resolución. Es también el
   contenido indexable que pide el SEO, y el sitio natural para la figura de
   ejemplo (§8.11).
+* **Páginas legales hechas el 2026-09-21** (`legal.md`), con los datos del
+  titular como marcadores y un aviso de borrador visible mientras falten.
+  **Antes de publicar:** rellenar `src/components/legal/site-owner.ts` y que
+  alguien que conozca la ley del país revise los textos. Lo que se pidió:
 * Las cuatro páginas legales, enlazadas desde el pie: privacidad, términos,
   cookies y aviso legal. Sin ellas AdSense no aprueba la cuenta.
 * Consentimiento de cookies con rechazo efectivo de la publicidad
@@ -814,6 +818,9 @@ posicionar.
   (`image-processing.md` §101).
 * El reparto en páginas no descarta hojas sin geometría. Optimizar el uso de
   papel es una decisión pendiente, no un olvido.
+* Borrar una cuenta entera no se puede hacer desde la aplicación: la
+  política de privacidad lo ofrece por correo, en 30 días, y alguien lo
+  tiene que hacer a mano hasta que exista (`legal.md` §3).
 * Los archivos del object storage no se borran al borrar un proyecto: las
   filas se van en cascada y el bucket no se entera. Hace falta un proceso de
   limpieza o borrar los archivos antes (`storage.md` §59 y §164).
@@ -846,6 +853,8 @@ posicionar.
 | AC-16 | Generar y descargar sin cuenta | **Hecho y probado** (`usage.md` §10) |
 | AC-17 | El límite se cuenta en el servidor | **Hecho y probado**, atómico en la base de datos |
 | AC-18 | Al alcanzarlo se explica y se ofrece registrarse | **Hecho y probado** |
+| AC-19 | Las cuatro páginas legales, enlazadas desde el pie | **Hecho**, con los datos del titular pendientes (`legal.md` §2) |
+| AC-20 | Rechazar la publicidad personalizada | Pendiente: llega con AdSense (`legal.md` §4) |
 
 ---
 
