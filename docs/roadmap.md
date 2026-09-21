@@ -33,6 +33,7 @@ hay es interfaz**: `app/` solo contiene la API.
 [✓] Geometría en mm → reparto en páginas → PrintLayout
 [✓] PrintLayout → PDF
 [✓] Proyecto persistido, aislado por usuario, con registro y sesión
+[✓] Imagen original guardada en un bucket privado, servida con URL firmada
 [ ] Imagen real → máscara alfa (eliminación de fondo)
 [ ] Interfaz de usuario
 ```
@@ -47,7 +48,7 @@ conocido y medirlo con una regla real (`printing.md` §75).
 Verificación:
 
 ```bash
-pnpm test        # 319 tests, más 7 de integración que necesitan cuenta
+pnpm test        # 328 tests, más 13 de integración que necesitan cuenta
 pnpm exec tsc --noEmit
 ```
 
@@ -306,6 +307,7 @@ La imagen original que sube el usuario.
 | `asset.ts` | Entidad y ruta de almacenamiento determinista |
 | `asset-repository.ts` | Interfaz de la fila |
 | `asset-storage.ts` | Interfaz del archivo, aparte de la fila |
+| `asset-repository.contract.ts` | Qué significa cumplir el contrato |
 | `infrastructure/` | Adaptadores de Supabase: tabla y bucket |
 | `supabase/migrations/0002_assets.sql` | Tabla, RLS, bucket privado y políticas |
 | `presentation/http/asset-endpoints.ts` | Subir, listar y borrar |
@@ -318,6 +320,8 @@ Invariantes cubiertas por tests:
 * Si falla guardar la fila, el archivo subido se borra.
 * Borrar una imagen ajena no borra nada.
 * La respuesta no expone la ruta de almacenamiento.
+* Contra la base de datos real: la propiedad transitiva se aplica y el bucket
+  no entrega el archivo sin firma.
 
 Decisiones en `storage.md` §147-§152.
 

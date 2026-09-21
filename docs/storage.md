@@ -2361,7 +2361,8 @@ ejecutar DDL, que es justo lo que se quiere.
 supabase db push
 ```
 
-o pegar `supabase/migrations/0001_projects.sql` en el editor SQL del panel.
+o pegar los archivos de `supabase/migrations/` en el editor SQL del panel,
+en orden: `0001_projects.sql` y después `0002_assets.sql`.
 
 Para comprobar que el entorno está listo:
 
@@ -2369,9 +2370,9 @@ Para comprobar que el entorno está listo:
 pnpm check:supabase
 ```
 
-Verifica que las variables están definidas, que el proyecto responde, que la
-tabla existe y que **RLS oculta los proyectos a un cliente anónimo**. No
-imprime ningún valor de configuración.
+Verifica que las variables están definidas, que el proyecto responde, que las
+tablas existen, que **RLS las oculta a un cliente anónimo** y que el bucket de
+archivos existe y **no es público**. No imprime ningún valor de configuración.
 
 ---
 
@@ -2379,10 +2380,8 @@ imprime ningún valor de configuración.
 
 ```text
 plantillas y sus versiones (§15-§22)
-assets: original y procesado por separado (§37-§49)
 exports (§50 en adelante)
-object storage
-autenticación: el flujo de Supabase Auth en la aplicación
+la imagen procesada, que depende de la eliminación de fondo (§48)
 ```
 
 El repositorio de proyectos fija el patrón que los demás deben seguir:
@@ -2398,9 +2397,10 @@ usuario.
 
 ```text
 src/modules/assets/
-├── asset.ts                      Entidad y ruta de almacenamiento
-├── asset-repository.ts           Interfaz de la fila
-├── asset-storage.ts              Interfaz del archivo
+├── asset.ts                        Entidad y ruta de almacenamiento
+├── asset-repository.ts             Interfaz de la fila
+├── asset-storage.ts                Interfaz del archivo
+├── asset-repository.contract.ts    Qué significa cumplir el contrato
 ├── in-memory-asset-repository.ts
 ├── in-memory-asset-storage.ts
 ├── errors.ts
@@ -2410,6 +2410,16 @@ src/modules/assets/
 
 supabase/migrations/0002_assets.sql   Tabla, RLS, bucket y sus políticas
 ```
+
+El contrato del repositorio (§143) se ejecuta también aquí, contra la
+implementación en memoria. Contra Supabase no puede ejecutarse: guarda assets
+de dos dueños distintos y RLS —con razón— solo deja escribir los del usuario
+autenticado.
+
+Lo que solo la base de datos puede demostrar vive en
+`supabase-asset-repository.integration.test.ts`: que la propiedad
+**transitiva** se aplica —el asset es del dueño de su proyecto— y que el
+bucket no entrega el archivo sin una firma.
 
 ---
 
