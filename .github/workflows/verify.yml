@@ -1,0 +1,48 @@
+# Lo mismo que `pnpm verify` antes de commitear, más el build de producción,
+# en cada push y en cada pull request. Ver docs/deploy.md §2.
+name: verify
+
+on:
+  push:
+  pull_request:
+
+# Un push nuevo a la misma rama cancela la comprobación anterior.
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Valores falsos pero bien formados: el build los necesita para arrancar,
+    # y ninguna prueba de esta suite habla con Supabase. Las de integración
+    # se saltan solas sin credenciales. Los de verdad viven en el proveedor
+    # de despliegue, nunca aquí.
+    env:
+      NEXT_PUBLIC_SITE_URL: https://example.com
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+      USAGE_HASH_SECRET: ci-placeholder-secret-of-at-least-32-chars
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Lee la versión de `packageManager` en package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm verify
+
+      - run: pnpm build

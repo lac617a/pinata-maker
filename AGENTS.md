@@ -334,6 +334,21 @@ Use it whenever adding a public page or changing what is indexed.
 
 ---
 
+### deploy.md
+
+Defines:
+
+```text
+continuous integration
+environment variables
+production checklist
+hosting limits
+```
+
+Use it whenever adding an environment variable or changing how the app is built.
+
+---
+
 ### roadmap.md
 
 Defines:

@@ -826,6 +826,10 @@ posicionar.
 * Los archivos del object storage no se borran al borrar un proyecto: las
   filas se van en cascada y el bucket no se entera. Hace falta un proceso de
   limpieza o borrar los archivos antes (`storage.md` §59 y §164).
+* En Vercel, una función no acepta ni devuelve más de 4,5 MB, y las
+  imágenes pueden pesar 10 MB: una foto grande falla al subirla, y el PDF
+  sin cuenta puede no caber en la respuesta (`deploy.md` §4). Es lo primero
+  que resolver antes de publicar allí.
 * El PDF se genera dentro de la petición. Para una piñata de un metro son
   unos segundos; si llega a molestar, el export ya tiene identidad propia
   para poder consultarse en segundo plano (`storage.md` §115).
@@ -951,7 +955,11 @@ Lo que no hay es un registro de qué migración se aplicó y cuándo: el entorno
 el repositorio pueden separarse sin que nada lo note hasta que una consulta
 falla.
 
-## 8.8 No hay integración continua
+## 8.8 No hay integración continua — resuelto
+
+Desde el 2026-09-21, `.github/workflows/verify.yml` corre `pnpm verify` y el
+build en cada push (`deploy.md` §2). Falta subir el repositorio a GitHub para
+que empiece a correr. Queda como estaba escrito abajo por contexto.
 
 `pnpm verify` encadena formato, lint, tipos y tests, pero solo corre si
 alguien se acuerda. Un trabajo que lo ejecute en cada push cuesta media hora

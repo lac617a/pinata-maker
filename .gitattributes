@@ -1,0 +1,15 @@
+# Finales de línea LF en todas las máquinas.
+#
+# Prettier exige LF (`endOfLine` en .prettierrc.json). Con
+# `core.autocrlf=true`, lo habitual en Windows, git convertía a CRLF al sacar
+# los archivos y `pnpm verify` fallaba en un clon recién hecho sin que nadie
+# hubiera tocado nada. Esto manda sobre la configuración de cada máquina.
+* text=auto eol=lf
+
+# Binarios: ni se convierten ni se comparan como texto.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.pdf binary
+*.ico binary

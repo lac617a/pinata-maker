@@ -217,8 +217,11 @@ Resumen; la versión autoritativa está en `docs/roadmap.md`.
   `src/components/legal/site-owner.ts` —cada página legal avisa mientras
   falte algo— y `NEXT_PUBLIC_SITE_URL`, obligatoria en producción. El banner
   de cookies llega con AdSense.
+* **CI y despliegue preparados** (`docs/deploy.md`): el workflow corre
+  `pnpm verify` y el build; `.gitattributes` fuerza LF. En Vercel, el límite
+  de 4,5 MB por petición choca con las imágenes de 10 MB (`docs/deploy.md` §4).
 * **Siguiente:** imprimir un póster y medirlo con una regla
-  (`docs/roadmap.md` §8.1), desplegar y el pulido del póster.
+  (`docs/roadmap.md` §8.1), resolver el límite de 4,5 MB y desplegar.
 * **Fases G y H** cubren el modelo de acceso (anónimo con límite, registrado,
   de pago) y la publicación con SEO y páginas legales. Los requisitos están en
   `docs/PRD.md` §38-§43, no en el roadmap: el roadmap solo registra cuándo se
